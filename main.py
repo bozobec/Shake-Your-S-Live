@@ -2,12 +2,12 @@
 # Main file for approximating an S-curve, given a certain data set
 import numpy as np
 import math
-#from scikit_learn import linear_model
+# from scikit_learn import linear_model
 from scipy.optimize import curve_fit
 from datetime import datetime
 import numpy_financial as npf
 from sklearn import linear_model
-from sklearn.metrics import mean_squared_error
+# from sklearn.metrics import mean_squared_error
 from sympy.solvers import solve
 from sympy import Symbol
 import sqlite3
