@@ -29,7 +29,7 @@ current_valuation_container = 0.0
 arpu_needed_container = 0.0
 user_value_container = 0.0
 valuation_Snapchat = 119.85 * pow(10, 9)
-valuation_Spotify = 47.3 * pow(10, 9)
+valuation_Spotify = 47.2 * pow(10, 9)
 valuation_Twitter = 51.74 * pow(10, 9)
 valuation_Linkedin = 29.5 * pow(10, 9)
 valuation_Netflix = 282.36 * pow(10, 9)
@@ -76,7 +76,7 @@ navbar = dbc.NavbarSimple(
 dropdown = dcc.Dropdown(id='dropdown', options=[{'label': i, 'value': i} for i in labels])
 
 # Tooltips
-tooltip_plateau = dbc.Tooltip("This number highlights the maximum amount of users that can be reached with the current growth",
+tooltip_plateau = dbc.Tooltip("This number highlights the maximum amount of users that will be reached with the current growth",
                        target="tooltip-plateau-target",)
 # Sliders
 slider = html.Div(children=[dcc.RangeSlider(id="range-slider-data-ignored1", min=0, step=1,

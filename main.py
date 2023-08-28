@@ -18,7 +18,7 @@ import plotly.express as px
 
 # ---------------------------- Importing Data for testing purpose
 
-# DO NOT DELETE Transforming string dates in yearly float format (example: Jun.11 ---> 2011.4167)
+# DO NOT DELETE Transforming string dates in yearly float format (example: Jun.11 -> 2011.4167)
 SECONDS_PER_YEAR = 31557600  # Number of seconds in a year
 
 
