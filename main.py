@@ -126,8 +126,8 @@ def rsquare_calculation(dates, users):
         k, r, p0 = logistic_function_approximation(dates_rsquare, users_rsquare)
         k_data_ignored[i] = k
         # Calculating the RSquare for all data
-        x_values = users
-        y_values = logisticfunction(k, r, p0, dates)
+        x_values = userinterval
+        y_values = rd
         correlation_matrix = np.corrcoef(x_values, y_values)
         correlation_xy = correlation_matrix[0, 1]
         r_squares[i] = correlation_xy ** 2
@@ -146,8 +146,8 @@ def parameters_dataframe(dates, users):
         rd = discrete_growth_rate(users_rsquare, dates_rsquare)
         userinterval = discrete_user_interval(users_rsquare)
         k, r, p0 = logistic_function_approximation(dates_rsquare, users_rsquare)
-        x_values = users_rsquare
-        y_values = logisticfunction(k, r, p0, dates_rsquare)
+        x_values = userinterval
+        y_values = rd
         correlation_matrix = np.corrcoef(x_values, y_values) # R Square calculation
         correlation_xy = correlation_matrix[0, 1]
         r_squared = correlation_xy ** 2
@@ -161,13 +161,13 @@ def parameters_dataframe(dates, users):
 
 
 # Function to clean the parameters dataframe (the dataframe containing parameters in function of the data ignored)
-# Rows are deleted if: value = Nan; K<=userMax ; r<0 ; R Squared < 0.9 ; p0 <= 0
+# Rows are deleted if: value = Nan; K<= 0.9*userMax ; r<0 ; R Squared < 0.9 ; p0 <= 0
 def parameters_dataframe_cleaning(df, users):
     # Eliminate all rows where NaN values are present
     df = df.dropna()
     usersMax = np.amax(users)
-    # Get names of indexes for which column K is smaller than the max user
-    indexNames_K = df[df['K'] <= usersMax].index
+    # Get names of indexes for which column K is smaller than 90% of the max user
+    indexNames_K = df[df['K'] <= 0.9*usersMax].index
     # Delete these row indexes from dataFrame
     df.drop(indexNames_K, inplace=True)
     # Get names of indexes for which column r is smaller than zero

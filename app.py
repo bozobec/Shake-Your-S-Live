@@ -335,11 +335,15 @@ def graph_update(jsonified_users_data, jsonified_cleaned_data, data_slider):
                              line=dict(color='Grey', width=2, dash='dash')))
     x1 = np.linspace(dates[-1] + 0.25, dates[-1] + 10, num=10)
     # Add predicted bars
-    fig_main.add_trace(go.Bar(name="Predicted S Curve", x=x1+1970, y=main.logisticfunction(k, r, p0, x1),
-                         marker_color='White', marker_line_color='Black'))
+    # fig_main.add_trace(go.Bar(name="Predicted S Curve", x=x1+1970, y=main.logisticfunction(k, r, p0, x1),
+                         # marker_color='White', marker_line_color='Black'))
     # Highlight points considered for the approximation
-    fig_main.add_trace(go.Bar(name="Data used for the approximation", x=dates+1970, y=users,
-                         marker_color="Black"))
+    fig_main.add_trace(go.Bar(name="Data used for the approximation", x=dates[number_ignored_data:-1] + 1970,
+                              y=users[number_ignored_data:-1],
+                              marker_color="Black"))
+    # Highlight points not considered for the approximation
+    fig_main.add_trace(go.Bar(name="Data used for the approximation", x=dates[0:number_ignored_data]+1970, y=users[0:number_ignored_data],
+                         marker_color="Grey"))
 
     # Build second chart containing the discrete growth rates
     fig_second = go.Figure(layout=layout_second_graph)
