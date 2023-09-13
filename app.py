@@ -380,8 +380,14 @@ def graph_update(jsonified_users_data, jsonified_cleaned_data, data_slider, hist
     print("Number of ignored data")
     print(number_ignored_data)
 
+    # Polynomial approximation
+    polynum3 = main.polynomial_approximation(dates, users, 3)
+    polynum1 = main.polynomial_approximation(dates, users, 1)
+
     # Build Main Chart
     fig_main = go.Figure(layout=layout_main_graph)
+    fig_main.update_xaxes(range=[dates[0]+1970, dates[-1]*2-dates[0]+1970])  # Fixing the size of the X axis with users max + 10%
+    fig_main.update_yaxes(range=[0, users[-1]*1.3])  # Fixing the size of the Y axis
     # Add S-curve - S-Curve the user can play with
     x = np.linspace(dates[0], dates[-1]*2-dates[0], num=50)
     fig_main.add_trace(go.Scatter(name="Predicted S Curve", x=x+1970, y=main.logisticfunction(k, r, p0, x), mode="lines", line=dict(color='#54c4f4')))
@@ -418,6 +424,8 @@ def graph_update(jsonified_users_data, jsonified_cleaned_data, data_slider, hist
 
     # Build second chart containing the discrete growth rates
     fig_second = go.Figure(layout=layout_second_graph)
+    fig_second.update_xaxes(range=[0, users[-1]*1.1])  # Fixing the size of the X axis with users max + 10%
+    fig_second.update_yaxes(range=[0, 1.2]) # Fixing the size of the Y axis
     fig_second.add_trace(
         go.Scatter(name="Discrete Growth Rate", x=main.discrete_user_interval(users),
                    y=main.discrete_growth_rate(users, dates+1970), mode="markers",line=dict(color='#54c4f4')))
@@ -425,6 +433,15 @@ def graph_update(jsonified_users_data, jsonified_cleaned_data, data_slider, hist
     fig_second.add_trace(
         go.Scatter(name="Discrete Growth Rate", x=main.discrete_user_interval(users),
                    y=-r/k*main.discrete_user_interval(users)+r, mode="lines", line=dict(color='#54c4f4')))
+    # Add trace of the polynomial approximation
+    '''
+    fig_second.add_trace(
+        go.Scatter(name="Discrete Growth Rate", x=main.discrete_user_interval(users),
+                   y=np.polyval(polynum3,main.discrete_user_interval(users)), mode="lines", line=dict(color="Red")))
+    fig_second.add_trace(
+        go.Scatter(name="Discrete Growth Rate", x=main.discrete_user_interval(users),
+                   y=np.polyval(polynum1, main.discrete_user_interval(users)), mode="lines", line=dict(color="Green")))
+                   '''
     # Changes the color of the scatters ignored
     if number_ignored_data > 0:
         fig_second.add_trace(
@@ -454,8 +471,12 @@ def graph_update(jsonified_users_data, jsonified_cleaned_data, data_slider, hist
         date_plateau_displayed = "Plateau could not be calculated"
     print("2. CALLBACK END")
 
+    # Analysis test to be deleted
+
     return {'display': 'block'}, {'display': 'block'}, {'display': 'block'}, {'display': 'block'}, \
         fig_main, fig_second, k_printed, r_squared_showed, date_plateau_displayed, marks
+
+
 
 
 

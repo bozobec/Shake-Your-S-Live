@@ -153,14 +153,10 @@ def parameters_dataframe(dates, users):
     dataframe = np.zeros((n_data_ignored, 6))
     # Calculation of K, r & p0 and its related RSquare for each data ignored
     for i in range(n_data_ignored):
-        print("DATAIGNORED")
-        print(i)
         dates_rsquare = dates[i:len(dates)]
         users_rsquare = users[i:len(dates)]
         rd = discrete_growth_rate(users_rsquare, dates_rsquare)
         userinterval = discrete_user_interval(users_rsquare)
-        print(userinterval)
-        print(rd)
         k, r, p0 = logistic_function_approximation(dates_rsquare, users_rsquare)
         x_values = userinterval
         y_values = rd
@@ -263,4 +259,11 @@ def get_earlier_dates(dates, t_time):
         if date < t_time:
             earlier_dates.append(date)
     return earlier_dates
+
+def polynomial_approximation(dates, users, n_polynome):
+    rd = discrete_growth_rate(users, dates)
+    userinterval = discrete_user_interval(users)
+    parameters = np.polyfit(userinterval, rd, n_polynome, rcond=None, full=False)
+    return parameters
+
 
