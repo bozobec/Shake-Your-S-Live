@@ -110,6 +110,17 @@ def logistic_function_approximation_method(dates, users):
     return popt
 
 
+# Calculation of the Root Mean Square Deviation (RMSD) based on two arrays
+def rmsd(array1, array2):
+    if len(array1) != len(array2):
+        raise ValueError("Arrays must have the same length")
+
+    squared_diff = np.square(np.array(array1) - np.array(array2))
+    mean_squared_diff = np.mean(squared_diff)
+    rmsd_value = np.sqrt(mean_squared_diff)
+    return rmsd_value
+
+
 # Calculation of the RSquare in function of the number of first data point ignored
 def rsquare_calculation(dates, users):
     maximum_data_ignored = 0.85  # Up to 85% of the data can be ignored
@@ -134,29 +145,36 @@ def rsquare_calculation(dates, users):
         mse[i] = mean_squared_error(x_values, y_values)
     return r_squares, mse
 
+
 # Calculation of the parameters and RSquare, mapped to the amount of data ignored
 def parameters_dataframe(dates, users):
     maximum_data_ignored = 0.85  # Up to 80% of the data can be ignored
     n_data_ignored = int(round(len(dates)*maximum_data_ignored))
-    dataframe = np.zeros((n_data_ignored, 5))
+    dataframe = np.zeros((n_data_ignored, 6))
     # Calculation of K, r & p0 and its related RSquare for each data ignored
     for i in range(n_data_ignored):
+        print("DATAIGNORED")
+        print(i)
         dates_rsquare = dates[i:len(dates)]
         users_rsquare = users[i:len(dates)]
         rd = discrete_growth_rate(users_rsquare, dates_rsquare)
         userinterval = discrete_user_interval(users_rsquare)
+        print(userinterval)
+        print(rd)
         k, r, p0 = logistic_function_approximation(dates_rsquare, users_rsquare)
         x_values = userinterval
         y_values = rd
         correlation_matrix = np.corrcoef(x_values, y_values) # R Square calculation
         correlation_xy = correlation_matrix[0, 1]
         r_squared = correlation_xy ** 2
+        rootmeansquare = rmsd(users_rsquare, logisticfunction(k,r,p0,dates_rsquare))
         dataframe[i, 0] = i  # Data ignored column
         dataframe[i, 1] = k  # K (carrying capacity) column
         dataframe[i, 2] = r  # r (growth rate) column
         dataframe[i, 3] = p0  # p0 (initial population) column
         dataframe[i, 4] = r_squared  # r squared column
-    df = pd.DataFrame(dataframe, columns=['Data Ignored', 'K', 'r', 'p0', 'R Squared'])
+        dataframe[i, 5] = rootmeansquare  # Root Mean Square Deviation column
+    df = pd.DataFrame(dataframe, columns=['Data Ignored', 'K', 'r', 'p0', 'R Squared', 'RMSD'])
     return df
 
 
@@ -178,8 +196,8 @@ def parameters_dataframe_cleaning(df, users):
     indexNames_rSquared = df[df['R Squared'] <= 0].index
     # Delete these row indexes from dataFrame
     df.drop(indexNames_rSquared, inplace=True)
-    # Get names of indexes for which column p0 is smaller or equal to zero
-    indexNames_p0 = df[df['p0'] <= 0].index
+    # Get names of indexes for which column p0 is smaller that numbers very close to zero
+    indexNames_p0 = df[df['p0'] < 5.775167e-11].index
     # Delete these row indexes from dataFrame
     df.drop(indexNames_p0, inplace=True)
     df_sorted = df.sort_values(by=['K'], ascending=True)
@@ -231,4 +249,18 @@ def arpu_for_valuation(k, r, p0, profitmargin, discount_rate, years, valuation):
     function_to_solve = solve(net_present_value(k, r, p0, x, profitmargin, discount_rate, years) - valuation, x)
     arpu = float(function_to_solve[0])
     return arpu
+
+# Calculate the minimum time you can go back in time, given a certain dataset with an array of dates (dates)
+# One can go back only until 4 data are left to be analyzed
+def date_minimum_history(dates):
+    date_minimum = dates[4] + 0.5
+    return date_minimum
+
+# Get only arrays data before a given certain t_time
+def get_earlier_dates(dates, t_time):
+    earlier_dates = []
+    for date in dates:
+        if date < t_time:
+            earlier_dates.append(date)
+    return earlier_dates
 
