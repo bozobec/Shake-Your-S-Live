@@ -74,12 +74,14 @@ navbar = dbc.NavbarSimple(
 dropdown = dcc.Dropdown(id='dropdown', options=[{'label': i, 'value': i} for i in labels])
 
 # Tooltips
-tooltip_plateau = dbc.Tooltip("This number highlights the maximum amount of users that will be reached with the current growth",
-                       target="tooltip-plateau-target",)
+tooltip_plateau = dbc.Tooltip("This number highlights the maximum amount of users that will be reached with the selected scenario",
+                       target="plateau-header",)
 # Sliders
 slider = html.Div(children=[dcc.RangeSlider(id="range-slider-data-ignored1", min=0, step=1,
                                                                marks={},
-                                                               value=[0]),
+                                                               value=[0],
+                            tooltip={"placement": "bottom", "always_visible": True},
+                                            vertical=True),
                             html.Div(id="max-label")])
 slider_history = html.Div(children=[dcc.RangeSlider(id="range-slider-history", min=0, max=10,
                                                                marks={},
@@ -96,7 +98,7 @@ row2 = html.Tr([html.Td("Plateau reached in: "), html.Td(id='time-plateau', chil
 # row3 = html.Tr([html.Td("Current valuation: "), html.Td(id='current-valuation', children=current_valuation_container)])
 # row4 = html.Tr([html.Td("Yearly profit per user to justify the current valuation: "),
 # html.Td(id='arpu-needed', children=arpu_needed_container, style={"color": '#54c4f4'})])
-row5 = html.Tr([html.Td("R Squared: "), html.Td(id='rsquared-container', children=r_squared_selected, style={"color": '#54c4f4'})])
+# row5 = html.Tr([html.Td("R Squared: "), html.Td(id='rsquared-container', children=r_squared_selected, style={"color": '#54c4f4'})])
 # row6 = html.Tr([html.Td("Current user value: "), html.Td(id='uservalue-container', children=user_value_container)])
 
 # Left card consolidating all the rows defined above
@@ -107,10 +109,10 @@ left_card = dbc.Card(id="left-card", children=[
                             html.Span([
                                 html.H6("Prediction data"),
                                 dbc.Table(html.Tbody(row1), style={"margin-bottom": "0px"}),
-                                html.Div(slider, style={"height": "10px", "margin-bottom": "20px"}),
+                                # html.Div(slider, style={"height": "10px", "margin-bottom": "20px"}),
                                 # dbc.Table(html.Tbody(row4), style={"margin-bottom": "0px"}),
                                 # html.Div(slider_profitability, style={"height": "10px", "margin-bottom": "40px"}),
-                                dbc.Table(html.Tbody([row2, row5])),
+                                dbc.Table(html.Tbody([row2])),
                             ]),
                         ])
                 ], style={'display': 'none'}),
@@ -130,6 +132,23 @@ top_card = dbc.Card(id="top-card", children=[
                             [
                             html.Span([html.H6("Date of the prediction"),
                             html.Div(slider_history, style={"height": "10px", "margin-bottom": "20px"})])
+                            ])
+                      ], style={'display': 'none'})
+
+# Card containing the vertical slider for the carrying capacity
+vertical_slider_card = dbc.Card(id="vertical-slider", children=[
+                        dbc.CardBody(
+                            [
+                            html.Span([
+                            html.H6("Plateau", id="plateau-header"),
+                            html.Div(slider)])
+                            ])
+                      ], style={'display': 'none'})
+r_squared_card = dbc.Card(id="r-squared-card", children=[
+                        dbc.CardBody(
+                            [
+                            html.H6(["R", html.Sup(2)], id="r-squared-header"),
+                            html.P(id="rsquared-container"),
                             ])
                       ], style={'display': 'none'})
 
@@ -198,14 +217,18 @@ layout_second_graph = go.Layout(
     ),
 )
 
+loading = dcc.Loading(id="loading-component", children=[html.Div([html.Div(id="loading-output")])], type="circle",),
 
 # ----------------------------------------------------------------------------------
 # App Layout
 app.layout = html.Div(children=[
-    #navbar,
+    # Toast message appearing on top
     dbc.Row(html.Div(alert_no_calculation_possible)),
-    # Title
-    dbc.Row(dbc.Col(html.H1(id='main-title', children='Growth estimation'), width={"size": 6, "offset": 1}), style={"margin-top": "40px"}),
+    # Title row & loading animation
+    dbc.Row(dbc.Col([
+        html.Div(html.H1(id='main-title', children='Growth estimation')),
+        html.Div(loading)],
+                    width={"size": 6, "offset": 1}), style={"margin-top": "40px"}),
     # Subtitle
     # dbc.Row(dbc.Col(html.Div(children="Have fun estimating the user growth of companies"),
                     # width={"size": 6, "offset": 1})),
@@ -215,16 +238,22 @@ app.layout = html.Div(children=[
     dbc.Row(dbc.Col(html.H2(id='title', children=[]), width={"size": 6, "offset": 1}), style={"margin-top": "40px"}),
     # --------------------------------------------------------
     # Slider to go back in time and retrofit
-    dbc.Row(dbc.Col(top_card, width={"size": 6, "offset": 1})),
+    dbc.Row([
+        dbc.Col(top_card, width={"size": 6, "offset": 1}),
+        dbc.Col(r_squared_card, width={"size": 1}),
+    ]),
     # Bloc with buttons and graph
     dbc.Row([
-        # 1st column with buttons
+        # 1st column with the main graph
         dbc.Col(right_card, width={"size": 6, "offset": 1}),
-        # 2nd column with graph
-        dbc.Col(left_card, width={"size": 4}),
+        # 2nd column with the table and the slider
+        # dbc.Col(left_card, width={"size": 4}),
+        # Column with the vertical slider for carrying capacity
+        dbc.Col(vertical_slider_card, width="auto"),
     ], style={"margin-top": "20px"}),
     # Bottom graph
     dbc.Row(dbc.Col(bottom_card, width={"size": 6, "offset": 1}), style={"margin-top": "2px"}),
+    dbc.Row(left_card),
     # Storing the key dataframe with all parameters
     dcc.Store(id='intermediate-value'),
     dcc.Store(id='users-data')
@@ -256,12 +285,13 @@ def set_history_size(dropdown_value):
         max_history_date: {'label': str(int(max_history_date)), 'style': {'color': '#f50'}}
     }
     print("Dropdown value fetched and slider printed successfully")
-    return [max_history_date], min_history_date, max_history_date, marks_history,
+    return [max_history_date], min_history_date, max_history_date, marks_history
 @app.callback(
     Output(component_id='intermediate-value', component_property='data'), #prints the dataframe
     Output(component_id='users-data', component_property='data'),
     Output(component_id='range-slider-data-ignored1', component_property='value'), # Reset slider value to zero
     Output("alert-fade", "is_open"),  # Reset slider value to zero
+    Output("loading-component", "loading"),
     # Output(component_id='range-slider-history', component_property='value'), # Set slider to the last date available
     # Output(component_id='uservalue-container', component_property='children'),
     Input(component_id='dropdown', component_property='value'),  # Take dropdown value
@@ -305,29 +335,29 @@ def load_data(dropdown_value, history_value):
     formatted_dates = dates + 1970
     min_history_date = main.date_minimum_history(formatted_dates)
     max_history_date = formatted_dates[-1]
-    marks_history = {
-        min_history_date: {'label': str(int(min_history_date)), 'style': {'color': '#77b0b1'}},
-        max_history_date: {'label': str(int(max_history_date)), 'style': {'color': '#f50'}}
-    }
+
     print(min_history_date)
     print(max_history_date)
     print("Scenarios calculation completed")
-    return df_sorted.to_json(date_format='iso', orient='split'), df.to_json(date_format='iso', orient='split'), [0], state_alert
+    return df_sorted.to_json(date_format='iso', orient='split'), df.to_json(date_format='iso', orient='split'), \
+        [0], state_alert, True
 
 @app.callback([
     # Output(component_id='title', component_property='children'),  # Title
 
     Output(component_id='top-card', component_property='style'),  # Show top card with slider
-    Output(component_id='left-card', component_property='style'),  # Show left card
+    # Output(component_id='left-card', component_property='style'),  # Show left card
     Output(component_id='right-card', component_property='style'),  # Show graph card
     Output(component_id='bottom-card', component_property='style'),  # Show graph card
+    Output(component_id='vertical-slider', component_property='style'),  # Show slider card
+    Output(component_id='r-squared-card', component_property='style'),  # Show r-squared card
     Output(component_id='main-graph1', component_property='figure'),  # Update graph 1
     Output(component_id='main-graph2', component_property='figure'),  # Update graph 2
     Output(component_id='carrying-capacity', component_property='children'),  # Update the carrying capacity
     Output(component_id='rsquared-container', component_property='children'),  # Update regression
     Output(component_id='time-plateau', component_property='children'),  # Update the time when the plateau is reached
     Output(component_id='range-slider-data-ignored1', component_property='marks'),  # Amount of steps for the slider, matching the number of parameters calculated
-    ],  # Maximum value of the slider, of length of parameters array
+    ],
 
     [
     Input(component_id='users-data', component_property='data'),  # Take dropdown value
@@ -365,9 +395,21 @@ def graph_update(jsonified_users_data, jsonified_cleaned_data, data_slider, hist
     max_value = len(df_sorted) - 1
     print("Length of the slider for ignored data:")
     print(max_value)
+    '''
+    marks_history = {
+        min_history_date: {'label': str(int(min_history_date)), 'style': {'color': '#77b0b1'}},
+        max_history_date: {'label': str(int(max_history_date)), 'style': {'color': '#f50'}}
+    }'''
+    # Formatting of the marks to be created for the slider
+    k_min_mark1 = int(np.rint(k_scenarios[0]) / pow(10, 6))
+    k_min_mark = "{:,} M".format(k_min_mark1)
+    k_max_mark1 = int(np.rint(k_scenarios[-1]) / pow(10, 6))
+    k_max_mark = "{:,} M".format(k_max_mark1)
+    k_tooltip1 = int(np.rint(k_scenarios[data_slider]) / pow(10, 6))
+    k_tooltip = "{:,} M".format(k_tooltip1)
     marks = {
-        0: {'label': 'Min', 'style': {'color': '#77b0b1'}},
-        max_value: {'label': 'Max', 'style': {'color': '#f50'}}
+        0: {'label': k_min_mark, 'style': {'color': '#f50', 'position': 'absolute', 'right': '-30px'}},
+        max_value: {'label': k_max_mark, 'style': {'color': '#77b0b1', 'right': '-30px'}}
     }
     # Based on the slider's value, the related row of parameters is selected
     row_selected = int(data_slider[0])
@@ -473,7 +515,7 @@ def graph_update(jsonified_users_data, jsonified_cleaned_data, data_slider, hist
 
     # Analysis test to be deleted
 
-    return {'display': 'block'}, {'display': 'block'}, {'display': 'block'}, {'display': 'block'}, \
+    return {'display': 'block'}, {'display': 'block'}, {'display': 'block'}, {'display': 'block'},  {'display': 'block'},\
         fig_main, fig_second, k_printed, r_squared_showed, date_plateau_displayed, marks
 
 
