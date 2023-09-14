@@ -298,7 +298,7 @@ def set_history_size(dropdown_value):
     Input(component_id='range-slider-history', component_property='value'),  # Take slider history value
     )
 
-# Here analysis is made to load the different scenarios (low & high) when a dropdown value is selected
+# Analysis to load the different scenarios (low & high) when a dropdown value is selected
 def load_data(dropdown_value, history_value):
     print("Starting scenarios calculation")
     #Initializing random data when dropdown is None
