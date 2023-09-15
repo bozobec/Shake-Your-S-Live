@@ -134,14 +134,14 @@ top_card = dbc.Card(id="top-card", children=[
                             html.Span([html.H6("Date of the prediction"),
                             html.Div(slider_history, style={"height": "10px", "margin-bottom": "20px"})])
                             ])
-                      ], style={'display': 'none'})
+                      ], style={'display': 'none', "height": 1})
 
 # Card containing the vertical slider for the carrying capacity
 vertical_slider_card = dbc.Card(id="vertical-slider", children=[
                         dbc.CardBody(
                             [
                             html.Span([
-                            html.H6("Plateau", id="plateau-header"),
+                            html.H6("Max", id="plateau-header"),
                             html.Div(slider)])
                             ])
                       ], style={'display': 'none'})
@@ -151,7 +151,7 @@ r_squared_card = dbc.Card(id="r-squared-card", children=[
                             html.H6(["R", html.Sup(2)], id="r-squared-header"),
                             html.P(id="rsquared-container"),
                             ])
-                      ], style={'display': 'none'})
+                      ], style={'display': 'none', "height": 1})
 
 # Alert generated
 alert_no_calculation_possible = dbc.Alert(
@@ -251,7 +251,7 @@ app.layout = dbc.Container(children=[
         # 2nd column with the table and the slider
         # dbc.Col(left_card, width={"size": 4}),
         # Column with the vertical slider for carrying capacity
-        dbc.Col(vertical_slider_card, width="auto"),
+        dbc.Col(vertical_slider_card, width={"size": 1}),
     ], style={"margin-top": "20px"}, justify="center"),
     # Bottom graph
     dbc.Row(dbc.Col(bottom_card, width={"size": 7}), style={"margin-top": "2px"}, justify="center"),
