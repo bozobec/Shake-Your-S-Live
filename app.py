@@ -254,7 +254,7 @@ app.layout = dbc.Container(children=[
         dbc.Col(vertical_slider_card, width="auto"),
     ], style={"margin-top": "20px"}, justify="center"),
     # Bottom graph
-    dbc.Row(dbc.Col(bottom_card, width={"size": 6}), style={"margin-top": "2px"}, justify="center"),
+    dbc.Row(dbc.Col(bottom_card, width={"size": 7}), style={"margin-top": "2px"}, justify="center"),
     dbc.Row(left_card),
     # Storing the key dataframe with all parameters
     dcc.Store(id='intermediate-value'),
