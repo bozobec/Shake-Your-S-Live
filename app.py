@@ -226,9 +226,10 @@ app.layout = html.Div(children=[
     dbc.Row(html.Div(alert_no_calculation_possible)),
     # Title row & loading animation
     dbc.Row(dbc.Col([
-        html.Div(html.H1(id='main-title', children='Growth estimation')),
-        html.Div(loading)],
-                    width={"size": 6, "offset": 1}), style={"margin-top": "40px"}),
+        html.Div([html.Img(src="/assets/Vector.svg", style={'height': '35px', 'float': 'left'}),
+                  html.H1(id='main-title', style={'float': 'left', 'margin-left': '20px'} , children='Growth estimation')]),
+        html.Div(loading)], style={'clear': 'both', "margin-top": "40px"},
+                    width={"size": 6, "offset": 1})),
     # Subtitle
     # dbc.Row(dbc.Col(html.Div(children="Have fun estimating the user growth of companies"),
                     # width={"size": 6, "offset": 1})),
@@ -312,6 +313,14 @@ def load_data(dropdown_value, history_value):
         dates = np.array(main.date_formatting(df["Date"]))
         # Users are taken from the database and multiply by a million
         users = np.array(df["Users"]).astype(float) * 1000000
+
+    # Test to be deleted, changing dates & users to use moving average
+    print(dates)
+    print(users)
+    print("CHANGE")
+    # dates, users = main.moving_average_smoothing(dates, users, 3)
+    print(dates)
+    print(users)
     history_value_formatted = history_value[0]-1970  # Puts back the historical value to the format for computations
     dates_actual = main.get_earlier_dates(dates, history_value_formatted)
     data_len = len(dates_actual)  # length of the dataset to consider for retrofitting
@@ -375,6 +384,8 @@ def graph_update(jsonified_users_data, jsonified_cleaned_data, data_slider, hist
     title_figure = "The growth evolution is shown"
     dates = np.array(main.date_formatting(df["Date"]))
     users = np.array(df["Users"]).astype(float)*1000000
+    # To be deleted: changed dates & users to moving average
+    # dates, users = main.moving_average_smoothing(dates, users, 3)
     # Calculating the length of historical values to be considered in the plots
     history_value_formatted = history_value[0] - 1970  # Puts back the historical value to the format for computations
     dates_actual = main.get_earlier_dates(dates, history_value_formatted)
@@ -512,8 +523,11 @@ def graph_update(jsonified_users_data, jsonified_cleaned_data, data_slider, hist
     else:
         date_plateau_displayed = "Plateau could not be calculated"
     print("2. CALLBACK END")
+    print(dates)
+    print(users)
 
     # Analysis test to be deleted
+
 
     return {'display': 'block'}, {'display': 'block'}, {'display': 'block'}, {'display': 'block'},  {'display': 'block'},\
         fig_main, fig_second, k_printed, r_squared_showed, date_plateau_displayed, marks

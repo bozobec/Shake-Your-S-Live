@@ -266,4 +266,14 @@ def polynomial_approximation(dates, users, n_polynome):
     parameters = np.polyfit(userinterval, rd, n_polynome, rcond=None, full=False)
     return parameters
 
+# Function to smoothen the data with a given window size
+def moving_average_smoothing(dates, users, window_size):
+    dates_series = pd.Series(dates)
+    users_series = pd.Series(users)
+    smoothed_dates = dates_series.rolling(3, min_periods=1).mean()
+    smoothed_users = users_series.rolling(3, min_periods=1).mean()
+    smoothed_dates_array = smoothed_dates.values
+    smoothed_users_array = smoothed_users.values
+    return smoothed_dates_array, smoothed_users_array
+
 
