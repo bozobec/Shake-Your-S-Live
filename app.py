@@ -185,9 +185,9 @@ layout_main_graph = go.Layout(
     ),
     showlegend=False,
     font=dict(
-        family="Open Sans",
-        size=16,
-        color="Black"
+        # family="Open Sans",
+        #size=16,
+        # color="Black"
     ),
 )
 
@@ -212,9 +212,9 @@ layout_second_graph = go.Layout(
     ),
     showlegend=False,
     font=dict(
-        family="Open Sans",
-        size=16,
-        color="Black"
+        # family="Open Sans",
+        #size=16,
+        #color="Black"
     ),
 )
 
@@ -222,7 +222,7 @@ loading = dcc.Loading(id="loading-component", children=[html.Div([html.Div(id="l
 
 # ----------------------------------------------------------------------------------
 # App Layout
-app.layout = html.Div(children=[
+app.layout = dbc.Container(children=[
     # Toast message appearing on top
     dbc.Row(html.Div(alert_no_calculation_possible)),
     # Title row & loading animation
@@ -230,36 +230,36 @@ app.layout = html.Div(children=[
         html.Div([html.Img(src="/assets/Vector.svg", style={'height': '35px', 'float': 'left'}),
                   html.H1(id='main-title', style={'float': 'left', 'margin-left': '20px'} , children='Growth estimation')]),
         html.Div(loading)], style={'clear': 'both', "margin-top": "40px"},
-                    width={"size": 6, "offset": 1})),
+                    width={"size": 7}), justify="center"),
     # Subtitle
     # dbc.Row(dbc.Col(html.Div(children="Have fun estimating the user growth of companies"),
                     # width={"size": 6, "offset": 1})),
     # Dropdown
-    dbc.Row(dbc.Col(html.Div(dropdown), width={"size": 2, "offset": 1})),
+    dbc.Row(dbc.Col(html.Div(dropdown), width={"size": 7}), justify="center"),
     # Title - You are seeing the evolution of X company
     dbc.Row(dbc.Col(html.H2(id='title', children=[]), width={"size": 6, "offset": 1}), style={"margin-top": "40px"}),
     # --------------------------------------------------------
     # Slider to go back in time and retrofit
     dbc.Row([
-        dbc.Col(top_card, width={"size": 6, "offset": 1}),
+        dbc.Col(top_card, width={"size": 6}),
         dbc.Col(r_squared_card, width={"size": 1}),
-    ]),
+    ], justify="center"),
     # Bloc with buttons and graph
     dbc.Row([
         # 1st column with the main graph
-        dbc.Col(right_card, width={"size": 6, "offset": 1}),
+        dbc.Col(right_card, width={"size": 6}),
         # 2nd column with the table and the slider
         # dbc.Col(left_card, width={"size": 4}),
         # Column with the vertical slider for carrying capacity
         dbc.Col(vertical_slider_card, width="auto"),
-    ], style={"margin-top": "20px"}),
+    ], style={"margin-top": "20px"}, justify="center"),
     # Bottom graph
-    dbc.Row(dbc.Col(bottom_card, width={"size": 6, "offset": 1}), style={"margin-top": "2px"}),
+    dbc.Row(dbc.Col(bottom_card, width={"size": 6}), style={"margin-top": "2px"}, justify="center"),
     dbc.Row(left_card),
     # Storing the key dataframe with all parameters
     dcc.Store(id='intermediate-value'),
     dcc.Store(id='users-data')
-])
+], fluid=True)
 
 
 # ----------------------------------------------------------------------------------
@@ -319,7 +319,7 @@ def load_data(dropdown_value, history_value):
     print(dates)
     print(users)
     print("CHANGE")
-    # dates, users = main.moving_average_smoothing(dates, users, 3)
+    dates, users = main.moving_average_smoothing(dates, users, 3)
     print(dates)
     print(users)
     history_value_formatted = history_value[0]-1970  # Puts back the historical value to the format for computations
@@ -386,7 +386,7 @@ def graph_update(jsonified_users_data, jsonified_cleaned_data, data_slider, hist
     dates = np.array(main.date_formatting(df["Date"]))
     users = np.array(df["Users"]).astype(float)*1000000
     # To be deleted: changed dates & users to moving average
-    # dates, users = main.moving_average_smoothing(dates, users, 3)
+    dates, users = main.moving_average_smoothing(dates, users, 3)
     # Calculating the length of historical values to be considered in the plots
     history_value_formatted = history_value[0] - 1970  # Puts back the historical value to the format for computations
     dates_actual = main.get_earlier_dates(dates, history_value_formatted)
