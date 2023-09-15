@@ -17,6 +17,7 @@ import math
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 # app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 app = dash.Dash(external_stylesheets=[dbc.themes.LUX])
+app.title = 'Growth Estimation'
 server = app.server
 # ---------------------------------------------------------------------------
 # Data Definition & Initialization
