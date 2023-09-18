@@ -13,6 +13,7 @@ import dash_bootstrap_components as dbc
 from dash import html
 import datetime
 import math
+from plotly.subplots import make_subplots
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 # app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
@@ -127,6 +128,11 @@ bottom_card = dbc.Card(id="bottom-card", children=[
                         html.Div(id='graph-container2', children=[dcc.Graph(id='main-graph2',
                                                                             config={'displayModeBar': False})])
                       ], style={'display': 'none'})
+# Card that contains the evolution of R square and RMSD
+bottom_bottom_card = dbc.Card(id="bottom-bottom-card", children=[
+                        html.Div(id='graph-container3', children=[dcc.Graph(id='main-graph3',
+                                                                            config={'displayModeBar': False})])
+                      ], style={'display': 'none'})
 # Card containing the history slider
 top_card = dbc.Card(id="top-card", children=[
                         dbc.CardBody(
@@ -176,12 +182,14 @@ layout_main_graph = go.Layout(
     xaxis=dict(
         title="Timeline",
         linecolor="Grey",
+        hoverformat=".0f",
     ),
     yaxis=dict(
         title="Users",
         linecolor="Grey",
         gridwidth=1,
         gridcolor='#e3e1e1',
+        # hoverformat='{y/1e6:.0f} M'
     ),
     showlegend=False,
     font=dict(
@@ -206,6 +214,32 @@ layout_second_graph = go.Layout(
     ),
     yaxis=dict(
         title="Discrete Growth Rate",
+        linecolor="Grey",
+        gridwidth=1,
+        gridcolor='#e3e1e1',
+    ),
+    showlegend=False,
+    font=dict(
+        # family="Open Sans",
+        #size=16,
+        #color="Black"
+    ),
+)
+# Build third graph
+layout_third_graph = go.Layout(
+    # title="User Evolution",
+    plot_bgcolor="White",
+    legend=dict(
+        # Adjust click behavior
+        itemclick="toggleothers",
+        itemdoubleclick="toggle",
+    ),
+    xaxis=dict(
+        title="# of Data ignored",
+        linecolor="Grey",
+    ),
+    yaxis=dict(
+        title="R^2",
         linecolor="Grey",
         gridwidth=1,
         gridcolor='#e3e1e1',
@@ -253,8 +287,10 @@ app.layout = dbc.Container(children=[
         # Column with the vertical slider for carrying capacity
         dbc.Col(vertical_slider_card, width={"size": 1}),
     ], style={"margin-top": "20px"}, justify="center"),
-    # Bottom graph
-    dbc.Row(dbc.Col(bottom_card, width={"size": 7}), style={"margin-top": "2px"}, justify="center"),
+    # Bottom graph of the regression
+    dbc.Row(dbc.Col(bottom_card, width={"size": 7}), style={"margin-top": "20px"}, justify="center"),
+    # Bottom graph of the evolution of r^2
+    dbc.Row(dbc.Col(bottom_bottom_card, width={"size": 7}), style={"margin-top": "20px"}, justify="center"),
     dbc.Row(left_card),
     # Storing the key dataframe with all parameters
     dcc.Store(id='intermediate-value'),
@@ -319,7 +355,7 @@ def load_data(dropdown_value, history_value):
     print(dates)
     print(users)
     print("CHANGE")
-    dates, users = main.moving_average_smoothing(dates, users, 3)
+    dates, users = main.moving_average_smoothing(dates, users, 6)
     print(dates)
     print(users)
     history_value_formatted = history_value[0]-1970  # Puts back the historical value to the format for computations
@@ -359,10 +395,12 @@ def load_data(dropdown_value, history_value):
     # Output(component_id='left-card', component_property='style'),  # Show left card
     Output(component_id='right-card', component_property='style'),  # Show graph card
     Output(component_id='bottom-card', component_property='style'),  # Show graph card
+    Output(component_id='bottom-bottom-card', component_property='style'),  # Show graph card
     Output(component_id='vertical-slider', component_property='style'),  # Show slider card
     Output(component_id='r-squared-card', component_property='style'),  # Show r-squared card
     Output(component_id='main-graph1', component_property='figure'),  # Update graph 1
     Output(component_id='main-graph2', component_property='figure'),  # Update graph 2
+    Output(component_id='main-graph3', component_property='figure'),  # Update graph 3
     Output(component_id='carrying-capacity', component_property='children'),  # Update the carrying capacity
     Output(component_id='rsquared-container', component_property='children'),  # Update regression
     Output(component_id='time-plateau', component_property='children'),  # Update the time when the plateau is reached
@@ -391,6 +429,7 @@ def graph_update(jsonified_users_data, jsonified_cleaned_data, data_slider, hist
     history_value_formatted = history_value[0] - 1970  # Puts back the historical value to the format for computations
     dates_actual = main.get_earlier_dates(dates, history_value_formatted)
     data_len = len(dates_actual)  # length of the dataset to consider for retrofitting
+    users_actual = users[0:data_len]
 
     df_sorted = pd.read_json(jsonified_cleaned_data, orient='split')
     df_sorted_array = np.array(df_sorted)
@@ -435,8 +474,19 @@ def graph_update(jsonified_users_data, jsonified_cleaned_data, data_slider, hist
     print(number_ignored_data)
 
     # Polynomial approximation
-    polynum3 = main.polynomial_approximation(dates, users, 3)
-    polynum1 = main.polynomial_approximation(dates, users, 1)
+    logfit = main.log_approximation(dates[number_ignored_data:data_len], users[number_ignored_data:data_len])
+    k_log = np.exp(-logfit[1]/logfit[0])
+    df_log = main.parameters_dataframe_given_k(dates[0:data_len], users[0:data_len])
+    print("LOG params")
+    print(df_log)
+    polynum3 = main.polynomial_approximation(dates[number_ignored_data:data_len], users[number_ignored_data:data_len], 3)
+    polynum2 = main.polynomial_approximation(dates[number_ignored_data:data_len], users[number_ignored_data:data_len],
+                                             2)
+    polynum1 = main.polynomial_approximation(dates[number_ignored_data:data_len], users[number_ignored_data:data_len], 1)
+
+    # Calculating the other parameters, given K provided by the log approximation
+    r_log, p0_log = main.logistic_parameters_given_K(dates[number_ignored_data:data_len],
+                                                     users[number_ignored_data:data_len], k_log)
 
     # Build Main Chart
     fig_main = go.Figure(layout=layout_main_graph)
@@ -444,42 +494,50 @@ def graph_update(jsonified_users_data, jsonified_cleaned_data, data_slider, hist
     fig_main.update_yaxes(range=[0, users[-1]*1.3])  # Fixing the size of the Y axis
     # Add S-curve - S-Curve the user can play with
     x = np.linspace(dates[0], dates[-1]*2-dates[0], num=50)
-    fig_main.add_trace(go.Scatter(name="Predicted S Curve", x=x+1970, y=main.logisticfunction(k, r, p0, x), mode="lines", line=dict(color='#54c4f4')))
+    fig_main.add_trace(go.Scatter(name="Estimation", x=x+1970, y=main.logisticfunction(k, r, p0, x),
+                                  mode="lines", line=dict(color='#54c4f4')))
     # Add 3 scenarios
     x0 = np.linspace(dates_actual[-1] + 0.25, dates_actual[-1]*2-dates_actual[0], num=10)  # Creates a future timeline the size of the data
     # Low growth scenario
-    fig_main.add_trace(go.Scatter(name="Predicted S Curve", x=x0 + 1970,
-                             y=main.logisticfunction(k_scenarios[0], r_scenarios[0], p0_scenarios[0], x0), mode='lines',
-                             line=dict(color='LightGrey', width=2, dash='dash')))
+    x_annotation = max(x0+1970)
+    y_annotation = float(main.logisticfunction(k_scenarios[0], r_scenarios[0], p0_scenarios[0], [dates[-1]*2-dates[0]]))
+    fig_main.add_trace(go.Scatter(name="Low growth", x=x + 1970,
+                             y=main.logisticfunction(k_scenarios[0], r_scenarios[0], p0_scenarios[0], x), mode='lines+text',
+                             line=dict(color='LightGrey', width=2, dash='dash'))),
     #fig.add_trace(go.Line(name="Predicted S Curve", x=x + 1970,
                              #y=main.logisticfunction(k_scenarios[1], r_scenarios[1], p0_scenarios[1], x), mode="lines"))
     # High growth scenario, if existent
     if len(df_scenarios_array) > 1:
-        fig_main.add_trace(go.Scatter(name="Predicted S Curve", x=x0 + 1970,
-                             y=main.logisticfunction(k_scenarios[-1], r_scenarios[-1], p0_scenarios[-1], x0), mode='lines',
-                             line=dict(color='Grey', width=2, dash='dash')))
+        fig_main.add_trace(go.Scatter(name="High Growth", x=x + 1970,
+                             y=main.logisticfunction(k_scenarios[-1], r_scenarios[-1], p0_scenarios[-1], x), mode='lines+text',
+                             line=dict(color='Grey', width=2, dash='dash'), text=["High Growth   "],
+                                      textposition="top left", textfont_size=6))
+
     x1 = np.linspace(dates[-1] + 0.25, dates[-1] + 10, num=10)
     # Add predicted bars
     # fig_main.add_trace(go.Bar(name="Predicted S Curve", x=x1+1970, y=main.logisticfunction(k, r, p0, x1),
                          # marker_color='White', marker_line_color='Black'))
     # Highlight points considered for the approximation
-    fig_main.add_trace(go.Bar(name="Data used for the approximation", x=dates[number_ignored_data:data_len] + 1970,
+    fig_main.add_trace(go.Bar(name="Historical data", x=dates[number_ignored_data:data_len] + 1970,
                               y=users[number_ignored_data:data_len],
                               marker_color="Black"))
     # Highlight points not considered for the approximation
-    fig_main.add_trace(go.Bar(name="Data used for the approximation", x=dates[0:number_ignored_data]+1970, y=users[0:number_ignored_data],
+    fig_main.add_trace(go.Bar(name="Data omitted", x=dates[0:number_ignored_data]+1970, y=users[0:number_ignored_data],
                          marker_color="Grey"))
     # Highlight points past the current date
-    fig_main.add_trace(go.Bar(name="Data used for the approximation", x=dates[data_len:] + 1970,
+    fig_main.add_trace(go.Bar(name="Future data", x=dates[data_len:] + 1970,
                               y=users[data_len:],
                               marker_color='#e6ecf5'))
     # Add vertical line indicating the year of the prediction for retrofitting
-    fig_main.add_vline(x=history_value[0], line_width=3, line_dash="dash")
-
+    fig_main.add_vline(x=history_value[0], line_width=3, line_dash="dot", opacity=0.25)
+    fig_main.update_layout(hovermode="x unified")
     # Build second chart containing the discrete growth rates
     fig_second = go.Figure(layout=layout_second_graph)
     fig_second.update_xaxes(range=[0, users[-1]*1.1])  # Fixing the size of the X axis with users max + 10%
-    fig_second.update_yaxes(range=[0, 1.2]) # Fixing the size of the Y axis
+    max_rd_value = df_sorted['r'].max()
+    print(max_rd_value)
+    print("RD")
+    fig_second.update_yaxes(range=[0, max_rd_value]) # Fixing the size of the Y axis
     fig_second.add_trace(
         go.Scatter(name="Discrete Growth Rate", x=main.discrete_user_interval(users),
                    y=main.discrete_growth_rate(users, dates+1970), mode="markers",line=dict(color='#54c4f4')))
@@ -487,15 +545,41 @@ def graph_update(jsonified_users_data, jsonified_cleaned_data, data_slider, hist
     fig_second.add_trace(
         go.Scatter(name="Discrete Growth Rate", x=main.discrete_user_interval(users),
                    y=-r/k*main.discrete_user_interval(users)+r, mode="lines", line=dict(color='#54c4f4')))
-    # Add trace of the polynomial approximation
-    '''
+    # Add trace of the regression obtained by fixing k
     fig_second.add_trace(
         go.Scatter(name="Discrete Growth Rate", x=main.discrete_user_interval(users),
-                   y=np.polyval(polynum3,main.discrete_user_interval(users)), mode="lines", line=dict(color="Red")))
+                   y=-r_log / k_log * main.discrete_user_interval(users) + r_log, mode="lines", line=dict(color='Purple')))
+
+    # Build third chart containing the evolution of r^2 & rmsd
+    # fig_third = go.Figure(layout=layout_third_graph)
+    fig_third = make_subplots(specs=[[{"secondary_y": True}]])
+    df_sorted_n_ignored = df_sorted.sort_values(by='Data Ignored')
+    x_3_axis = df_sorted_n_ignored['Data Ignored']
+    y_3_axis = df_sorted_n_ignored['R Squared']
+    y_3_axis2 = df_sorted_n_ignored['RMSD']
+    fig_third.add_trace(
+        go.Scatter(name="R^2", x=x_3_axis,
+                   y=y_3_axis, mode="markers", line=dict(color='#54c4f4')))
+    fig_third.add_trace(
+        go.Scatter(name="RMSD", x=x_3_axis,
+                   y=y_3_axis2, mode="markers", line=dict(color='Green')), secondary_y=True)
+    # Vertical line indicating what is the value shown in the main graph
+    fig_third.add_vline(x=number_ignored_data, line_width=3, line_dash="dot", opacity=0.25)
+
+        # Add trace of the polynomial approximation
     fig_second.add_trace(
         go.Scatter(name="Discrete Growth Rate", x=main.discrete_user_interval(users),
                    y=np.polyval(polynum1, main.discrete_user_interval(users)), mode="lines", line=dict(color="Green")))
-                   '''
+    #fig_second.add_trace(
+    #    go.Scatter(name="Discrete Growth Rate", x=main.discrete_user_interval(users),
+    #               y=np.polyval(polynum2, main.discrete_user_interval(users)), mode="lines", line=dict(color="Blue")))
+    #fig_second.add_trace(
+    #    go.Scatter(name="Discrete Growth Rate", x=main.discrete_user_interval(users),
+    #               y=np.polyval(polynum3, main.discrete_user_interval(users)), mode="lines", line=dict(color="Red")))
+    fig_second.add_trace(
+        go.Scatter(name="Discrete Growth Rate", x=main.discrete_user_interval(users),
+                   y=np.polyval(logfit, np.log(main.discrete_user_interval(users))), mode="lines", line=dict(color="Orange")))
+
     # Changes the color of the scatters ignored
     if number_ignored_data > 0:
         fig_second.add_trace(
@@ -524,14 +608,18 @@ def graph_update(jsonified_users_data, jsonified_cleaned_data, data_slider, hist
     else:
         date_plateau_displayed = "Plateau could not be calculated"
     print("2. CALLBACK END")
-    print(dates)
-    print(users)
+    print(df_sorted)
+    print(polynum1)
+    print(-polynum1[1]/polynum1[0])
+    print("K log")
+    print(k_log,r_log,p0_log)
+    print(number_ignored_data)
 
     # Analysis test to be deleted
 
 
-    return {'display': 'block'}, {'display': 'block'}, {'display': 'block'}, {'display': 'block'},  {'display': 'block'},\
-        fig_main, fig_second, k_printed, r_squared_showed, date_plateau_displayed, marks
+    return {'display': 'block'}, {'display': 'block'}, {'display': 'block'}, {'display': 'block'}, {'display': 'block'},  {'display': 'block'},\
+        fig_main, fig_second, fig_third, k_printed, r_squared_showed, date_plateau_displayed, marks
 
 
 

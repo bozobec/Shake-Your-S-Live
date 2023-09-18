@@ -1,3 +1,4 @@
+import functools
 
 # Main file for approximating an S-curve, given a certain data set
 import numpy as np
@@ -14,6 +15,7 @@ from sympy import Symbol
 import sqlite3
 import pandas as pd
 import plotly.express as px
+import matplotlib.pyplot as plt
 # import matplotlib.pyplot as plt
 
 # ---------------------------- Importing Data for testing purpose
@@ -164,6 +166,7 @@ def parameters_dataframe(dates, users):
         correlation_xy = correlation_matrix[0, 1]
         r_squared = correlation_xy ** 2
         rootmeansquare = rmsd(users_rsquare, logisticfunction(k,r,p0,dates_rsquare))
+
         dataframe[i, 0] = i  # Data ignored column
         dataframe[i, 1] = k  # K (carrying capacity) column
         dataframe[i, 2] = r  # r (growth rate) column
@@ -266,6 +269,12 @@ def polynomial_approximation(dates, users, n_polynome):
     parameters = np.polyfit(userinterval, rd, n_polynome, rcond=None, full=False)
     return parameters
 
+def log_approximation(dates, users):
+    rd = discrete_growth_rate(users, dates)
+    userinterval = discrete_user_interval(users)
+    parameters = np.polyfit(np.log(userinterval), rd, 1, rcond=None, full=False)
+    return parameters
+
 # Function to smoothen the data with a given window size
 def moving_average_smoothing(dates, users, window_size):
     dates_series = pd.Series(dates)
@@ -276,4 +285,72 @@ def moving_average_smoothing(dates, users, window_size):
     smoothed_users_array = smoothed_users.values
     return smoothed_dates_array, smoothed_users_array
 
+# Function calculating r, p0, given a certain k. In the function, k is added to the dataset and the dataset in then
+# centered around (k, 0) to perform an intercepted regression.
+def logistic_parameters_given_K(dates, users, k):
+    print("Calculation LOG PARAMs")
+    discretegrowthrate_initial = discrete_growth_rate(users, dates)
+    discretegrowthrate = np.append(discretegrowthrate_initial, 0)  # adding zero to the discrete growth rate array
+    user_interval_initial = discrete_user_interval(users)
+    user_interval = np.append(user_interval_initial, k)  # adding k to the user interval array
 
+    user_interval = user_interval - k  # Centering around the last point (0, K),
+                                                        # by substracting K to the entire dataset
+    reg = linear_model.LinearRegression(fit_intercept=True)  # Forcing the regression to go through 0,0
+    x = user_interval.reshape(-1, 1)
+    y = discretegrowthrate.reshape(-1, 1)
+    regression = reg.fit(x, y)
+    coefficient = regression.coef_  # slope "a" of the function "y(x)=a*x"
+    intercept = coefficient*(user_interval[0])  # The final intercept is found by computing the function for x=K
+    r_growth_rate = float(intercept)
+    def p0_function(usersp, datesp, k, r):
+        p0 = usersp * k / (-usersp * (np.exp(r * datesp) - 1) + k * np.exp(r * datesp))
+        return p0
+
+    p0_all_func = np.vectorize(p0_function)
+    p0_all = p0_all_func(users, dates, k, r_growth_rate)
+    p0_initialusers = np.mean(p0_all)
+    k_carrying_capacity = k
+    return r_growth_rate, p0_initialusers
+
+# This function serves to define how many data to delete to get the best log approximation of the dataset. We here
+# simply evaluate r^2 by deleting data one by one
+def parameters_dataframe_given_k(dates, users):
+    maximum_data_ignored = 0.85  # Up to 80% of the data can be ignored
+    n_data_ignored = int(round(len(dates)*maximum_data_ignored))
+    dataframe = np.zeros((n_data_ignored, 6))
+    # Calculation of K, r & p0 and its related RSquare for each data ignored
+    for i in range(n_data_ignored):
+        dates_rsquare = dates[i:len(dates)]
+        users_rsquare = users[i:len(dates)]
+        logfit = log_approximation(dates_rsquare, users_rsquare)
+        rd = discrete_growth_rate(users_rsquare, dates_rsquare)
+        userinterval = discrete_user_interval(users_rsquare)
+        k_log = np.exp(-logfit[1] / logfit[0])
+        r_log, p0_log = logistic_parameters_given_K(dates_rsquare, users_rsquare, k_log)
+        x_values = userinterval
+        y_values = rd
+        correlation_matrix = np.corrcoef(x_values, y_values) # R Square calculation
+        correlation_xy = correlation_matrix[0, 1]
+        r_squared = correlation_xy ** 2
+        rootmeansquare = rmsd(users_rsquare, logisticfunction(k_log,r_log,p0_log,dates_rsquare))
+
+        # other calculation for r-square to be tested and deleted
+        # Calculate the mean of the observed data
+        observed_data = rd
+        mean_observed = np.mean(rd)
+        # Calculate SSTO (Total Sum of Squares)
+        ssto = np.sum((rd - mean_observed) ** 2)
+        # Calculate SSE (Sum of Squared Errors)
+        approximated_values = np.polyval(logfit, np.log(userinterval))
+        sse = np.sum((observed_data - approximated_values) ** 2)
+        # Calculate R-squared
+        r_squared2 = 1 - (sse / ssto)
+        dataframe[i, 0] = i  # Data ignored column
+        dataframe[i, 1] = k_log  # K (carrying capacity) column
+        dataframe[i, 2] = r_log  # r (growth rate) column
+        dataframe[i, 3] = p0_log  # p0 (initial population) column
+        dataframe[i, 4] = r_squared2  # r squared column
+        dataframe[i, 5] = rootmeansquare  # Root Mean Square Deviation column
+    df = pd.DataFrame(dataframe, columns=['Data Ignored', 'K', 'r', 'p0', 'R Squared', 'RMSD'])
+    return df
