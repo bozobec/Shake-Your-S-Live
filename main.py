@@ -288,7 +288,6 @@ def moving_average_smoothing(dates, users, window_size):
 # Function calculating r, p0, given a certain k. In the function, k is added to the dataset and the dataset in then
 # centered around (k, 0) to perform an intercepted regression.
 def logistic_parameters_given_K(dates, users, k):
-    print("Calculation LOG PARAMs")
     discretegrowthrate_initial = discrete_growth_rate(users, dates)
     discretegrowthrate = np.append(discretegrowthrate_initial, 0)  # adding zero to the discrete growth rate array
     user_interval_initial = discrete_user_interval(users)

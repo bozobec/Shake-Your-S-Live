@@ -614,6 +614,10 @@ def graph_update(jsonified_users_data, jsonified_cleaned_data, data_slider, hist
     print("K log")
     print(k_log,r_log,p0_log)
     print(number_ignored_data)
+    #for i in range(36):
+     #   k_log = k_scenarios[i]
+      #  r_log, p0_log = main.logistic_parameters_given_K(dates[i:], users[i:], k_log)
+       # print(i, k_log, r_log, p0_log)
 
     # Analysis test to be deleted
 
