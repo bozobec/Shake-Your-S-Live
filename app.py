@@ -638,17 +638,20 @@ app.layout = html.Div(
     [navbar6,
      dmc.Space(mb=30),  # Margin/space between the navbar and the content
      # Mantine Grid
+
+dmc.Container(fluid=True, children=[
      dmc.Grid([
         #dmc.Col(span=0.5, lg=0), # Empty left column
-        dmc.Col(selector_card, span="auto", offset=0.5),
-        dmc.Col(graph_card, span=6),
-        dmc.Col(functionalities_card, span=2),
-        dmc.Col(span=1, lg=0), # Empty right column
+        dmc.Col(selector_card, span="auto"),
+        dmc.Col(graph_card, span=12, lg=6),
+        dmc.Col(functionalities_card, span=12, lg=2),
+        # dmc.Col(span="auto", lg=0), # Empty right column
          ],
         gutter="xl",
          justify="space-around",
          # align="center",
      ),
+    ]),
 
      dbc.Container(children=[
         # Toast message appearing on top
