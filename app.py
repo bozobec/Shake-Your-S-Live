@@ -743,7 +743,7 @@ def enable_slider(scenario_value, data_selection):
     ])
 def select_value(value):
     title = value
-    subtitle = "Explore "+value+"'s Historical Data (Bars) and Future Growth Projections. Customize Predictions with the Slider in the 'Functionalities' Section and Adjust the Forecast Start Date Using the Datepicker."
+    subtitle = "Explore "+str(value)+"'s Historical Data (Bars) and Future Growth Projections. Customize Predictions with the Slider in the 'Functionalities' Section and Adjust the Forecast Start Date Using the Datepicker."
     return title, subtitle, False, False, False
 
 # Callback defining the minimum and the maximum date of the datepicker, based on the selected dataset
@@ -774,7 +774,7 @@ def set_history_size(dropdown_value):
     Output(component_id='users-data', component_property='data'),
     Output(component_id='range-slider-data-ignored1', component_property='value'), # Reset slider value to zero
     Output("alert-fade", "is_open"),  # Reset slider value to zero
-    Output("loading-component", "loading"),
+    # Output("loading-component", "loading"),
     Output(component_id='range-slider-k', component_property='value'), # Reset slider value to the best value
     Output(component_id="growth-message", component_property="title"),
     Output(component_id="growth-message", component_property="children"),
@@ -915,7 +915,7 @@ def load_data(dropdown_value, date_picked, scenario_value):
     print(highest_r2_index)
     print(df_sorted)
     return df_sorted.to_json(date_format='iso', orient='split'), df.to_json(date_format='iso', orient='split'), \
-        [0], state_alert, True, highest_r2_index, growth_message_title, growth_message_body, growth_message_color, \
+        [0], state_alert, highest_r2_index, growth_message_title, growth_message_body, growth_message_color, \
         plateau_message_title, plateau_message_body
 
 @app.callback([
