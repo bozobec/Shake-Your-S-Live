@@ -56,4 +56,4 @@ def get_airtable_data(filter):
 
 
 df = get_airtable_data("Netflix")
-print(df)
+print("API operational")
