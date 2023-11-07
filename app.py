@@ -640,7 +640,7 @@ dmc.Container(fluid=True, children=[
      dmc.Grid([
         #dmc.Col(span=0.5, lg=0), # Empty left column
         dmc.Col(selector_card, span="auto"),
-        dmc.Col(graph_card, span=12, lg=6),
+        dmc.Col(dmc.LoadingOverlay(graph_card), span=12, lg=6),
         dmc.Col(functionalities_card, span=12, lg=2),
         # dmc.Col(span="auto", lg=0), # Empty right column
          ],
@@ -675,8 +675,8 @@ dmc.Container(fluid=True, children=[
         # --------------------------------------------------------
         # Slider to go back in time and retrofit
         dbc.Row([
-            dbc.Col(top_card, width={"size": 6}),
-            dbc.Col(r_squared_card, width={"size": 1}),
+            # dbc.Col(top_card, width={"size": 6}),
+            # dbc.Col(r_squared_card, width={"size": 1}),
         ], justify="center"),
         # Bloc with buttons and graph
         dbc.Row([
@@ -914,7 +914,7 @@ def load_data(dropdown_value, date_picked, scenario_value):
     Output(component_id='main-graph2', component_property='figure'),  # Update graph 2
     Output(component_id='main-graph3', component_property='figure'),  # Update graph 3
     Output(component_id='carrying-capacity', component_property='children'),  # Update the carrying capacity
-    Output(component_id='rsquared-container', component_property='children'),  # Update regression
+    #Output(component_id='rsquared-container', component_property='children'),  # Update regression
     Output(component_id='r2-ring-progress', component_property='sections'),  # Update regression
     Output(component_id='time-plateau', component_property='children'),  # Update the time when the plateau is reached
     Output(component_id='range-slider-data-ignored1', component_property='marks'),  # Amount of steps for the slider, matching the number of parameters calculated
@@ -1289,8 +1289,7 @@ def graph_update(jsonified_users_data, jsonified_cleaned_data, data_slider, date
     # Analysis test to be deleted
 
 
-    return fig_main, fig_second, fig_third, k_printed, \
-        r_squared_showed, sections, date_plateau_displayed, marks, data_ignored_array[-1], \
+    return fig_main, fig_second, fig_third, k_printed, sections, date_plateau_displayed, marks, data_ignored_array[-1], \
         marks_slider, False, graph_message
 
 @app.callback(
