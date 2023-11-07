@@ -191,13 +191,13 @@ navbar6 = dbc.Navbar(
                 ],
                     width={"size": "auto"})
             ],
-                align="center"),
-            dbc.Col(dbc.NavbarToggler(id="navbar-toggler", n_clicks=0)),
+                align="left"),
+            # dbc.Col(dbc.NavbarToggler(id="navbar-toggler", n_clicks=0)),
         ],
         fluid=True
     ),
     color="primary",
-    dark=True
+    dark=True,
 )
 
 
