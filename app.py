@@ -172,14 +172,11 @@ navbar6 = dbc.Navbar(
     dbc.Container(
         [
             dbc.Row([
-                dbc.Col([
-                    html.Img(src="/assets/Vector_white.svg", height="25px"),
-                    dbc.NavbarBrand("GROOWT", className="ms-2")
-                ],
-                    width={"size": "auto"})
-            ],
-                align="center",
-                className="g-0"),
+                    dbc.Col(html.Img(src="/assets/Vector_white.svg", height="25px")),
+                    dbc.Col(dbc.NavbarBrand("GROOWT", className="ms-2"))
+                    ],
+                    align="bottom",
+                    className="g-0"),
 
             dbc.Row([
                 dbc.Col([
