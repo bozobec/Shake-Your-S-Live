@@ -364,22 +364,6 @@ accordion = dmc.Accordion(
             ],
             value="lambda",
         ),
-        dmc.AccordionItem(
-            [
-                dmc.AccordionControl(
-                    "Accuracy",
-                    id="accordion-accuracy",
-                    disabled=True,
-                    icon=DashIconify(icon="ph:gear", width=20
-                ),
-                                     ),
-                dmc.AccordionPanel(
-                    "Configure temp appearance and behavior with vast amount of settings or overwrite any part of "
-                    "component styles "
-                ),
-            ],
-            value="ring",
-        ),
     ],
 )
 
@@ -736,14 +720,13 @@ def enable_slider(scenario_value, data_selection):
     Output("graph-subtitle", "children"),
     Output("accordion-growth", "disabled"),
     Output("accordion-plateau", "disabled"),
-    Output("accordion-accuracy", "disabled"),
 
     Input("dataset-selection", "value")
-    ])
+    ],prevent_initial_call=True)
 def select_value(value):
     title = value
     subtitle = "Explore "+str(value)+"'s Historical Data (Bars) and Future Growth Projections. Customize Predictions with the Slider in the 'Functionalities' Section and Adjust the Forecast Start Date Using the Datepicker."
-    return title, subtitle, False, False, False
+    return title, subtitle, False, False
 
 # Callback defining the minimum and the maximum date of the datepicker, based on the selected dataset
 @app.callback([
