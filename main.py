@@ -4,7 +4,6 @@ import functools
 import numpy as np
 import math
 from sklearn import linear_model
-# import scikit_learn
 from scipy.optimize import curve_fit
 from datetime import datetime
 import numpy_financial as npf
