@@ -17,7 +17,6 @@ import datetime
 import math
 from plotly.subplots import make_subplots
 from dash_iconify import DashIconify
-from highcharts_stock.chart import Chart
 
 pd.set_option('display.max_columns', None)
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
