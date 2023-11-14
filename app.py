@@ -447,7 +447,7 @@ functionalities_card = dmc.Card(
                 dmc.Tooltip(
                     dmc.Group([
                         dmc.Text(
-                            "Prediction",
+                            "Prediction Line",
                             size="sm",
                             weight=700,
                             ),
