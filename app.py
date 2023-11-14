@@ -1169,6 +1169,9 @@ def graph_update(jsonified_users_data, jsonified_cleaned_data, data_slider, date
                 opacity=0.3  # Set the opacity
             )
         ],
+        yaxis=dict(
+            fixedrange=True
+        ),
         dragmode="pan",
     )
 
