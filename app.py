@@ -463,16 +463,17 @@ functionalities_card = dmc.Card(
                                 ),
                         ],
                         spacing=5),
-                    label="This slider allows you to move the blue curve and see how well it fits the dataset",
+                    label="Select 'Custom' to move the blue curve and see how well it fits the dataset. The star "
+                          "indicates GROOWT's best prediction",
                     transition="slide-down",
                     transitionDuration=300,
                     multiline=True,
                 ),
                 dmc.Space(h=10),
-                scenarios_picker,
+                dmc.Container(scenarios_picker),
         ]),
         dmc.Space(h=10),
-        html.Div(slider_k),
+        html.Div(slider_k, style={"marginLeft":15, "marginRight": 15}),
         dmc.Space(h=30),
 
         # Datepicker
@@ -698,7 +699,8 @@ dmc.Container(fluid=True, children=[
         dbc.Row(left_card),
         # Storing the key dataframe with all parameters
         dcc.Store(id='intermediate-value'),
-        dcc.Store(id='users-data')
+        dcc.Store(id='users-data'),
+        dcc.Store(id='test-data')
     ], fluid=True)])
 
 
@@ -756,6 +758,7 @@ def set_history_size(dropdown_value):
     max_history_datepicker = str(dates_unformatted[-1]) # Same as above but for the max
 
     return min_history_datepicker, max_history_datepicker, date_value_datepicker
+
 @app.callback(
     Output(component_id='intermediate-value', component_property='data'), #prints the dataframe
     Output(component_id='users-data', component_property='data'),
@@ -889,7 +892,7 @@ def load_data(dropdown_value, date_picked, scenario_value):
                                + " with " + str(plateau_best_growth) + " users"
         plateau_message_body = "Given the likelihood of a stable growth in the foreseeable " \
                               "future, the best growth scenario is likely to reach its plateau in " \
-                              + main.string_formatting_to_date(time_high_growth) + " with " + str(plateau_high_growth) + " users"
+                              + main.string_formatting_to_date(time_best_growth) + " with " + str(plateau_best_growth) + " users"
 
     # Slider Marks
     data_ignored_array = df_sorted.index.to_numpy()
@@ -1040,18 +1043,41 @@ def graph_update(jsonified_users_data, jsonified_cleaned_data, data_slider, date
 
 
     highest_r2_index = df_sorted['R Squared'].idxmax()
+    print("HIGHEST", highest_r2_index, data_ignored_array[-1])
     if k_scenarios[-1] >= 1_000_000_000:
-        marks_slider = [
-            {"value": 0},
-            {"value": highest_r2_index, "label": "★"},
-            {"value": data_ignored_array[-1], "label": f"{k_scenarios[-1] / 1000000000:.1f}B      "},
-        ]
+        if highest_r2_index == data_ignored_array[-1]:
+            marks_slider = [
+                {"value": data_ignored_array[0], "label": f"{k_scenarios[0] / 1000000000:.1f}B"},
+                {"value": data_ignored_array[-1], "label": f"★{k_scenarios[-1] / 1000000000:.1f}B"},
+            ]
+        elif highest_r2_index == data_ignored_array[0]:
+            marks_slider = [
+                {"value": data_ignored_array[0], "label": f"★{k_scenarios[0] / 1000000000:.1f}B"},
+                {"value": data_ignored_array[-1], "label": f"{k_scenarios[-1] / 1000000000:.1f}B"},
+            ]
+        else:
+            marks_slider = [
+                {"value": data_ignored_array[0], "label": f"{k_scenarios[0] / 1000000000:.1f}B"},
+                {"value": highest_r2_index, "label": "★"},
+                {"value": data_ignored_array[-1], "label": f"{k_scenarios[-1] / 1000000000:.1f}B"},
+            ]
     else:
-        marks_slider = [
-            {"value": 0},
-            {"value": highest_r2_index, "label": "★"},
-            {"value": data_ignored_array[-1], "label": f"{k_scenarios[-1]/1000000:.0f}M      "},
-        ]
+        if highest_r2_index == data_ignored_array[-1]:
+            marks_slider = [
+                {"value": data_ignored_array[0], "label": f"{k_scenarios[0]/1000000:.0f}M"},
+                {"value": data_ignored_array[-1], "label": f"★{k_scenarios[-1]/1000000:.0f}M"},
+            ]
+        elif highest_r2_index == data_ignored_array[0]:
+            marks_slider = [
+                {"value": data_ignored_array[0], "label": f"★{k_scenarios[0] / 1000000:.0f}M"},
+                {"value": data_ignored_array[-1], "label": f"{k_scenarios[-1] / 1000000:.0f}M"},
+            ]
+        else:
+            marks_slider = [
+                {"value": data_ignored_array[0], "label": f"{k_scenarios[0]/1000000:.0f}M"},
+                {"value": highest_r2_index, "label": "★"},
+                {"value": data_ignored_array[-1], "label": f"{k_scenarios[-1]/1000000:.0f}M"},
+            ]
 
     # Graph message
 
