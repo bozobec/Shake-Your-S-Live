@@ -205,8 +205,8 @@ def parameters_dataframe_cleaning(df, users):
     # Eliminate all rows where NaN values are present
     df = df.dropna()
     usersMax = np.amax(users)
-    # Get names of indexes for which column K is smaller than 90% of the max user
-    indexNames_K = df[df['K'] <= 0.9*usersMax].index
+    # Get names of indexes for which column K is smaller than 98% of the max user
+    indexNames_K = df[df['K'] <= 0.98*usersMax].index
     # Delete these row indexes from dataFrame
     df.drop(indexNames_K, inplace=True)
     # Get names of indexes for which column r is smaller than zero
