@@ -22,7 +22,7 @@ pd.set_option('display.max_columns', None)
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 # app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.LUX])
-app.title = 'Growth Estimation'
+app.title = 'GROOWT'
 server = app.server
 # ---------------------------------------------------------------------------
 # Data Definition & Initialization
