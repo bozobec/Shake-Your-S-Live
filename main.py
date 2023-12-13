@@ -21,6 +21,8 @@ import plotly.express as px
 
 # DO NOT DELETE Transforming string dates in yearly float format (example: Jun.11 -> 2011.4167)
 SECONDS_PER_YEAR = 31557600  # Number of seconds in a year
+YEAR_OFFSET = 1970 # Offset taken to define the year zero
+MIN_DATEPICKER_INDEX = 4  # For a given dataset, this is the minimum below which no date can be selected
 
 
 # This function takes a panda series date of format YYYY-MM-DD and returns a decimal year, with year 0 in 1970
@@ -367,3 +369,67 @@ def parameters_dataframe_given_klog(dates, users):
     df = pd.DataFrame(dataframe, columns=['Data Ignored', 'K', 'r', 'p0', 'R Squared', 'RMSD'])
     df['Method'] = 'K set'
     return df
+
+# Function providing the date of the end of the previous quarter (as of now)
+def previous_quarter_calculation():
+    # Calculate the end date of the previous quarter
+    # Get the current date
+    current_date = datetime.now()
+    if current_date.month in [1, 2, 3]:
+        # If the current quarter is Q1, the previous quarter is Q4 of the previous year
+        end_date_prev_quarter = datetime(current_date.year - 1, 12, 31)
+        year_percentage = 1/4
+    else:
+        # Otherwise, calculate the last day of the previous quarter
+        previous_quarter = (current_date.month - 1) // 3
+        print("Previous Quarter:", previous_quarter)
+        end_date_prev_quarter = datetime(current_date.year, previous_quarter * 3, 1)
+        print("End date of previous quarter", end_date_prev_quarter)
+        year_percentage = previous_quarter/4  # Defines the percentage of the year that has passed. Because
+                                                # the revenue in the report is from the beginning of the year
+    end_date_formatted = end_date_prev_quarter.strftime('%Y-%m-%d')
+    return end_date_prev_quarter
+
+# Function finding the closest date in an array that is before the given date
+def find_closest_date(given_date, date_array):
+    # Convert the given_date string to a datetime object
+    given_date = datetime.strptime(given_date, "%Y-%m-%d")
+
+    # Convert each date in date_array to datetime objects
+    date_array = [datetime.strptime(date, "%Y-%m-%d") for date in date_array]
+
+    # Find the index of the date in date_array that is closest to given_date
+    closest_date_index = min(range(len(date_array)), key=lambda i: abs(date_array[i] - given_date))
+
+    return closest_date_index
+
+
+# Function to provide the minimum and maximum date of the datepicker for a given dataset as a pandas dataframe and
+# formats the dataframe as an output
+def datepicker_limit(dataset_df):
+    if dataset_df is not None:
+        print("Dataset in the function")
+        print(dataset_df)
+        dates = np.array(date_formatting(dataset_df["Date"]))
+
+        dates_formatted = dates + YEAR_OFFSET
+        dates_unformatted = np.array(dataset_df["Date"])
+
+
+        dataset_df_formatted = dataset_df.copy()
+        dataset_df_formatted["Date"] = dates_formatted
+
+        print("dates_unformatted_infunction")
+        print(dates_unformatted)
+        date_value_datepicker = str(dates_unformatted[-1])
+        min_history_datepicker = str(dates_unformatted[MIN_DATEPICKER_INDEX])
+        max_history_datepicker = str(dates_unformatted[-1])
+        print("date_value, min, max, in function")
+        print(date_value_datepicker, min_history_datepicker, max_history_datepicker)
+
+        return min_history_datepicker, max_history_datepicker, date_value_datepicker, dataset_df_formatted
+    else:
+        # Return default values or handle as needed in case of an error
+        print("An error occured while calculating the min & max of the datepicker")
+        return "", "", "", [], []
+

@@ -13,10 +13,13 @@ import dataAPI
 import main
 import dash_bootstrap_components as dbc
 from dash import html
-import datetime
+#import datetime
+from datetime import datetime, timedelta
 import math
 from plotly.subplots import make_subplots
 from dash_iconify import DashIconify
+import time
+
 
 pd.set_option('display.max_columns', None)
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
@@ -41,7 +44,13 @@ valuation_Tesla = 1000 * pow(10, 9)
 valuation_Teladoc = 23.1 * pow(10, 9)
 
 # Values for the dropdown (all different companies in the DB)
-labels = dataAPI.get_airtable_labels()
+# labels = dataAPI.get_airtable_labels() # OLD METHOD
+labels = dataAPI.get_airtable_labels_new()
+
+
+# Constants for the calculation
+YEAR_OFFSET = 1970  # The year "zero" for all the calculations
+MIN_DATE_INDEX = 4  # Defines the minimum year below which no date can be picked in the datepicker
 
 # ------------------------------------------------------------------------------------------------------------
 # Components definition
@@ -54,19 +63,33 @@ dropdown2 = dbc.DropdownMenu(id='dropdown2', label="Select dataset", children=dr
 dropdown3 = dbc.DropdownMenu(id='dropdown3', label="Select dataset", children=[dbc.DropdownMenuItem(i) for i in labels])
 dropdown4 = dbc.DropdownMenu(id='dropdown4', label="Select dataset", children=[dbc.DropdownMenuItem(i) for i in labels])
 dropdown5 = dcc.Dropdown(id='dropdown5', placeholder="awdsfsdfsadf", options=[{'label': i, 'value': i} for i in labels])
+
+
+#company_test = "testtest"
+#labels_new.append({"value": company_test, "label": f" {company_test}", "disabled": True})
+
 dropdown6 = html.Div(
     [
         dmc.Select(
             # label="Select framework",
             placeholder="Dataset...",
             id="dataset-selection",
-            # value="ng",
             data=labels,
             style={"marginBottom": 10},
+            styles={"disabled": {
+                "root": {
+                "fontWeight": 800
+                    }
+                }
+            },
             dropdownPosition="bottom",
+            searchable=True,
+            selectOnBlur=True,
         )
     ]
 )
+
+
 
 # OffCanvas (side panel that opens to give more information)
 offcanvas = html.Div(
@@ -202,9 +225,7 @@ navbar6 = dbc.Navbar(
 )
 
 
-# Tooltips
-tooltip_plateau = dbc.Tooltip("This number highlights the maximum amount of users that will be reached with the selected scenario",
-                       target="plateau-header",)
+
 # Sliders
 slider = html.Div(children=[dcc.RangeSlider(id="range-slider-data-ignored1", min=0, step=1,
                                                                marks={},
@@ -212,47 +233,20 @@ slider = html.Div(children=[dcc.RangeSlider(id="range-slider-data-ignored1", min
                             tooltip={"placement": "bottom", "always_visible": True},
                                             vertical=True),
                             html.Div(id="max-label")])
-slider_history = html.Div(children=[dcc.RangeSlider(id="range-slider-history", min=0, max=10,
-                                                               marks={},
-                                                               value=[10],
-                                                            tooltip={"placement": "bottom", "always_visible": True}),
-                            html.Div(id="max-label2")])
+
 # slider_profitability = html.Div(children=[dcc.RangeSlider(id="range-slider-profitability", min=20, max=50, step=5,
                                                                # marks={20: '20% Profitability', 50: '50% Profitability'},
                                                                # value=[20])])
 # Table summarising insights
-row1 = html.Tr([html.Td(["Users ", html.Span("plateau: ", id="tooltip-plateau-target", style={"textDecoration": "underline", "cursor": "pointer"},)], style={"width": "380px"}),
-                        html.Td(id='carrying-capacity', children=carrying_capacity_container, style={"color": '#54c4f4'}), tooltip_plateau], style={"margin-bottom": "0px"})
-row2 = html.Tr([html.Td("Plateau reached in: "), html.Td(id='time-plateau', children=time_plateau_container, style={"color": '#54c4f4'})])
+#row1 = html.Tr([html.Td(["Users ", html.Span("plateau: ", id="tooltip-plateau-target", style={"textDecoration": "underline", "cursor": "pointer"},)], style={"width": "380px"}),
+                       # html.Td(id='carrying-capacity', children=carrying_capacity_container, style={"color": '#54c4f4'})], style={"margin-bottom": "0px"})
 # row3 = html.Tr([html.Td("Current valuation: "), html.Td(id='current-valuation', children=current_valuation_container)])
 # row4 = html.Tr([html.Td("Yearly profit per user to justify the current valuation: "),
 # html.Td(id='arpu-needed', children=arpu_needed_container, style={"color": '#54c4f4'})])
 # row5 = html.Tr([html.Td("R Squared: "), html.Td(id='rsquared-container', children=r_squared_selected, style={"color": '#54c4f4'})])
 # row6 = html.Tr([html.Td("Current user value: "), html.Td(id='uservalue-container', children=user_value_container)])
 
-# Left card consolidating all the rows defined above
-left_card = dbc.Card(id="left-card", children=[
-                    dbc.CardBody(
-                        [
-                            # R squared text and value displayed
-                            html.Span([
-                                html.H6("Prediction data"),
-                                dbc.Table(html.Tbody(row1), style={"margin-bottom": "0px"}),
-                                # html.Div(slider, style={"height": "10px", "margin-bottom": "20px"}),
-                                # dbc.Table(html.Tbody(row4), style={"margin-bottom": "0px"}),
-                                # html.Div(slider_profitability, style={"height": "10px", "margin-bottom": "40px"}),
-                                dbc.Table(html.Tbody([row2])),
-                            ]),
-                        ])
-                ], style={'display': 'none'}),
-right_card = dbc.Card(id="right-card")
-'''
-# Card that contains the main graph with the prediction (OLD)
-right_card = dbc.Card(id="right-card", children=[
-                        html.Div(id='graph-container1', children=[dcc.Graph(id='main-graph1',
-                                                                            config={'displayModeBar': False})])
-                      ], style={'display': 'none'})
-                      '''
+
 # Card that contains the regression
 bottom_card = dbc.Card(id="bottom-card", children=[
                         html.Div(id='graph-container2', children=[dcc.Graph(id='main-graph2',
@@ -268,28 +262,15 @@ top_card = dbc.Card(id="top-card", children=[
                         dbc.CardBody(
                             [
                             html.Span([html.H6("Date of the prediction"),
-                            html.Div(slider_history, style={"height": "10px", "margin-bottom": "20px"})])
+                            ])
                             ])
                       ], style={'display': 'none', "height": 1})
 
-# Card containing the vertical slider for the carrying capacity
-vertical_slider_card = dbc.Card(id="vertical-slider", children=[
-                        dbc.CardBody(
-                            [
-                            html.Span([
-                            html.H6("Max", id="plateau-header"),
-                            html.Div(slider)])
-                            ])
-                      ], style={'display': 'none'})
-r_squared_card = dbc.Card(id="r-squared-card", children=[
-                        dbc.CardBody(
-                            [
-                            html.H6(["R", html.Sup(2)], id="r-squared-header"),
-                            html.P(id="rsquared-container"),
-                            ])
-                      ], style={'display': 'none', "height": 1})
+
 
 # Mantine Components
+
+# Prediction line slider
 
 slider_k = dmc.Slider(
             id="range-slider-k",
@@ -298,6 +279,40 @@ slider_k = dmc.Slider(
             value=0,
             size="sm",
             disabled=True,
+            showLabelOnHover=False,
+            )
+
+# Profit margin slider
+
+slider_profit_margin = dmc.Slider(
+            id="range-profit-margin",
+            min=1,
+            max=50,
+            value=20,
+            marks=[
+                {"value": 1, "label": "1%"},
+                {"value": 20, "label": "20%"},
+                {"value": 50, "label": "50%"},
+            ],
+            size="sm",
+            disabled=False,
+            showLabelOnHover=False,
+            )
+
+# Discount rate slider
+
+slider_discount_rate = dmc.Slider(
+            id="range-discount-rate",
+            min=2,
+            max=20,
+            value=5,
+            marks=[
+                {"value": 2, "label": "2%"},
+                {"value": 10, "label": "10%"},
+                {"value": 20, "label": "20%"},
+            ],
+            size="sm",
+            disabled=False,
             showLabelOnHover=False,
             )
 
@@ -328,6 +343,13 @@ growth_message = dmc.Alert(
 plateau_message = dmc.Alert(
     children=dmc.Text(""),
     id="plateau-message",
+    title="",
+    color="gray"),
+
+# Valuation
+valuation_message = dmc.Alert(
+    children=dmc.Text(""),
+    id="valuation-message",
     title="",
     color="gray"),
 
@@ -365,6 +387,20 @@ accordion = dmc.Accordion(
             ],
             value="customization",
         ),
+        dmc.AccordionItem(
+            [
+                dmc.AccordionControl(
+                    "Valuation",
+                    id="accordion-valuation",
+                    disabled=True,
+                    icon=DashIconify(icon="radix-icons:rocket", width=20)
+                                     ),
+                dmc.AccordionPanel(
+                    valuation_message
+                ),
+            ],
+            value="customization",
+        ),
     ],
 )
 
@@ -387,6 +423,33 @@ scenarios_picker = dmc.Stack(
         radius=20,
         id="scenarios-picker")],
 )
+
+# Main plot definition
+main_plot = go.Figure()
+hovertemplate_maingraph = "%{text}"
+
+# Definition of the different traces
+# Main bars
+main_plot.add_trace(go.Bar(name="dataset-bars", x=[], y=[],
+                          marker_color='Black', hoverinfo='none'))
+# Continuous legend for the historical data set
+main_plot.add_trace(go.Scatter(name="dataset-line", x=[],
+                              y=[], mode='lines', opacity=1,
+                              marker_color="Black", showlegend=False, hovertemplate=hovertemplate_maingraph))
+
+# Ignored bars (ignored data for scenario)
+main_plot.add_trace(go.Bar(name="ignored-bars", x=[], y=[],
+                          marker_color='Grey', hoverinfo='none'))
+# Future bars (if past the date picked by the user)
+main_plot.add_trace(go.Bar(name="future-bars", x=[], y=[],
+                          marker_color='Grey', hoverinfo='none'))
+# Prediction line
+main_plot.add_trace(go.Scatter(name="prediction-line", x=[], y=[],
+                              mode="lines", line=dict(color='#4dabf7', width=2), opacity=0.8,
+                              hovertemplate=hovertemplate_maingraph))
+# Vertical line for current date
+main_plot.add_vline(name="current-date", line_width=1, line_dash="dot",
+                   opacity=0.5, x=2023, annotation_text="   Forecast")
 
 # Card where dataset is selected and analysis shown
 
@@ -474,7 +537,67 @@ functionalities_card = dmc.Card(
         ]),
         dmc.Space(h=10),
         html.Div(slider_k, style={"marginLeft":15, "marginRight": 15}),
-        dmc.Space(h=30),
+        dmc.Space(h=40),
+
+# Profit margin
+        html.Div(
+            style={'display': 'none'},
+            id="profit-margin",
+            children=[
+
+                dmc.Group(
+                    style={'display': 'flex'},
+                    children=[
+                        dmc.Text(
+                            "Profit margin",
+                            size="sm",
+                            weight=700,
+                            ),
+                        dmc.Tooltip(
+                            DashIconify(icon="feather:info", width=15),
+                            label="Adjust the profit margin using the slider to observe the impact on the company's "
+                                  "annual average revenue per user. Decreasing the profit margin will increase "
+                                  "the amount of revenue required to justify the current market cap.",
+                            transition="slide-down",
+                            transitionDuration=300,
+                            multiline=True,
+                        ),
+                    ]),
+                dmc.Space(h=10),
+                dmc.Container(slider_profit_margin),
+                dmc.Space(h=40),
+        ]),
+
+# Discount Rate
+        html.Div(
+            style={'display': 'none'},
+            id="discount-rate",
+            children=[
+
+                dmc.Group(
+                    style={'display': 'flex'},
+                    children=[
+                        dmc.Text(
+                            "Discount Rate",
+                            size="sm",
+                            weight=700,
+                        ),
+                        dmc.Tooltip(
+                            DashIconify(icon="feather:info", width=15),
+                            label="Adjust the discount rate with the slider to match the risks in the company and its "
+                                  "industry. Kroll research shows that, on average, the discount rate for consumer "
+                                  "staples companies was 8.4% in June 2023, and for information technology companies, "
+                                  "it was 11.4%. Raising the rate raises future uncertainty and requires a "
+                                  "higher average revenue per user.",
+                            transition="slide-down",
+                            transitionDuration=300,
+                            multiline=True,
+                        ),
+                    ]),
+                dmc.Space(h=10),
+                dmc.Container(slider_discount_rate),
+                dmc.Space(h=40),
+            ]),
 
         # Datepicker
         html.Div(
@@ -501,7 +624,37 @@ functionalities_card = dmc.Card(
     withBorder=True,
     shadow="sm",
     radius="md",
-    style={"height": 500},
+    #style={"height": 500},
+)
+
+arpu_card = dmc.Card(
+    children=[
+        dmc.Group(
+            [
+                dmc.Text("Average yearly revenue per user needed", weight=500),
+            ],
+            position="apart",
+            mt="md",
+            mb="xs",
+        ),
+        dmc.Text(
+            id="arpu-needed",
+            children="456$",
+            size="lg",
+            color="Black",
+        ),
+        dmc.Text(
+            id="current-arpu",
+            children="No data available",
+            size="lg",
+            color="dimmed",
+        ),
+    ],
+    id="arpu-card",
+    style={'display': 'none'},
+    withBorder=True,
+    shadow="sm",
+    radius="md",
 )
 
 graph_card = dmc.Card(
@@ -529,20 +682,26 @@ graph_card = dmc.Card(
                  children=[dcc.Graph(id='main-graph1', config={'displayModeBar': False, 'scrollZoom': True}
                                      )
                            ]
-                 )],
+                 ),
+        html.Div(id='graph-container0',
+                 children=[dcc.Graph(id='main-graph0', config={'displayModeBar': False, 'scrollZoom': True}, style={'display': 'none'},
+                                     )
+                           ]
+                 ),
+        html.Div(id='main-plot-container0',
+                         children=[dcc.Graph(id='main-plot-container',
+                                             figure=main_plot,
+                                             config={'displayModeBar': False, 'scrollZoom': True},
+                                             style={'display': 'none'},
+                                             )
+                                   ]
+                         )
+    ],
     withBorder=True,
     shadow="sm",
     radius="md",
 )
 
-# Alert generated
-alert_no_calculation_possible = dbc.Alert(
-            "No estimation could be done with the selected dataset. Try another dataset and/or point in time",
-            id="alert-fade",
-            dismissable=True,
-            is_open=False,
-            color="info"
-        ),
 
 # Graph layout
 
@@ -631,8 +790,12 @@ layout_third_graph = go.Layout(
     ),
 )
 
+main_plot.update(
+            layout=layout_main_graph
+        )
 
-loading = dcc.Loading(id="loading-component", children=[html.Div([html.Div(id="loading-output")])], type="circle",),
+
+#loading = dcc.Loading(id="loading-component", children=[html.Div([html.Div(id="loading-output")])], type="circle",),
 
 # ----------------------------------------------------------------------------------
 # App Layout
@@ -646,7 +809,7 @@ dmc.Container(fluid=True, children=[
         #dmc.Col(span=0.5, lg=0), # Empty left column
         dmc.Col(selector_card, span="auto"),
         dmc.Col(dmc.LoadingOverlay(graph_card), span=12, lg=6),
-        dmc.Col(dmc.LoadingOverlay(functionalities_card), span=12, lg=3),
+        dmc.Col([dmc.LoadingOverlay(functionalities_card), dmc.Space(h=20), arpu_card], span=12, lg=3),
         # dmc.Col(span="auto", lg=0), # Empty right column
          ],
         gutter="xl",
@@ -657,17 +820,12 @@ dmc.Container(fluid=True, children=[
 
      dbc.Container(children=[
         # Toast message appearing on top
-        dbc.Row(html.Div(alert_no_calculation_possible)),
         #dbc.Row(navbar2),
         # dbc.Row(html.Div(dropdown2)),
         # dbc.Row(dbc.Col(navbar2, style={'clear': 'both', "margin-top": "40px"},
                         # width={"size": 7}), justify="center"),
         # Title row & loading animation
-        dbc.Row(dbc.Col([
-            #html.Div([html.Img(src="/assets/Vector.svg", style={'height': '35px', 'float': 'left'}),
-            #         html.H1(id='main-title', style={'float': 'left', 'margin-left': '20px'}, children='GROOWT')]),
-            html.Div(loading)], style={'clear': 'both', "margin-top": "40px"},
-                        width={"size": 7}), justify="center"),
+
         # Subtitle
         # dbc.Row(dbc.Col(html.Div(children="Have fun estimating the user growth of companies"),
                         # width={"size": 6, "offset": 1})),
@@ -679,34 +837,25 @@ dmc.Container(fluid=True, children=[
         # dbc.Row(dbc.Col(html.H2(id='title', children=[]), width={"size": 6, "offset": 1}), style={"margin-top": "40px"}),
         # --------------------------------------------------------
         # Slider to go back in time and retrofit
-        dbc.Row([
-            # dbc.Col(top_card, width={"size": 6}),
-            # dbc.Col(r_squared_card, width={"size": 1}),
-        ], justify="center"),
-        # Bloc with buttons and graph
-        dbc.Row([
-            # 1st column with the main graph
-            dbc.Col(right_card, width={"size": 6}),
-            # 2nd column with the table and the slider
-            # dbc.Col(left_card, width={"size": 4}),
-            # Column with the vertical slider for carrying capacity
-            dbc.Col(vertical_slider_card, width={"size": 1}),
-        ], style={"margin-top": "20px"}, justify="center"),
+
         # Bottom graph of the regression
         dbc.Row(dbc.Col(bottom_card, width={"size": 7}), style={"margin-top": "20px"}, justify="center"),
         # Bottom graph of the evolution of r^2
         dbc.Row(dbc.Col(bottom_bottom_card, width={"size": 7}), style={"margin-top": "20px"}, justify="center"),
-        dbc.Row(left_card),
         # Storing the key dataframe with all parameters
-        dcc.Store(id='intermediate-value'),
         dcc.Store(id='users-data'),
-        dcc.Store(id='test-data')
+        dcc.Store(id='users-dates-raw'),  # DF containing the initial users/dates from the API
+        dcc.Store(id='users-dates-formatted'),  # DF containing the users & dates in float for computation
+        dcc.Store(id='scenarios-sorted'),  # DF containing all the possible growth scenarios
+        dcc.Store(id='current-market-cap'),  # Market cap of the company selected, 0 if N/A
+        dcc.Store(id='graph-unit'),  # Graph unit (MAU, Population, etc.)
     ], fluid=True)])
 
 
 # ----------------------------------------------------------------------------------
 # Callback behaviours and interaction
 # Callback to enable the slider if "Custom" is selected
+
 @app.callback([
     Output("range-slider-k", "disabled"),
 
@@ -722,48 +871,171 @@ def enable_slider(scenario_value, data_selection):
 
 # Callback to change the Graph's title, enable the analysis buttons
 @app.callback([
-    Output("graph-title", "children"),
-    Output("graph-subtitle", "children"),
     Output("accordion-growth", "disabled"),
     Output("accordion-plateau", "disabled"),
+    Output("accordion-valuation", "disabled"),
 
     Input("dataset-selection", "value")
     ],prevent_initial_call=True)
 def select_value(value):
     title = value
-    subtitle = "Explore "+str(value)+"'s Historical Data (Bars) and Future Growth Projections. Customize Predictions with the Slider in the 'Functionalities' Section and Adjust the Forecast Start Date Using the Datepicker."
-    return title, subtitle, False, False
+    subtitle = "Explore "+str(value)+"'s Historical Data (Bars) and Future Growth Projections. Customize " \
+                                     "Predictions with the Slider in the 'Functionalities' Section and Adjust " \
+                                     "the Forecast Start Date Using the Datepicker."
+    return False, False, False
 
-# Callback defining the minimum and the maximum date of the datepicker, based on the selected dataset
+# Callback defining the minimum and the maximum date of the datepicker and loading the dataset
 @app.callback([
     Output(component_id='date-picker', component_property='minDate'), # Calculate the min of the new history slider
     Output(component_id='date-picker', component_property='maxDate'), # Calculate the min of the new history slider
     Output(component_id='date-picker', component_property='value'), # Resets the date to the last available date of the dataset
+    Output(component_id='users-dates-raw', component_property='data'), # Stores the users + dates data
+    Output(component_id='users-dates-formatted', component_property='data'), # Stores the users + dates formatted for computation
+    Output(component_id='current-market-cap', component_property='data'), # Stores the company market cap
+    Output(component_id='graph-unit', component_property='data'), # Stores the graph unit (y axis legend)
+    Output(component_id='main-graph0', component_property='figure'), # Stores the users + dates formatted for computation
+    Output("graph-title", "children"),
+    Output("graph-subtitle", "children"),
+    Output(component_id='main-plot-container', component_property='figure'), # Stores the users + dates formatted for computation
+    Output(component_id='profit-margin', component_property='style'), # Show/hide depending on company or not
+    Output(component_id='discount-rate', component_property='style'), # Show/hide depending on company or not
+    Output(component_id='arpu-card', component_property='style'), # Show/hide depending on company or not
+    Output(component_id='current-arpu', component_property='children'), # Print ARPU text
     Input(component_id='dataset-selection', component_property='value')], # Take dropdown value
-    prevent_initial_call=True,)
+    [State('main-plot-container', 'figure')],
+    prevent_initial_call=True,
+)
+def set_history_size(dropdown_value, existing_main_plot):
 
-def set_history_size(dropdown_value):
-    print("Fetching the dataset for ", dropdown_value)
-    df = dataAPI.get_airtable_data(dropdown_value)
-    print(df)
-    # The dates in a panda serie of format YYYY-MM-DD are transformed to a decimal yearly array
-    dates = np.array(main.date_formatting(df["Date"]))
-    formatted_dates = dates + 1970
-    min_history_date = main.date_minimum_history(formatted_dates)
-    max_history_date = formatted_dates[-1]
-    dates_unformatted = np.array(df["Date"])
+    try:
+        # Fetch dataset from API
+        df = dataAPI.get_airtable_data(dropdown_value)
 
-    date_value_datepicker = str(dates_unformatted[-1])
-    min_history_datepicker = str(dates_unformatted[4])  # Defines the minimum date that can be chosen by the user, based on the data available
-    max_history_datepicker = str(dates_unformatted[-1]) # Same as above but for the max
+        # Creating the title & subtitle for the graph
+        title = dropdown_value
+        subtitle = "Explore " + str(dropdown_value) + "'s Historical Data (Bars) and Future Growth Projections. Customize " \
+                                             "Predictions with the Slider in the 'Functionalities' Section and Adjust " \
+                                             "the Forecast Start Date Using the Datepicker."
 
-    return min_history_datepicker, max_history_datepicker, date_value_datepicker
+        # Transforming it to a dictionary to be stored
+        users_dates_dict = df.to_dict(orient='records')
+
+        # Process & format df. The dates in a panda serie of format YYYY-MM-DD are transformed to a decimal yearly array
+        dates = np.array(main.date_formatting(df["Date"]))
+        dates_formatted = dates + YEAR_OFFSET
+        dates_unformatted = np.array(df["Date"])
+        users_formatted = np.array(df["Users"]).astype(float) * 1000000
+
+        # Logic to be used when implementing changing the ARPU depending on the date picked
+        #date_last_quarter = main.previous_quarter_calculation().strftime("%Y-%m-%d")
+        #closest_index = main.find_closest_date(date_last_quarter,dates_unformatted)
+
+        current_users = users_formatted[-1]
+
+        # Check whether it is a public company: Market cap fetching & displaying profit margin,
+        # discount rate and arpu for Companies
+        symbol_company = df.loc[0, 'Symbol']
+        if symbol_company != "N/A":
+            current_market_cap = dataAPI.get_marketcap(symbol_company)  # Sets valuation if symbol exists
+            show_company_functionalities = {'display': 'block'}  # Style component showing the fin. function.
+            yearly_revenue = dataAPI.get_previous_quarter_revenue(symbol_company)
+            if yearly_revenue != 0:
+                printed_current_arpu = f"{yearly_revenue/current_users:.0f} $ (current arpu)"  # formatting
+            else:
+                printed_current_arpu = "Error calculating the current arpu"
+
+        else:
+            current_market_cap = 0  # Otherwise, market_cap = zero
+            show_company_functionalities = {'display': 'none'}
+            printed_current_arpu = 0
+
+        df_formatted = df
+        df_formatted["Date"] = dates_formatted
+
+        users_dates_formatted_dict = df_formatted.to_dict(orient='records')
+
+        min_history_datepicker = str(dates_unformatted[MIN_DATE_INDEX])  # Minimum date that can be picked
+        max_dataset_date = datetime.strptime(dates_unformatted[-1], "%Y-%m-%d") # Fetching the last date of the dataset
+        max_history_datepicker_date = max_dataset_date + timedelta(days=1)  # Adding one day to the max, to include all dates
+        max_history_datepicker = max_history_datepicker_date.strftime("%Y-%m-%d")
+        date_value_datepicker = max_history_datepicker  # Sets the value of the datepicker as the max date
+        current_date = dates_formatted[-1]
+
+        # Graph creation
+        fig_main = go.Figure(layout=layout_main_graph)
+        hovertemplate_maingraph = "%{text}"
+
+        # Calculate the desired X-axis range based on the first and last date in the dataset
+        x_axis_start = dates_formatted[0]
+        x_axis_end = dates_formatted[-1]+((dates_formatted[-1] - dates_formatted[0]) * 0.2)  # We see "20%" in the future
+
+        # Update X-axis range to fix the size
+        x_axis_range = [x_axis_start, x_axis_end + (x_axis_end - x_axis_start)]
+        # x_axis = [dates[0] + 1970, dates[-1] * 2 - dates[0] + 1970]
+        fig_main.update_xaxes(range=x_axis_range)
+
+        # Set y legend
+        y_legend_title = df.loc[0, 'Unit']
+        fig_main.update_layout(
+            yaxis=dict(
+                title=str(y_legend_title),
+            )
+        )
+
+        # Definition of the different traces
+        # Main bars
+        main_plot_bars = go.Bar(name="dataset-bars", x=dates_formatted, y=users_formatted,
+                                marker_color='Black', hoverinfo='none')
+        existing_main_plot['data'].append(main_plot_bars)
+
+        fig_main.add_trace(go.Bar(name="dataset-bars", x=dates_formatted, y=users_formatted,
+                                  marker_color='Black', hoverinfo='none'))
+        # Continuous legend for the historical data set
+        formatted_y_values = [f"{y / 1e6:.1f} M" if y < 1e9 else f"{y / 1e9:.2f} B" for y in users_formatted]
+        fig_main.add_trace(go.Scatter(name="dataset-line", x=dates_formatted,
+                                      y=users_formatted, mode='lines', opacity=1,
+                                      marker_color="Black", showlegend=False, text=formatted_y_values,
+                                      hovertemplate=hovertemplate_maingraph))
+        main_plot_dataset = (go.Scatter(name="dataset-line", x=dates_formatted,
+                                      y=users_formatted, mode='lines', opacity=1,
+                                      marker_color="Black", showlegend=False, text=formatted_y_values,
+                                      hovertemplate=hovertemplate_maingraph))
+        existing_main_plot['data'].append(main_plot_dataset)
+
+        # Vertical line indicating the date picked
+        main_plot_date_picked = go.Scatter(
+            x=[current_date, current_date],
+            y=[0, users_formatted[-1] * 1.1],  # Adjust the y-values based on your plot range
+            mode='lines',
+            name='Vertical Line',
+            line=dict(color='green', width=1, dash="dot"),
+            opacity=0.5,
+        )
+        existing_main_plot['data'].append(main_plot_date_picked)
+
+        # Ignored bars (ignored data for scenario)
+        fig_main.add_trace(go.Bar(name="ignored-bars", x=[], y=[],
+                                  marker_color='Grey', hoverinfo='none'))
+        # Future bars (if past the date picked by the user)
+        fig_main.add_trace(go.Bar(name="future-bars", x=[], y=[],
+                                  marker_color='Grey', hoverinfo='none'))
+        # Prediction line
+        fig_main.add_trace(go.Scatter(name="prediction-line", x=[], y=[],
+                                      mode="lines", line=dict(color='#4dabf7', width=2), opacity=0.8,
+                                      text=formatted_y_values, hovertemplate=hovertemplate_maingraph))
+        # Vertical line for current date
+        fig_main.add_vline(name="current-date", x=current_date, line_width=1, line_dash="dot",
+                            opacity=0.5, annotation_text="   Forecast")
+
+        return min_history_datepicker, max_history_datepicker, date_value_datepicker, users_dates_dict, \
+            users_dates_formatted_dict, current_market_cap, y_legend_title, fig_main, title, subtitle, existing_main_plot, \
+            show_company_functionalities, show_company_functionalities, show_company_functionalities, printed_current_arpu
+
+    except Exception as e:
+        print(f"Error fetching or processing dataset: {str(e)}")
+        return "", "", "", "", "", "", "", "", "",
 
 @app.callback(
-    Output(component_id='intermediate-value', component_property='data'), #prints the dataframe
-    Output(component_id='users-data', component_property='data'),
-    Output(component_id='range-slider-data-ignored1', component_property='value'), # Reset slider value to zero
-    Output("alert-fade", "is_open"),  # Reset slider value to zero
     # Output("loading-component", "loading"),
     Output(component_id='range-slider-k', component_property='value'), # Reset slider value to the best value
     Output(component_id="growth-message", component_property="title"),
@@ -773,32 +1045,40 @@ def set_history_size(dropdown_value):
     Output(component_id="plateau-message", component_property="title"),
     Output(component_id="plateau-message", component_property="children"),
     Output(component_id="plateau-message", component_property="color"),
+    Output(component_id="valuation-message", component_property="title"),
+    Output(component_id="valuation-message", component_property="children"),
+    Output(component_id="valuation-message", component_property="color"),
+    Output(component_id='scenarios-sorted', component_property='data'),
+    Output(component_id='range-slider-k', component_property='max'),
+    Output(component_id='range-slider-k', component_property='marks'),
 
-    # Output(component_id='range-slider-history', component_property='value'), # Set slider to the last date available
-    # Output(component_id='uservalue-container', component_property='children'),
     Input(component_id='dataset-selection', component_property='value'),  # Take dropdown value
     Input(component_id='date-picker', component_property='value'), # Take date-picker date
     Input("scenarios-picker", "value"), # Input the scenario to reset the position of the slider to the best scenario
+    Input(component_id='users-dates-formatted', component_property='data'),
+    Input(component_id='current-market-cap', component_property='data'),
     prevent_initial_call=True)
 
 # Analysis to load the different scenarios (low & high) when a dropdown value is selected
-def load_data(dropdown_value, date_picked, scenario_value):
+def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict, current_market_cap):
     print("Starting scenarios calculation")
-    print(date_picked, type(date_picked))
     date_picked_formatted = main.date_formatting_from_string(date_picked)
-    print(date_picked_formatted)
 
     # The data is loaded from airtable
-    df = dataAPI.get_airtable_data(dropdown_value)
-    # The dates in a panda serie of format YYYY-MM-DD are transformed to a decimal yearly array
-    dates = np.array(main.date_formatting(df["Date"]))
+    #df = dataAPI.get_airtable_data(dropdown_value)
+
+    # Dates array definition from dictionary
+    dates_new = np.array([entry['Date'] for entry in df_dataset_dict])
+    dates = dates_new - 1970
     # Users are taken from the database and multiply by a million
-    users = np.array(df["Users"]).astype(float) * 1000000
-    print(df)
+    users_new = np.array([entry['Users'] for entry in df_dataset_dict])
+    users = users_new.astype(float) * 1000000
+    #print(df)
 
     # Test to be deleted, changing dates & users to use moving average
     dates, users = main.moving_average_smoothing(dates, users, 1)
-    #history_value_formatted = history_value[0]-1970  # OLDPuts back the historical value to the format for computations
+
+    # Resizing of the dataset taking into account the date picked
     history_value_formatted = date_picked_formatted-1970  # New slider: Puts back the historical value to the format for computations
     dates_actual = main.get_earlier_dates(dates, history_value_formatted)
     data_len = len(dates_actual)  # length of the dataset to consider for retrofitting
@@ -806,6 +1086,7 @@ def load_data(dropdown_value, date_picked, scenario_value):
     # All parameters are calculated by ignoring data 1 by 1, taking the history reference as the end point
     df_full = main.parameters_dataframe(dates[0:data_len], users[0:data_len])  # Dataframe containing all parameters with all data ignored
     df_sorted = main.parameters_dataframe_cleaning(df_full, users[0:data_len])  # Dataframe where inadequate scenarios are eliminated
+    df_sorted_dict = df_sorted.to_dict(orient='records')  # Transforming it to dict to be stored
     if dropdown_value is None:  # Exception for when dropdown is not selected yet, initializing df
         df = df_full
     current_valuation = 100
@@ -816,14 +1097,7 @@ def load_data(dropdown_value, date_picked, scenario_value):
             state_alert = False
 
 
-
-    user_value = current_valuation / users[-1]
-    user_value_displayed = '{:.1f} $'.format(user_value)
-    formatted_dates = dates + 1970
-    min_history_date = main.date_minimum_history(formatted_dates)
-    max_history_date = formatted_dates[-1]
-
-    # Best scenario ---> Index of the row containing the highest R^Square
+    # Best scenario definition ---> Index of the row containing the highest R^Square
     highest_r2_index = df_sorted['R Squared'].idxmax()
 
 
@@ -880,7 +1154,7 @@ def load_data(dropdown_value, date_picked, scenario_value):
                                                p0_scenarios[highest_r2_index],
                                                k_scenarios[highest_r2_index] * 0.9)+1970
 
-# Plateau Accordion
+    # Plateau Accordion
     if diff_r2lin_log > 0.1:
         plateau_message_title = "Plateau could be reached in " + main.string_formatting_to_date(time_high_growth) \
                                + " with " + str(plateau_high_growth) + " users "
@@ -894,65 +1168,126 @@ def load_data(dropdown_value, date_picked, scenario_value):
                               "future, the best growth scenario is likely to reach its plateau in " \
                               + main.string_formatting_to_date(time_best_growth) + " with " + str(plateau_best_growth) + " users"
 
-    # Slider Marks
-    data_ignored_array = df_sorted.index.to_numpy()
-    k_scenarios = np.array(df_sorted['K'])
+    # Plateau Accordion
+    arpu_needed = main.arpu_for_valuation(k_scenarios[highest_r2_index], r_scenarios[highest_r2_index],
+                                          p0_scenarios[highest_r2_index], 0.2, 0.05, 10, current_market_cap*1000000)
+    # Formating the displayed market cap:
+    if current_market_cap >= 1000:
+        formatted_market_cap = f"{current_market_cap / 1000:.2f} B$"
+    else:
+        formatted_market_cap = f"{current_market_cap} mio$"
+    if current_market_cap != 0:
+        valuation_message_title = "Current market cap is " + str(formatted_market_cap)
+        valuation_message_body = "Given the projected user growth, " + str(dropdown_value) + " should make " + \
+                                 f"{arpu_needed:.0f} $" + " per user and per year to justify the current market cap " \
+                                                    "(assuming a 20% profit margin & a 5% discount rate)"
+        valuation_message_color = "green"
+    else:
+        valuation_message_title = "Valuation not applicable"
+        valuation_message_body = "No valuation can be assessed with the selected dataset"
+        valuation_message_color = "gray"
 
-    marks_slider = [
-        {"value": 0, "label": f"      {k_scenarios[0] / 1000000:.0f}M"},
-        {"value": data_ignored_array[-1], "label": f"{k_scenarios[-1] / 1000000:.0f}M      "},
-    ]
+    # Slider definition
+    df_scenarios = df_sorted
+    data_ignored_array = df_scenarios.index.to_numpy()
+    slider_max_value = data_ignored_array[-1]
 
-    print(df_sorted)
+    # Slider max definition
+    if k_scenarios[-1] >= 1_000_000_000:  # If the max value of the slider is over 1 B
+        if highest_r2_index == data_ignored_array[-1]:  # If the best = max, then display them side by side"
+            marks_slider = [
+                {"value": data_ignored_array[0], "label": f"{k_scenarios[0] / 1000000000:.1f}B"},
+                {"value": data_ignored_array[-1], "label": f"★{k_scenarios[-1] / 1000000000:.1f}B"},
+            ]
+        elif highest_r2_index == data_ignored_array[0]:  # If the best = mind, then display them side by side"
+            marks_slider = [
+                {"value": data_ignored_array[0], "label": f"★{k_scenarios[0] / 1000000000:.1f}B"},
+                {"value": data_ignored_array[-1], "label": f"{k_scenarios[-1] / 1000000000:.1f}B"},
+            ]
+        else:
+            marks_slider = [
+                {"value": data_ignored_array[0], "label": f"{k_scenarios[0] / 1000000000:.1f}B"},
+                {"value": highest_r2_index, "label": "★"},
+                {"value": data_ignored_array[-1], "label": f"{k_scenarios[-1] / 1000000000:.1f}B"},
+            ]
+    elif k_scenarios[-1] >= 1_000_000:
+        if highest_r2_index == data_ignored_array[-1]:
+            marks_slider = [
+                {"value": data_ignored_array[0], "label": f"{k_scenarios[0]/1000000:.0f}M"},
+                {"value": data_ignored_array[-1], "label": f"★{k_scenarios[-1]/1000000:.0f}M"},
+            ]
+        elif highest_r2_index == data_ignored_array[0]:
+            marks_slider = [
+                {"value": data_ignored_array[0], "label": f"★{k_scenarios[0] / 1000000:.0f}M"},
+                {"value": data_ignored_array[-1], "label": f"{k_scenarios[-1] / 1000000:.0f}M"},
+            ]
+        else:
+            marks_slider = [
+                {"value": data_ignored_array[0], "label": f"{k_scenarios[0]/1000000:.0f}M"},
+                {"value": highest_r2_index, "label": "★"},
+                {"value": data_ignored_array[-1], "label": f"{k_scenarios[-1]/1000000:.0f}M"},
+            ]
+
+    else :  # If K max smaller than 1 million
+        if highest_r2_index == data_ignored_array[-1]:
+            marks_slider = [
+                {"value": data_ignored_array[0], "label": f"{k_scenarios[0]/1000:.0f}K"},
+                {"value": data_ignored_array[-1], "label": f"★{k_scenarios[-1]/1000:.0f}K"},
+            ]
+        elif highest_r2_index == data_ignored_array[0]:
+            marks_slider = [
+                {"value": data_ignored_array[0], "label": f"★{k_scenarios[0] / 1000:.0f}K"},
+                {"value": data_ignored_array[-1], "label": f"{k_scenarios[-1] / 1000:.0f}K"},
+            ]
+        else:
+            marks_slider = [
+                {"value": data_ignored_array[0], "label": f"{k_scenarios[0]/1000:.0f}K"},
+                {"value": highest_r2_index, "label": "★"},
+                {"value": data_ignored_array[-1], "label": f"{k_scenarios[-1]/1000:.0f}K"},
+            ]
+
+    # Updating the datepicker graph traces, the high & the low growth scenario
+    main_plot.update_traces(
+        selector=dict(name="current-date"),
+        x=date_picked_formatted,
+    )
+
     print("Scenarios calculation completed")
-    print(highest_r2_index)
     print(df_sorted)
-    return df_sorted.to_json(date_format='iso', orient='split'), df.to_json(date_format='iso', orient='split'), \
-        [0], state_alert, highest_r2_index, growth_message_title, growth_message_body, growth_message_color, \
-        "customization", plateau_message_title, plateau_message_body, "blue"
+    return highest_r2_index, growth_message_title, growth_message_body, growth_message_color, \
+        "customization", plateau_message_title, plateau_message_body, "blue", valuation_message_title, \
+        valuation_message_body, valuation_message_color, df_sorted_dict, slider_max_value, marks_slider
 
 @app.callback([
-    # Output(component_id='title', component_property='children'),  # Title
-
-    # Output(component_id='top-card', component_property='style'),  # Show top card with slider
-    # Output(component_id='left-card', component_property='style'),  # Show left card
-    # Output(component_id='right-card', component_property='style'),  # Show graph card
-    # Output(component_id='bottom-card', component_property='style'),  # Show graph card
-    # Output(component_id='bottom-bottom-card', component_property='style'),  # Show graph card
-    # Output(component_id='vertical-slider', component_property='style'),  # Show slider card
-    # Output(component_id='r-squared-card', component_property='style'),  # Show r-squared card
     Output(component_id='main-graph1', component_property='figure'),  # Update graph 1
-    Output(component_id='main-graph2', component_property='figure'),  # Update graph 2
-    Output(component_id='main-graph3', component_property='figure'),  # Update graph 3
-    Output(component_id='carrying-capacity', component_property='children'),  # Update the carrying capacity
-    #Output(component_id='rsquared-container', component_property='children'),  # Update regression
+    # Output(component_id='main-graph2', component_property='figure'),  # Update graph 2 about regression
+    # Output(component_id='main-graph3', component_property='figure'),  # Update graph 3
+    #Output(component_id='carrying-capacity', component_property='children'),  # Update the carrying capacity
     Output(component_id='r2-ring-progress', component_property='sections'),  # Update regression
-    Output(component_id='time-plateau', component_property='children'),  # Update the time when the plateau is reached
-    Output(component_id='range-slider-data-ignored1', component_property='marks'),  # Amount of steps for the slider, matching the number of parameters calculated
-    Output(component_id='range-slider-k', component_property='max'),
-    Output(component_id='range-slider-k', component_property='marks'),
+    #Output(component_id='range-slider-k', component_property='max'),
+    #Output(component_id='range-slider-k', component_property='marks'),
     Output(component_id='graph-message', component_property='hide'),
     Output(component_id='graph-message', component_property='children'),
     ],
 
     [
-    Input(component_id='users-data', component_property='data'),  # Take dropdown value
-    Input(component_id='intermediate-value', component_property='data'), # Read data of the parameters calculated earlier
     Input(component_id='range-slider-k', component_property='value'),  # Take user slider value
     Input(component_id='date-picker', component_property='value'), # Take date-picker date
-    # Input(component_id='range-slider-profitability', component_property='value')
-              ])
-def graph_update(jsonified_users_data, jsonified_cleaned_data, data_slider, date_picked_formatted):
+    Input(component_id='users-dates-formatted', component_property='data'),
+    Input(component_id='scenarios-sorted', component_property='data'),
+    Input(component_id='graph-unit', component_property='data'),  # Stores the graph unit (y axis legend)
+    ], prevent_initial_call=True)
+def graph_update(data_slider, date_picked_formatted, df_dataset_dict, df_scenarios_dict, graph_unit):
     # --------- Data Loading
+
     # Data prepared earlier is fetched here
-    df = pd.read_json(jsonified_users_data, orient='split')  # Users+date data
-    #print(df)
-    # Way of dynamically adapting the title --> company_name should be used as a variable
-    title_figure = "The growth evolution is shown"
-    dates = np.array(main.date_formatting(df["Date"]))
-    users = np.array(df["Users"]).astype(float)*1000000
-    # Test to be deleted, changing dates & users to use moving average
-    #dates, users = main.moving_average_smoothing(dates, users, 1)
+    # Dates array definition from dictionary
+    dates = np.array([entry['Date'] for entry in df_dataset_dict])
+    dates = dates - 1970
+    # Users are taken from the database and multiply by a million
+    users = np.array([entry['Users'] for entry in df_dataset_dict])
+    users = users.astype(float) * 1000000
+
 
     # Gets the date selected from the new date picker
     date_picked_formatted = main.date_formatting_from_string(date_picked_formatted)
@@ -964,55 +1299,27 @@ def graph_update(jsonified_users_data, jsonified_cleaned_data, data_slider, date
     data_len = len(dates_actual)  # length of the dataset to consider for retrofitting
     users_actual = users[0:data_len]
 
-    df_sorted = pd.read_json(jsonified_cleaned_data, orient='split')
     print("Selected date", date_picked_formatted)
-    print(df_sorted)
-    df_sorted_array = np.array(df_sorted)
+    print(graph_unit)
 
 
     # If selecting all possible scenarios,  Creation of the arrays of parameters
-    df_scenarios = df_sorted
-    df_scenarios_array = np.array(df_scenarios)
-    k_scenarios = np.array(df_scenarios['K'])
-    r_scenarios = np.array(df_scenarios['r'])
-    p0_scenarios = np.array(df_scenarios['p0'])
-    # ignored_data_scenarios = np.array((df_scenarios['d_ignored']))
-
-
-
-    # Creating the slider's marks
-    max_value = len(df_sorted) - 1
-
-    '''
-    marks_history = {
-        min_history_date: {'label': str(int(min_history_date)), 'style': {'color': '#77b0b1'}},
-        max_history_date: {'label': str(int(max_history_date)), 'style': {'color': '#f50'}}
-    }'''
-    # Formatting of the marks to be created for the slider
-    k_min_mark1 = int(np.rint(k_scenarios[0]) / pow(10, 6))
-    k_min_mark = "{:,} M".format(k_min_mark1)
-    k_max_mark1 = int(np.rint(k_scenarios[-1]) / pow(10, 6))
-    k_max_mark = "{:,} M".format(k_max_mark1)
-    k_tooltip1 = int(np.rint(k_scenarios[data_slider]) / pow(10, 6))
-    k_tooltip = "{:,} M".format(k_tooltip1)
-    marks = {
-        0: {'label': k_min_mark, 'style': {'color': '#f50', 'position': 'absolute', 'right': '-30px'}},
-        max_value: {'label': k_max_mark, 'style': {'color': '#77b0b1', 'right': '-30px'}}
-    }
-
-    # The "marks" list now contains the desired format
+    k_scenarios = np.array([entry['K'] for entry in df_scenarios_dict])
+    r_scenarios = np.array([entry['r'] for entry in df_scenarios_dict])
+    p0_scenarios = np.array([entry['p0'] for entry in df_scenarios_dict])
+    rsquared_scenarios = np.array([entry['R Squared'] for entry in df_scenarios_dict])
+    number_ignored_data_scenarios = np.array([entry['Data Ignored'] for entry in df_scenarios_dict])
 
     # Based on the slider's value, the related row of parameters is selected
     row_selected = data_slider
     # Parameters definition
-    data_ignored_array = df_scenarios.index.to_numpy()
-    k = df_scenarios_array[row_selected, 1]
-    r = df_scenarios_array[row_selected, 2]
-    p0 = df_scenarios_array[row_selected, 3]
-    r_squared_showed = np.round(df_sorted_array[row_selected, 4], 3)
-    number_ignored_data = int(df_scenarios_array[row_selected, 0])
+    k = k_scenarios[row_selected]
+    r = r_scenarios[row_selected]
+    p0 = p0_scenarios[row_selected]
+    r_squared_showed = np.round(rsquared_scenarios[row_selected], 3)
+    number_ignored_data = int(number_ignored_data_scenarios[row_selected])
 
-    # R^2 Ring progress definition
+    # R^2 Ring progress definition of the selected prediction line
     value_section = r_squared_showed*100
     if r_squared_showed > 0.9:
         sections = [
@@ -1042,42 +1349,8 @@ def graph_update(jsonified_users_data, jsonified_cleaned_data, data_slider, date
 
 
 
-    highest_r2_index = df_sorted['R Squared'].idxmax()
-    print("HIGHEST", highest_r2_index, data_ignored_array[-1])
-    if k_scenarios[-1] >= 1_000_000_000:
-        if highest_r2_index == data_ignored_array[-1]:
-            marks_slider = [
-                {"value": data_ignored_array[0], "label": f"{k_scenarios[0] / 1000000000:.1f}B"},
-                {"value": data_ignored_array[-1], "label": f"★{k_scenarios[-1] / 1000000000:.1f}B"},
-            ]
-        elif highest_r2_index == data_ignored_array[0]:
-            marks_slider = [
-                {"value": data_ignored_array[0], "label": f"★{k_scenarios[0] / 1000000000:.1f}B"},
-                {"value": data_ignored_array[-1], "label": f"{k_scenarios[-1] / 1000000000:.1f}B"},
-            ]
-        else:
-            marks_slider = [
-                {"value": data_ignored_array[0], "label": f"{k_scenarios[0] / 1000000000:.1f}B"},
-                {"value": highest_r2_index, "label": "★"},
-                {"value": data_ignored_array[-1], "label": f"{k_scenarios[-1] / 1000000000:.1f}B"},
-            ]
-    else:
-        if highest_r2_index == data_ignored_array[-1]:
-            marks_slider = [
-                {"value": data_ignored_array[0], "label": f"{k_scenarios[0]/1000000:.0f}M"},
-                {"value": data_ignored_array[-1], "label": f"★{k_scenarios[-1]/1000000:.0f}M"},
-            ]
-        elif highest_r2_index == data_ignored_array[0]:
-            marks_slider = [
-                {"value": data_ignored_array[0], "label": f"★{k_scenarios[0] / 1000000:.0f}M"},
-                {"value": data_ignored_array[-1], "label": f"{k_scenarios[-1] / 1000000:.0f}M"},
-            ]
-        else:
-            marks_slider = [
-                {"value": data_ignored_array[0], "label": f"{k_scenarios[0]/1000000:.0f}M"},
-                {"value": highest_r2_index, "label": "★"},
-                {"value": data_ignored_array[-1], "label": f"{k_scenarios[-1]/1000000:.0f}M"},
-            ]
+    highest_r2_index = np.argmax(rsquared_scenarios)
+    print("HIGHEST", highest_r2_index)
 
     # Graph message
 
@@ -1108,7 +1381,7 @@ def graph_update(jsonified_users_data, jsonified_cleaned_data, data_slider, date
     print(number_ignored_data)
 
     # Polynomial approximation
-    logfit = main.log_approximation(dates[number_ignored_data:data_len], users[number_ignored_data:data_len])
+    # logfit = main.log_approximation(dates[number_ignored_data:data_len], users[number_ignored_data:data_len])
     #k_log = np.exp(-logfit[1]/logfit[0])
     #df_log = main.parameters_dataframe_given_k(dates[0:data_len], users[0:data_len])
     #print("LOG params")
@@ -1133,7 +1406,7 @@ def graph_update(jsonified_users_data, jsonified_cleaned_data, data_slider, date
     # Historical data
 
     # Highlight points considered for the approximation
-    fig_main.add_trace(go.Bar(name="Dataset", x=dates[number_ignored_data:] + 1970,
+    fig_main.add_trace(go.Bar(name="Dataset", x=dates[number_ignored_data:data_len] + 1970,
                               y=users[number_ignored_data:data_len],
                               marker_color="Black", hoverinfo='none'))
     y_predicted = users
@@ -1146,7 +1419,7 @@ def graph_update(jsonified_users_data, jsonified_cleaned_data, data_slider, date
         go.Bar(name="Data omitted", x=dates[0:number_ignored_data] + 1970, y=users[0:number_ignored_data],
                marker_color="Grey", hoverinfo='none', showlegend=False))
     # Highlight points past the current date
-    fig_main.add_trace(go.Bar(name="Future data", x=dates[data_len:] + 1970,
+    fig_main.add_trace(go.Bar(name="Forecast Range", x=dates[data_len:] + 1970,
                               y=users[data_len:],
                               marker_color='#e6ecf5', hoverinfo='none',))
     # Add vertical line indicating the year of the prediction for retrofitting
@@ -1170,7 +1443,8 @@ def graph_update(jsonified_users_data, jsonified_cleaned_data, data_slider, date
             )
         ],
         yaxis=dict(
-            fixedrange=True
+            fixedrange=True,
+            title=graph_unit,
         ),
         dragmode="pan",
     )
@@ -1188,8 +1462,6 @@ def graph_update(jsonified_users_data, jsonified_cleaned_data, data_slider, date
     x0 = np.linspace(dates_actual[-1] + 0.25, dates_actual[-1]*2-dates_actual[0], num=10)  # Creates a future timeline the size of the data
 
     # Low growth scenario
-    x_annotation = max(x0+1970)
-    y_annotation = float(main.logisticfunction(k_scenarios[0], r_scenarios[0], p0_scenarios[0], [dates[-1]*2-dates[0]]))
     x = np.linspace(dates[-1], dates[-1] * 2 - dates[0], num=50)
     y_trace = main.logisticfunction(k_scenarios[0], r_scenarios[0], p0_scenarios[0], x)
     formatted_y_values = [f"{y / 1e6:.1f} M" if y < 1e9 else f"{y / 1e9:.2f} B" for y in y_trace]
@@ -1201,7 +1473,7 @@ def graph_update(jsonified_users_data, jsonified_cleaned_data, data_slider, date
     y_trace = main.logisticfunction(k_scenarios[-1], r_scenarios[-1], p0_scenarios[-1], x)
     formatted_y_values = [f"{y / 1e6:.1f} M" if y < 1e9 else f"{y / 1e9:.2f} B" for y in y_trace]
     # High growth scenario, if existent
-    if len(df_scenarios_array) > 1:
+    if len(k_scenarios) > 1:
         fig_main.add_trace(go.Scatter(name="High Growth", x=x + 1970,
                              y=y_trace, mode='lines',
                              line=dict(color='LightGrey', width=0.5),
@@ -1233,8 +1505,9 @@ def graph_update(jsonified_users_data, jsonified_cleaned_data, data_slider, date
     # fig_main.add_trace(go.Bar(name="Predicted S Curve", x=x1+1970, y=main.logisticfunction(k, r, p0, x1),
                          # marker_color='White', marker_line_color='Black'))
 
-    # Build second chart containing the discrete growth rates
+    # Build second chart containing the discrete growth rates & Regressions
     # -------------------------------------------------------
+    '''
     fig_second = go.Figure(layout=layout_second_graph)
     fig_second.update_xaxes(range=[0, users[-1]*1.1])  # Fixing the size of the X axis with users max + 10%
     max_rd_value = df_sorted['r'].max()
@@ -1265,9 +1538,26 @@ def graph_update(jsonified_users_data, jsonified_cleaned_data, data_slider, date
             go.Scatter(name="Discrete Growth Rate", x=main.discrete_user_interval(users[data_len:]),
                        y=main.discrete_growth_rate(users[data_len:], dates[data_len:] + 1970),
                        mode="markers", line=dict(color='#e6ecf5')))
+                       
+    # Add trace of the polynomial approximation
+    #fig_second.add_trace(
+        #go.Scatter(name="Discrete Growth Rate", x=main.discrete_user_interval(users),
+                   #y=np.polyval(polynum1, main.discrete_user_interval(users)), mode="lines", line=dict(color="Green")))
+    #fig_second.add_trace(
+    #    go.Scatter(name="Discrete Growth Rate", x=main.discrete_user_interval(users),
+    #               y=np.polyval(polynum2, main.discrete_user_interval(users)), mode="lines", line=dict(color="Blue")))
+    #fig_second.add_trace(
+    #    go.Scatter(name="Discrete Growth Rate", x=main.discrete_user_interval(users),
+    #               y=np.polyval(polynum3, main.discrete_user_interval(users)), mode="lines", line=dict(color="Red")))
+    fig_second.add_trace(
+        go.Scatter(name="Discrete Growth Rate", x=main.discrete_user_interval(users),
+                   y=np.polyval(logfit, np.log(main.discrete_user_interval(users))), mode="lines", line=dict(color="Orange")))
+    
+    '''
 
-    # Build third chart containing the evolution of r^2 & rmsd
-    # fig_third = go.Figure(layout=layout_third_graph)
+    # Build third chart containing the evolution of r^2 & rmsd linked to the # of data ignored
+    # -------------------------------------------
+    '''
     fig_third = make_subplots(specs=[[{"secondary_y": True}]])
     df_sorted_n_ignored = df_sorted.sort_values(by='Data Ignored')
     x_3_axis = df_sorted_n_ignored['Data Ignored']
@@ -1281,20 +1571,8 @@ def graph_update(jsonified_users_data, jsonified_cleaned_data, data_slider, date
                    y=y_3_axis2, mode="markers", line=dict(color='Green')), secondary_y=True)
     # Vertical line indicating what is the value shown in the main graph
     fig_third.add_vline(x=number_ignored_data, line_width=3, line_dash="dot", opacity=0.25)
+    '''
 
-        # Add trace of the polynomial approximation
-    #fig_second.add_trace(
-        #go.Scatter(name="Discrete Growth Rate", x=main.discrete_user_interval(users),
-                   #y=np.polyval(polynum1, main.discrete_user_interval(users)), mode="lines", line=dict(color="Green")))
-    #fig_second.add_trace(
-    #    go.Scatter(name="Discrete Growth Rate", x=main.discrete_user_interval(users),
-    #               y=np.polyval(polynum2, main.discrete_user_interval(users)), mode="lines", line=dict(color="Blue")))
-    #fig_second.add_trace(
-    #    go.Scatter(name="Discrete Growth Rate", x=main.discrete_user_interval(users),
-    #               y=np.polyval(polynum3, main.discrete_user_interval(users)), mode="lines", line=dict(color="Red")))
-    fig_second.add_trace(
-        go.Scatter(name="Discrete Growth Rate", x=main.discrete_user_interval(users),
-                   y=np.polyval(logfit, np.log(main.discrete_user_interval(users))), mode="lines", line=dict(color="Orange")))
 
     # Carrying capacity to be printed
     k_printed = int(np.rint(k)/pow(10, 6))
@@ -1305,31 +1583,36 @@ def graph_update(jsonified_users_data, jsonified_cleaned_data, data_slider, date
         t_plateau = main.time_to_population(k, r, p0, 0.95*k) + 1970
         month_plateau = math.ceil((t_plateau - int(t_plateau))*12)
         year_plateau = int(np.round(t_plateau, 0))
-        date_plateau = datetime.date(year_plateau, month_plateau, 1)
+        date_plateau = datetime(year_plateau, month_plateau, 1).date()
         date_plateau_displayed = date_plateau.strftime("%b, %Y")
         t_plateau_displayed = 'Year {:.1f}'.format(t_plateau)
     else:
         date_plateau_displayed = "Plateau could not be calculated"
     print("2. CALLBACK END")
-    print(df_sorted)
-    # print(polynum1)
-    # print(-polynum1[1]/polynum1[0])
-    print("K log")
-    print(k_log,r_log,p0_log, r_squared_log)
-    print(number_ignored_data)
-    #for i in range(36):
-        #k_log = k_scenarios[i]
-        #r_log, p0_log, rsquared2 = main.logistic_parameters_given_K(dates[i:], users[i:], k_log)
-        #print(i, k_log, r_log, p0_log, rsquared2)
-        #fig_second.add_trace(
-         #   go.Scatter(name="Discrete Growth Rate", x=main.discrete_user_interval(users),
-         #              y=-r_log / k_log * main.discrete_user_interval(users) + r_log, mode="lines"))
 
-    # Analysis test to be deleted
-
-
-    return fig_main, fig_second, fig_third, k_printed, sections, date_plateau_displayed, marks, data_ignored_array[-1], \
-        marks_slider, False, graph_message
+    return fig_main, sections, False, graph_message
+@app.callback(
+    Output(component_id="arpu-needed", component_property="children"),
+    [
+    Input(component_id='scenarios-sorted', component_property='data'),
+    Input("range-profit-margin", "value"),
+    Input("range-discount-rate", "value"),
+    Input("range-slider-k", "value"),
+    Input(component_id='current-market-cap', component_property='data'),
+    ], prevent_initial_call=True
+)
+def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, current_market_cap):
+    k_selected = df_sorted[row_index]['K']
+    r_selected = df_sorted[row_index]['r']
+    p0_selected = df_sorted[row_index]['p0']
+    profit_margin = profit_margin/100
+    discount_rate = discount_rate/100
+    YEARS_DCF = 10
+    current_market_cap = current_market_cap * 1000000
+    arpu_needed = main.arpu_for_valuation(k_selected, r_selected, p0_selected, profit_margin,
+                                          discount_rate, YEARS_DCF, current_market_cap)
+    printed_arpu = f"{arpu_needed:.0f} $" # formatting
+    return printed_arpu
 
 @app.callback(
     Output("offcanvas", "is_open"),
