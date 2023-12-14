@@ -1650,7 +1650,7 @@ def graph_update(data_slider, date_picked_formatted, df_dataset_dict, df_scenari
     fig_third.add_trace(
         go.Scatter(name="RMSD", x=x_3_axis,
                    y=y_3_axis2, mode="markers", line=dict(color='Green')), secondary_y=True)
-    # Vertical line indicating what is the value shown in the main graph
+    # Vertical line indicating what is the value shown in the main graph.
     fig_third.add_vline(x=number_ignored_data, line_width=3, line_dash="dot", opacity=0.25)
     '''
 
