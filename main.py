@@ -97,7 +97,12 @@ def logisticfunction(k, r, p0, dates):
     #y = (k*p0*np.exp(r*dates))/(k+p0*(np.exp(r*dates)-1))  OLD METHOD
     y = np.zeros(len(dates))
     for i in range(len(dates)):
-        y[i] = (k*p0*np.exp(r*dates[i]))/(k+p0*(np.exp(r*dates[i])-1))
+        try:
+            y[i] = (k*p0*np.exp(r*dates[i]))/(k+p0*(np.exp(r*dates[i])-1))
+        except:
+            y[i] = 0
+            print("Log function could not be computed with the following parameters")
+            print("k", k, "r", r, "p0", p0)
     return y
 
 
@@ -168,34 +173,57 @@ def rsquare_calculation (observed_values, approximated_values):
 
 # Calculation of the parameters and RSquare, mapped to the amount of data ignored
 def parameters_dataframe(dates, users):
-    maximum_data_ignored = 0.85  # Up to 80% of the data can be ignored
+    maximum_data_ignored = 0.9  # Up to 80% of the data can be ignored
     n_data_ignored = int(round(len(dates)*maximum_data_ignored))
     dataframe = np.zeros((n_data_ignored, 8))
     # Calculation of K, r & p0 and its related RSquare for each data ignored
     for i in range(n_data_ignored):
-        dates_rsquare = dates[i:len(dates)]
-        users_rsquare = users[i:len(dates)]
-        rd = discrete_growth_rate(users_rsquare, dates_rsquare)
-        userinterval = discrete_user_interval(users_rsquare)
-        k, r, p0 = logistic_function_approximation(dates_rsquare, users_rsquare)
-        observed_values_df = rd
-        approximated_values_df = -r/k*userinterval+r
-        r_squared = rsquare_calculation(observed_values_df, approximated_values_df)
-        rootmeansquare = rmsd(users_rsquare, logisticfunction(k, r, p0, dates_rsquare))
-        logfit = log_approximation(dates_rsquare, users_rsquare)
-        approximated_values_log = rsquare_calculation(observed_values_df, np.polyval(logfit, np.log(userinterval)))
+        try:
+            dates_rsquare = dates[i:len(dates)]
+            users_rsquare = users[i:len(dates)]
+            rd = discrete_growth_rate(users_rsquare, dates_rsquare)
+            userinterval = discrete_user_interval(users_rsquare)
+            print("data ignored", i)
+            try:
+                k, r, p0 = logistic_function_approximation(dates_rsquare, users_rsquare)
+                print("k", k, "r", r, "p0", p0)
+            except:
+                k, r, p0 = 0
+                print("Parameters could not be calculated for: ", i, " data ignored")
+            if k == 0:
+                print("Issue when ignoring", i, "data")
+                raise RuntimeError("Skipping ignoring", i, " data")
+            observed_values_df = rd
+            approximated_values_df = -r/k*userinterval+r
+            r_squared = rsquare_calculation(observed_values_df, approximated_values_df)
+            try:
+                rootmeansquare = rmsd(users_rsquare, logisticfunction(k, r, p0, dates_rsquare))
+            except:
+                rootmeansquare = 0
+                print("rmsd could not be calculated when ignoring:", n_data_ignored, " number of data points")
+            logfit = log_approximation(dates_rsquare, users_rsquare)
 
-        diff_lin_log = approximated_values_log-r_squared
+            approximated_values_log = rsquare_calculation(observed_values_df, np.polyval(logfit, np.log(userinterval)))
+            diff_lin_log = approximated_values_log-r_squared
 
 
-        dataframe[i, 0] = i  # Data ignored column
-        dataframe[i, 1] = k  # K (carrying capacity) column
-        dataframe[i, 2] = r  # r (growth rate) column
-        dataframe[i, 3] = p0  # p0 (initial population) column
-        dataframe[i, 4] = r_squared  # r squared column
-        dataframe[i, 5] = rootmeansquare  # Root Mean Square Deviation column
-        dataframe[i, 6] = approximated_values_log  # Root Mean Square Deviation of the log approximation column
-        dataframe[i, 7] = diff_lin_log  # Difference between the linear R^2 and the log R^2
+            dataframe[i, 0] = i  # Data ignored column
+            dataframe[i, 1] = k  # K (carrying capacity) column
+            dataframe[i, 2] = r  # r (growth rate) column
+            dataframe[i, 3] = p0  # p0 (initial population) column
+            dataframe[i, 4] = r_squared  # r squared column
+            dataframe[i, 5] = rootmeansquare  # Root Mean Square Deviation column
+            dataframe[i, 6] = approximated_values_log  # Root Mean Square Deviation of the log approximation column
+            dataframe[i, 7] = diff_lin_log  # Difference between the linear R^2 and the log R^2
+        except RuntimeError as e:
+            dataframe[i, 0] = 0  # Data ignored column
+            dataframe[i, 1] = 0  # K (carrying capacity) column
+            dataframe[i, 2] = 0  # r (growth rate) column
+            dataframe[i, 3] = 0  # p0 (initial population) column
+            dataframe[i, 4] = 0  # r squared column
+            dataframe[i, 5] = 0  # Root Mean Square Deviation column
+            dataframe[i, 6] = 0  # Root Mean Square Deviation of the log approximation column
+            dataframe[i, 7] = 0  # Difference between the linear R^2 and the log R^2
     df = pd.DataFrame(dataframe, columns=['Data Ignored', 'K', 'r', 'p0', 'R Squared', 'RMSD', 'R Squared LOG', 'Lin/Log Diff'])
     df['Method'] = 'Linear regression'
     return df
@@ -220,12 +248,44 @@ def parameters_dataframe_cleaning(df, users):
     # Delete these row indexes from dataFrame
     df.drop(indexNames_rSquared, inplace=True)
     # Get names of indexes for which column p0 is smaller that numbers very close to zero
-    indexNames_p0 = df[df['p0'] < 5.775167e-11].index
+    indexNames_p0 = df[df['p0'] < 5.775167e-41].index
     # Delete these row indexes from dataFrame
     df.drop(indexNames_p0, inplace=True)
     df_sorted = df.sort_values(by=['K'], ascending=True)
     # Resetting the indexes
     df_sorted= df_sorted.reset_index(drop=True)
+    return df_sorted
+
+# Second Function to clean the parameters dataframe (the dataframe containing parameters in function of the data ignored)
+# Called only in case no good scenario is found. Here only the absurd scenarios are eliminated
+# Rows are deleted if: value = Nan; K<= 0.9*userMax ; K> 5*usermax r<0 ; p0 <= 0
+def parameters_dataframe_cleaning_minimal(df, users):
+    # Eliminate all rows where NaN values are present
+    df = df.dropna()
+    usersMax = np.amax(users)
+    # Get names of indexes for which column K is smaller than 98% of the max user
+    indexNames_K = df[df['K'] <= 0.8*usersMax].index
+    # Delete these row indexes from dataFrame
+    df.drop(indexNames_K, inplace=True)
+    # Get names of indexes for which column K is smaller than 98% of the max user
+    indexNames_K_max = df[df['K'] > 5 * usersMax].index
+    # Delete these row indexes from dataFrame
+    df.drop(indexNames_K_max, inplace=True)
+    # Get names of indexes for which column r is smaller than zero
+    indexNames_r = df[df['r'] <= 0].index
+    # Delete these row indexes from dataFrame
+    df.drop(indexNames_r, inplace=True)
+    # Get names of indexes for which column r is smaller or equal to zero
+    indexNames_rSquared = df[df['R Squared'] <= 0.001].index
+    # Delete these row indexes from dataFrame
+    #df.drop(indexNames_rSquared, inplace=True)
+    # Get names of indexes for which column p0 is smaller that numbers very close to zero
+    indexNames_p0 = df[df['p0'] < 5.775167e-41].index
+    # Delete these row indexes from dataFrame
+    df.drop(indexNames_p0, inplace=True)
+    df_sorted = df.sort_values(by=['K'], ascending=True)
+    # Resetting the indexes
+    df_sorted = df_sorted.reset_index(drop=True)
     return df_sorted
 
 

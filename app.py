@@ -1166,7 +1166,14 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict, curr
 
     # All parameters are calculated by ignoring data 1 by 1, taking the history reference as the end point
     df_full = main.parameters_dataframe(dates[0:data_len], users[0:data_len])  # Dataframe containing all parameters with all data ignored
+    print("df_full", df_full)
     df_sorted = main.parameters_dataframe_cleaning(df_full, users[0:data_len])  # Dataframe where inadequate scenarios are eliminated
+    if df_sorted.empty:
+        print("No good scenario could be calculated")
+        df_sorted = main.parameters_dataframe_cleaning_minimal(df_full, users[0:data_len])
+    else:
+        print("Successful scenarios exist")
+    print("df_sorted", df_sorted)
     df_sorted_dict = df_sorted.to_dict(orient='records')  # Transforming it to dict to be stored
     if dropdown_value is None:  # Exception for when dropdown is not selected yet, initializing df
         df = df_full

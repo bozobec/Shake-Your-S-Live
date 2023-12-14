@@ -154,26 +154,20 @@ def get_previous_quarter_revenue(symbol_input):
         else:
             # Otherwise, calculate the last day of the previous quarter
             previous_quarter = (current_date.month - 1) // 3
-            print("Previous Quarter:", previous_quarter)
             end_date_prev_quarter = datetime(current_date.year, previous_quarter * 3, 1)
-            print("End date of previous quarter", end_date_prev_quarter)
             year_percentage = previous_quarter/4  # Defines the percentage of the year that has passed. Because
                                                     # the revenue in the report is from the beginning of the year
         from_date = end_date_prev_quarter.strftime('%Y-%m-%d')
-        print("FromDATE", from_date)
         to_date = current_date.strftime('%Y-%m-%d')
-        print("TODATE", to_date)
 
         # Response
         response = requests.get(url, params={'symbol': symbol, 'freq': frequency, 'from': from_date,
                                              'to': to_date, 'token': auth_token})
         data = response.json()
-        print(data)
         try:
             revenue = next(item['value'] for item in data['data'][0]['report']['ic'] if item['label'] == 'Revenue')
         except:
             revenue = next(item['value'] for item in data['data'][0]['report']['ic'] if item['label'] == 'Revenues')
-        print(revenue)
 
         return revenue / year_percentage
     except Exception as e:
