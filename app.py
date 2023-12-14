@@ -19,6 +19,7 @@ import math
 from plotly.subplots import make_subplots
 from dash_iconify import DashIconify
 import time
+from dash.exceptions import PreventUpdate
 
 
 pd.set_option('display.max_columns', None)
@@ -464,7 +465,8 @@ selector_card = dmc.Card(
             mb="xs",
         ),
         dmc.Text(
-            "Select a dataset to visualize its historical data and utilize the prediction tool to forecast its future growth.",
+            "Select a dataset to visualize its historical data and utilize the prediction tool "
+            "to forecast its future growth.",
             size="sm",
             color="dimmed",
         ),
@@ -507,39 +509,40 @@ functionalities_card = dmc.Card(
         # Plateau slider
         html.Div(
             children=[
-                dmc.Tooltip(
-                    dmc.Group([
-                        dmc.Text(
-                            "Prediction Line",
-                            size="sm",
-                            weight=700,
-                            ),
+                dmc.Group([
+                    dmc.Text(
+                        "Prediction Line",
+                        size="sm",
+                        weight=700,
+                        ),
+                    dmc.Tooltip(
                         DashIconify(icon="feather:info", width=15),
-                        dmc.RingProgress(
-                                    id="r2-ring-progress",
-                                    size=24,
-                                    thickness=4,
-                                    roundCaps=True,
-                                    sections=[
-                                        {"value": 0, "color": "LightGrey"},
-                                    ]
-                                ),
-                        ],
-                        spacing=5),
-                    label="Select 'Custom' to move the blue curve and see how well it fits the dataset. The star "
-                          "indicates GROOWT's best prediction",
-                    transition="slide-down",
-                    transitionDuration=300,
-                    multiline=True,
-                ),
+                        label="Select 'Custom' to move the blue curve and see how well it fits the dataset. "
+                              "The star indicates GROOWT's best prediction",
+                        transition="slide-down",
+                        transitionDuration=300,
+                        multiline=True,
+                    ),
+                    dmc.RingProgress(
+                        id="r2-ring-progress",
+                        size=24,
+                        thickness=4,
+                        roundCaps=True,
+                        sections=[
+                            {"value": 0, "color": "LightGrey"},
+                            ]
+                        ),
+                ],
+                    spacing=5),
+
                 dmc.Space(h=10),
                 dmc.Container(scenarios_picker),
-        ]),
+            ]),
         dmc.Space(h=10),
         html.Div(slider_k, style={"marginLeft":15, "marginRight": 15}),
         dmc.Space(h=40),
 
-# Profit margin
+        # Profit margin
         html.Div(
             style={'display': 'none'},
             id="profit-margin",
@@ -621,9 +624,11 @@ functionalities_card = dmc.Card(
                 datepicker,
         ]),
     ],
+    id="functionalities-card",
     withBorder=True,
     shadow="sm",
     radius="md",
+    style={'display': 'none'},
     #style={"height": 500},
 )
 
@@ -657,17 +662,87 @@ arpu_card = dmc.Card(
     radius="md",
 )
 
+# Welcome timeline introducing the user to Groowt
+
+welcome_timeline = html.Div([
+    dmc.Timeline(
+    active=0,
+    bulletSize=25,
+    lineWidth=2,
+    id='welcome-timeline',
+    children=[
+        dmc.TimelineItem(
+            title="Choose Your Dataset",
+            bullet=DashIconify(icon="teenyicons:add-solid", width=12),
+            #lineVariant="dashed",
+            color="dimmed",
+            children=[
+                dmc.Text(
+                    [
+                        "Use the dropdown menu on the side to select a dataset. Analyze its growth and get a "
+                        "feeling for when the growth is going to end.",
+                        dmc.Anchor("", href="#", size="sm"),
+                    ],
+                    color="dimmed",
+                    size="sm",
+                ),
+            ],
+        ),
+        dmc.TimelineItem(
+            title="Explore Growth and Valuation",
+            bullet=DashIconify(icon="teenyicons:adjust-vertical-alt-outline", width=12),
+            lineVariant="dashed",
+            children=[
+                dmc.Text(
+                    [
+                        "For publicly traded user-based companies, Assess how much a company "
+                        "needs to do to justify its current valuation.",
+                        dmc.Anchor(
+                            "",
+                            href="#",
+                            size="sm",
+                        ),
+                    ],
+                    color="dimmed",
+                    size="sm",
+                ),
+            ],
+        ),
+        dmc.TimelineItem(
+            title="Join the community",
+            bullet=DashIconify(icon="teenyicons:message-plus-outline", width=12),
+            lineVariant="dashed",
+            children=[
+                dmc.Text(
+                    [
+                        "Have new datasets or feature requests? Contact us",
+                        dmc.Anchor(
+                            " here!",
+                            href="mailto:groowt@proton.me",
+                            size="sm",
+                        ),
+                    ],
+                    color="dimmed",
+                    size="sm",
+                ),
+            ],
+        ),
+    ],
+)])
+
 graph_card = dmc.Card(
     children=[
         # Card Title
         dmc.Group(
                     [
-                        dmc.Text("Dataset visualization and Predicted growth", id="graph-title", weight=500),
+                        dmc.Text("Welcome to GROOWT", id="graph-title", weight=500),
                     ],
                     position="apart",
                     mt="md",
                     mb="xs",
                 ),
+        welcome_timeline,
+        html.Div([
         dmc.Text(
                     "Select a dataset first",
                     size="sm",
@@ -696,11 +771,16 @@ graph_card = dmc.Card(
                                              )
                                    ]
                          )
+        ],
+        id='graph-card-content',
+        style={'display': 'none'})
     ],
     withBorder=True,
     shadow="sm",
     radius="md",
 )
+
+
 
 
 # Graph layout
@@ -849,6 +929,7 @@ dmc.Container(fluid=True, children=[
         dcc.Store(id='scenarios-sorted'),  # DF containing all the possible growth scenarios
         dcc.Store(id='current-market-cap'),  # Market cap of the company selected, 0 if N/A
         dcc.Store(id='graph-unit'),  # Graph unit (MAU, Population, etc.)
+        dcc.Store(id='launch-counter', data={'flag': False}),  # Counter that shows 0 if no dataset has been selected, or 1 otherwise
     ], fluid=True)])
 
 
@@ -1591,6 +1672,33 @@ def graph_update(data_slider, date_picked_formatted, df_dataset_dict, df_scenari
     print("2. CALLBACK END")
 
     return fig_main, sections, False, graph_message
+
+# Callback displaying the functionalities & graph cards, and hiding the text
+@app.callback(
+    Output(component_id="graph-card-content", component_property='style'),
+    Output(component_id='functionalities-card', component_property='style'),
+    Output(component_id='welcome-timeline', component_property='style'),
+    Output(component_id='launch-counter', component_property='data'),
+    Input(component_id='dataset-selection', component_property='value'),
+    [State('launch-counter', 'data')]
+    , prevent_initial_call=True
+)
+def show_cards(data, launch_counter):
+    print("Displaying cards", launch_counter, type(launch_counter))
+    if launch_counter['flag'] is not True:
+        launch_counter['flag'] = True
+        show_graph_card = {'display': 'block'}
+        hide_graph_card = {'display': 'none'}
+        print(launch_counter)
+        return show_graph_card, show_graph_card, hide_graph_card, launch_counter
+
+    else:
+        print("Card already displayed", launch_counter)
+        raise PreventUpdate
+
+
+
+# Callback calculating the ARPU needed depending on the chosen scenario
 @app.callback(
     Output(component_id="arpu-needed", component_property="children"),
     [
