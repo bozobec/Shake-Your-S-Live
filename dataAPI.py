@@ -90,12 +90,24 @@ def get_airtable_data(filter):
     print("Fetching the dataset data")
     try:
         url2 = "https://api.airtable.com/v0/appm3ffcu38jyqhi3/tbl7LiTDpXk9DeRUB?fields%5B%5D=Company" \
-              "&fields%5B%5D=Date&fields%5B%""5D=Users&filterByFormula=Company%3D%22{}%22&sort%5B0%5D%5Bfield" \
-              "%5D=Users&sort%5B0%5D%5B""direction%5D=asc".format(filter)  # Add the filter to the URL to get only
+               "&fields%5B%5D=Date" \
+               "&fields%5B%5D=Users" \
+               "&fields%5B%5D=Unit" \
+               "&fields%5B%5D=Symbol" \
+               "&fields%5B%5D=Quarterly_Revenue_Mio$" \
+               "&filterByFormula=Company%3D%22{}%22" \
+               "&sort%5B0%5D%5Bfield%5D=Date" \
+               "&sort%5B0%5D%5Bdirection%5D=asc".format(filter)  # Add the filter to the URL to get only
                                                                             # the company needed
         url = "https://api.airtable.com/v0/appm3ffcu38jyqhi3/tbl7LiTDpXk9DeRUB?fields%5B%5D=Company" \
-               "&fields%5B%5D=Date&fields%5B%5D=Users&fields%5B%5D=Unit&fields%5B%5D=Symbol&filterByFormula=Company%3D%22{}%22&sort%5B0%5D%5Bfield" \
-               "%5D=Date&sort%5B0%5D%5Bdirection%5D=asc".format(filter)
+               "&fields%5B%5D=Date" \
+               "&fields%5B%5D=Users" \
+               "&fields%5B%5D=Unit" \
+               "&fields%5B%5D=Symbol" \
+               "&fields%5B%5D=Quarterly_Revenue_Mio$" \
+               "&filterByFormula=Company%3D%22{}%22" \
+               "&sort%5B0%5D%5Bfield%5D=Date" \
+               "&sort%5B0%5D%5Bdirection%5D=asc".format(filter)
         auth_token = "patUQKc4meIVaiLIw.efa35a957210ca18edc4fc00ae1b599a6a49851b8b7c59994e4384c19c20fcd1"
         headers = {
             "Authorization": f"Bearer {auth_token}"
@@ -111,7 +123,8 @@ def get_airtable_data(filter):
                 'Date': record['fields']['Date'],
                 'Users': record['fields']['Users'],
                 'Unit': record['fields']['Unit'],
-                'Symbol': record['fields']['Symbol']
+                'Symbol': record['fields']['Symbol'],
+                'Revenue': record['fields']['Quarterly_Revenue_Mio$']
             })
         df = pd.DataFrame(formatted_data)  # Create a DataFrame from the sample data
         # sorted_df = df.sort_values(by='Date')  # Sort df to avoid bugs linked to wrong API call
@@ -173,3 +186,24 @@ def get_previous_quarter_revenue(symbol_input):
     except Exception as e:
         print(f"Error fetching quarterly revenue: {str(e)}")
         return 0
+
+# API Fetching the profit margin of the past year
+def get_profit_margin(symbol_input):
+    print("Fetching the profit margin")
+    try:
+        url = "https://finnhub.io/api/v1/stock/metric?"
+        auth_token = "clmplq1r01qjj8i8s6ugclmplq1r01qjj8i8s6v0"  # Free token visible here: https://finnhub.io/dashboard
+        symbol = symbol_input  # Symbol of the stock
+        metric = "netProfitMarginAnnual"  # Frequency of the report
+
+        # Response
+        response = requests.get(url, params={'symbol': symbol, 'metric': metric, 'token': auth_token})
+        data = response.json()
+        profit_margin = data['metric']['netProfitMarginAnnual']
+        return profit_margin
+    except Exception as e:
+        print(f"Error fetching yearly profit_margin: {str(e)}")
+        return 0
+
+
+print(get_profit_margin("NFLX"))

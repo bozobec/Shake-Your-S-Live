@@ -5,7 +5,7 @@ import numpy as np
 import math
 from sklearn import linear_model
 from scipy.optimize import curve_fit
-from datetime import datetime
+from datetime import datetime, timedelta
 import numpy_financial as npf
 # from sklearn import linear_model
 # from sklearn.metrics import mean_squared_error
@@ -70,6 +70,20 @@ def string_formatting_to_date(decimal_year):
     date_string = f"{datetime(2000, month, 1).strftime('%B')} {year}"
 
     return date_string
+
+# The following function transforms a date of format 2016.99 to a date 2016-12-31
+def transform_date_format(input_date):
+    # Extract the year and fraction part from the float
+    year = int(input_date)
+    fraction = input_date - year
+
+    # Calculate the day of the year based on the fraction
+    total_days = int(fraction * 365)
+
+    # Create a datetime object with the calculated year and day of the year
+    transformed_date = datetime(year, 1, 1) + timedelta(days=total_days)
+
+    return transformed_date.strftime("%Y-%m-%d")
 
 
 # --------------------------------- USER GROWTH PREDICTION --------------------------------------
@@ -183,10 +197,8 @@ def parameters_dataframe(dates, users):
             users_rsquare = users[i:len(dates)]
             rd = discrete_growth_rate(users_rsquare, dates_rsquare)
             userinterval = discrete_user_interval(users_rsquare)
-            print("data ignored", i)
             try:
                 k, r, p0 = logistic_function_approximation(dates_rsquare, users_rsquare)
-                print("k", k, "r", r, "p0", p0)
             except:
                 k, r, p0 = 0
                 print("Parameters could not be calculated for: ", i, " data ignored")
@@ -442,9 +454,7 @@ def previous_quarter_calculation():
     else:
         # Otherwise, calculate the last day of the previous quarter
         previous_quarter = (current_date.month - 1) // 3
-        print("Previous Quarter:", previous_quarter)
         end_date_prev_quarter = datetime(current_date.year, previous_quarter * 3, 1)
-        print("End date of previous quarter", end_date_prev_quarter)
         year_percentage = previous_quarter/4  # Defines the percentage of the year that has passed. Because
                                                 # the revenue in the report is from the beginning of the year
     end_date_formatted = end_date_prev_quarter.strftime('%Y-%m-%d')
@@ -468,8 +478,6 @@ def find_closest_date(given_date, date_array):
 # formats the dataframe as an output
 def datepicker_limit(dataset_df):
     if dataset_df is not None:
-        print("Dataset in the function")
-        print(dataset_df)
         dates = np.array(date_formatting(dataset_df["Date"]))
 
         dates_formatted = dates + YEAR_OFFSET
@@ -479,13 +487,10 @@ def datepicker_limit(dataset_df):
         dataset_df_formatted = dataset_df.copy()
         dataset_df_formatted["Date"] = dates_formatted
 
-        print("dates_unformatted_infunction")
-        print(dates_unformatted)
         date_value_datepicker = str(dates_unformatted[-1])
         min_history_datepicker = str(dates_unformatted[MIN_DATEPICKER_INDEX])
         max_history_datepicker = str(dates_unformatted[-1])
-        print("date_value, min, max, in function")
-        print(date_value_datepicker, min_history_datepicker, max_history_datepicker)
+
 
         return min_history_datepicker, max_history_datepicker, date_value_datepicker, dataset_df_formatted
     else:

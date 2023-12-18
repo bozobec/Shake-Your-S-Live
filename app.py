@@ -86,6 +86,8 @@ dropdown6 = html.Div(
             dropdownPosition="bottom",
             searchable=True,
             selectOnBlur=True,
+            transition="pop",
+            transitionDuration=200,
         )
     ]
 )
@@ -290,14 +292,10 @@ slider_profit_margin = dmc.Slider(
             min=1,
             max=50,
             value=20,
-            marks=[
-                {"value": 1, "label": "1%"},
-                {"value": 20, "label": "20%"},
-                {"value": 50, "label": "50%"},
-            ],
             size="sm",
             disabled=False,
             showLabelOnHover=False,
+            precision=2,
             )
 
 # Discount rate slider
@@ -416,7 +414,7 @@ graph_message = dmc.Alert(
 
 
 # Scenario picker
-data_scenarios = ["Best", "Custom"]
+data_scenarios = ["Most Probable Scenario", "Custom"]
 
 scenarios_picker = dmc.Stack(
     [dmc.SegmentedControl(
@@ -568,8 +566,15 @@ functionalities_card = dmc.Card(
                     ]),
                 dmc.Space(h=10),
                 dmc.Container(slider_profit_margin),
-                dmc.Space(h=40),
+                dmc.Space(h=25),
+                dmc.Text(
+                    "Latest annual profit margin: 45%",
+                    id="profit-margin-container",
+                    size="sm",
+                    color="dimmed",
+                    ),
         ]),
+        dmc.Space(h=20),
 
 # Discount Rate
         html.Div(
@@ -600,6 +605,40 @@ functionalities_card = dmc.Card(
                 dmc.Space(h=10),
                 dmc.Container(slider_discount_rate),
                 dmc.Space(h=40),
+            ]),
+
+# ARPU
+        html.Div(
+            style={'display': 'block'},
+            id="arpu-card",
+            children=[
+
+                dmc.Group(
+                    style={'display': 'flex'},
+                    children=[
+                        dmc.Text(
+                            "Revenue per User needed",
+                            size="sm",
+                            weight=700,
+                        ),
+                        dmc.Tooltip(
+                            DashIconify(icon="feather:info", width=15),
+                            label="Depending on the profit margin & discount rate you choose, the required Average "
+                                  "Annual Revenue per user (ARPU) is displayed below to justify the current valuation."
+                                  "Comparing this to the actual current ARPU gives you a clear indication of whether the"
+                                  "stock is over or undervalued.",
+                            transition="slide-down",
+                            transitionDuration=300,
+                            multiline=True,
+                        ),
+                        dmc.Text(
+                            id="arpu-needed",
+                            children="456$",
+                            size="sm",
+                            color="Black",
+                        ),
+                    ],),
+                dmc.Space(h=10),
             ]),
 
         # Datepicker
@@ -749,7 +788,7 @@ graph_card = dmc.Card(
                     color="dimmed",
                     id='graph-subtitle',
                 ),
-        dmc.Space(h=30),
+        dmc.Space(h=20),
         html.Div(graph_message),
 
         # Card Content
@@ -789,6 +828,12 @@ graph_card = dmc.Card(
 layout_main_graph = go.Layout(
     # title="User Evolution",
     plot_bgcolor="White",
+    margin=go.layout.Margin(
+        l=0, #left margin
+        r=0, #right margin
+        b=0, #bottom margin
+        t=20, #top margin
+    ),
     legend=dict(
         # Adjust click behavior
         itemclick="toggleothers",
@@ -800,7 +845,7 @@ layout_main_graph = go.Layout(
     xaxis=dict(
         # title="Timeline",
         linecolor="Grey",
-        hoverformat=".0f",
+        #hoverformat=".0f",
     ),
     yaxis=dict(
         title="Users",
@@ -889,7 +934,7 @@ dmc.Container(fluid=True, children=[
         #dmc.Col(span=0.5, lg=0), # Empty left column
         dmc.Col(selector_card, span="auto"),
         dmc.Col(dmc.LoadingOverlay(graph_card), span=12, lg=6),
-        dmc.Col([dmc.LoadingOverlay(functionalities_card), dmc.Space(h=20), arpu_card], span=12, lg=3),
+        dmc.Col([dmc.LoadingOverlay(functionalities_card), dmc.Space(h=20)], span=12, lg=3),
         # dmc.Col(span="auto", lg=0), # Empty right column
          ],
         gutter="xl",
@@ -930,6 +975,8 @@ dmc.Container(fluid=True, children=[
         dcc.Store(id='current-market-cap'),  # Market cap of the company selected, 0 if N/A
         dcc.Store(id='graph-unit'),  # Graph unit (MAU, Population, etc.)
         dcc.Store(id='launch-counter', data={'flag': False}),  # Counter that shows 0 if no dataset has been selected, or 1 otherwise
+        dcc.Store(id='revenue-dates'),  # DF Containing the quarterly revenue and the dates
+        dcc.Store(id='current-arpu-stored'),  # DF Containing the current ARPU
     ], fluid=True)])
 
 
@@ -981,7 +1028,11 @@ def select_value(value):
     Output(component_id='profit-margin', component_property='style'), # Show/hide depending on company or not
     Output(component_id='discount-rate', component_property='style'), # Show/hide depending on company or not
     Output(component_id='arpu-card', component_property='style'), # Show/hide depending on company or not
-    Output(component_id='current-arpu', component_property='children'), # Print ARPU text
+    Output(component_id='profit-margin-container', component_property='children'), # Change the text below the profit margin slider
+    Output(component_id='range-profit-margin', component_property='marks'), # Adds a mark to the slider if the profit margin > 0
+    Output(component_id='range-profit-margin', component_property='value'), # Sets the value to the current profit margin
+    Output(component_id='current-arpu-stored', component_property='data'), # Stores the current arpu
+
     Input(component_id='dataset-selection', component_property='value')], # Take dropdown value
     [State('main-plot-container', 'figure')],
     prevent_initial_call=True,
@@ -991,6 +1042,7 @@ def set_history_size(dropdown_value, existing_main_plot):
     try:
         # Fetch dataset from API
         df = dataAPI.get_airtable_data(dropdown_value)
+        print("DF", df)
 
         # Creating the title & subtitle for the graph
         title = dropdown_value
@@ -1000,6 +1052,7 @@ def set_history_size(dropdown_value, existing_main_plot):
 
         # Transforming it to a dictionary to be stored
         users_dates_dict = df.to_dict(orient='records')
+        print("USERDATESDICT", users_dates_dict)
 
         # Process & format df. The dates in a panda serie of format YYYY-MM-DD are transformed to a decimal yearly array
         dates = np.array(main.date_formatting(df["Date"]))
@@ -1019,20 +1072,73 @@ def set_history_size(dropdown_value, existing_main_plot):
         if symbol_company != "N/A":
             current_market_cap = dataAPI.get_marketcap(symbol_company)  # Sets valuation if symbol exists
             show_company_functionalities = {'display': 'block'}  # Style component showing the fin. function.
-            yearly_revenue = dataAPI.get_previous_quarter_revenue(symbol_company)
-            if yearly_revenue != 0:
-                printed_current_arpu = f"{yearly_revenue/current_users:.0f} $ (current arpu)"  # formatting
+            yearly_revenue = dataAPI.get_previous_quarter_revenue(symbol_company) # Getting with API
+            quarterly_revenue = np.array(df["Revenue"]) # Getting in database
+            yearly_revenue_quarters = sum(quarterly_revenue[-4:])*1_000_000
+            print("yearly revenue from quarters")
+            print(yearly_revenue_quarters)
+            print("yearly revenue")
+            print(yearly_revenue)
+            try:
+                if yearly_revenue != 0:
+                    current_arpu = yearly_revenue/current_users
+                    printed_current_arpu = f"{current_arpu:.0f} $ (current arpu)"  # formatting
+                else:
+                    current_arpu = yearly_revenue_quarters/current_users
+                    printed_current_arpu = f"{current_arpu:.0f} $ (current arpu)"  # formatting
+            except ZeroDivisionError:
+                printed_current_arpu = "Error: Division by zero. Cannot calculate the current ARPU."
+                current_arpu = 0
+            except Exception as e:
+                printed_current_arpu = f"Error calculating the current ARPU: {str(e)}"
+                current_arpu = 0
+
+            # Profit margin text and marks
+            current_annual_profit_margin = dataAPI.get_profit_margin(symbol_company)
+            marks_profit_margin_slider = []
+            if current_annual_profit_margin > 1:
+                value_profit_margin_slider = float(current_annual_profit_margin)
+                marks_profit_margin_slider = [
+                    {"value": 2, "label": "2%"},
+                    {"value": 10, "label": "10%"},
+                    {"value": 20, "label": "20%"},
+                    {"value": value_profit_margin_slider, "label": "⭐"},
+                    {"value": 50, "label": "50%"},
+                ]
+                text_profit_margin = "Latest annual profit margin: " + str(current_annual_profit_margin) + "% 🤩",
+                print("Marks", type(marks_profit_margin_slider))
+                print(type(current_annual_profit_margin))
+
             else:
-                printed_current_arpu = "Error calculating the current arpu"
+                marks_profit_margin_slider = [
+                    {"value": 2, "label": "2%"},
+                    {"value": 10, "label": "10%"},
+                    {"value": 20, "label": "20%"},
+                    {"value": 50, "label": "50%"},
+                ]
+                value_profit_margin_slider = 5.0
+                text_profit_margin = "Latest annual profit margin: " + str(current_annual_profit_margin) + "% 😰",
 
         else:
             current_market_cap = 0  # Otherwise, market_cap = zero
+            current_arpu = 0
             show_company_functionalities = {'display': 'none'}
             printed_current_arpu = 0
+            text_profit_margin =""
+            value_profit_margin_slider = 5.0
+            marks_profit_margin_slider = [
+                {"value": 2, "label": "2%"},
+                {"value": 10, "label": "10%"},
+                {"value": 20, "label": "20%"},
+                {"value": 50, "label": "50%"},
+            ]
+
+        print("MARKSFINAL", marks_profit_margin_slider)
 
         df_formatted = df
         df_formatted["Date"] = dates_formatted
 
+        # Final DF containing dates, users, Units, Symbols & Quarterly revenue
         users_dates_formatted_dict = df_formatted.to_dict(orient='records')
 
         min_history_datepicker = str(dates_unformatted[MIN_DATE_INDEX])  # Minimum date that can be picked
@@ -1110,7 +1216,8 @@ def set_history_size(dropdown_value, existing_main_plot):
 
         return min_history_datepicker, max_history_datepicker, date_value_datepicker, users_dates_dict, \
             users_dates_formatted_dict, current_market_cap, y_legend_title, fig_main, title, subtitle, existing_main_plot, \
-            show_company_functionalities, show_company_functionalities, show_company_functionalities, printed_current_arpu
+            show_company_functionalities, show_company_functionalities, show_company_functionalities, \
+            text_profit_margin, marks_profit_margin_slider, value_profit_margin_slider, current_arpu
 
     except Exception as e:
         print(f"Error fetching or processing dataset: {str(e)}")
@@ -1333,6 +1440,7 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict, curr
                 {"value": highest_r2_index, "label": "★"},
                 {"value": data_ignored_array[-1], "label": f"{k_scenarios[-1]/1000:.0f}K"},
             ]
+    print("MARKSK", type(marks_slider), marks_slider)
 
     # Updating the datepicker graph traces, the high & the low growth scenario
     main_plot.update_traces(
@@ -1364,22 +1472,30 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict, curr
     Input(component_id='users-dates-formatted', component_property='data'),
     Input(component_id='scenarios-sorted', component_property='data'),
     Input(component_id='graph-unit', component_property='data'),  # Stores the graph unit (y axis legend)
+    Input(component_id='users-dates-raw', component_property='data'),
     ], prevent_initial_call=True)
-def graph_update(data_slider, date_picked_formatted, df_dataset_dict, df_scenarios_dict, graph_unit):
+def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, df_scenarios_dict, graph_unit, df_raw):
     # --------- Data Loading
 
     # Data prepared earlier is fetched here
     # Dates array definition from dictionary
     dates = np.array([entry['Date'] for entry in df_dataset_dict])
+    dates_raw = np.array([entry['Date'] for entry in df_raw])
     dates = dates - 1970
     # Users are taken from the database and multiply by a million
     users = np.array([entry['Users'] for entry in df_dataset_dict])
     users = users.astype(float) * 1000000
 
-
+    print("datepIckedinItial", date_picked_formatted_original)
     # Gets the date selected from the new date picker
-    date_picked_formatted = main.date_formatting_from_string(date_picked_formatted)
+    date_picked_formatted = main.date_formatting_from_string(date_picked_formatted_original)
     history_value = date_picked_formatted
+    history_value_graph = datetime.strptime(date_picked_formatted_original, "%Y-%m-%d")
+    print(history_value_graph)
+    print(date_picked_formatted)
+    # Extract the x-coordinate for the vertical line
+    x_coordinate = history_value_graph
+
     # Calculating the length of historical values to be considered in the plots
     # history_value_formatted = history_value[0] - 1970  # Puts back the historical value to the format for computations
     history_value_formatted = date_picked_formatted - 1970  # New slider: Puts back the historical value to the format for computations
@@ -1456,17 +1572,6 @@ def graph_update(data_slider, date_picked_formatted, df_dataset_dict, df_scenari
                     str(plateau_selected_growth) + " users"
 
 
-    # Finding the log parameters
-    df_log = main.parameters_dataframe_given_klog(dates[0:data_len], users[0:data_len])
-    df_log_array = np.array(df_log)
-    #index_of_k_log = df_sorted[df_sorted['Method'] == 'K set'].index[0]
-    k_log = df_log_array[0, 1]
-    r_log = df_log_array[0, 2]
-    p0_log = df_log_array[0, 3]
-    r_squared_log = np.round(df_log_array[0, 4], 3)
-    number_ignored_data_log = int(df_log_array[0, 0])
-    print("Number of ignored data")
-    print(number_ignored_data)
 
     # Polynomial approximation
     # logfit = main.log_approximation(dates[number_ignored_data:data_len], users[number_ignored_data:data_len])
@@ -1482,45 +1587,57 @@ def graph_update(data_slider, date_picked_formatted, df_dataset_dict, df_scenari
     # Calculating the other parameters, given K provided by the log approximation
     # r_log, p0_log, r_squared_log = main.logistic_parameters_given_K(dates[number_ignored_data:data_len],
                                                      # users[number_ignored_data:data_len], k_log)
-
     # Build Main Chart
     # ---------------------
     hovertemplate_maingraph = "%{text}"
-    fig_main = go.Figure(layout=layout_main_graph)
+    #fig_main = go.Figure(layout=layout_main_graph)
+    fig_main = make_subplots(specs=[[{"secondary_y": True}]])
+    fig_main.update_layout(layout_main_graph)
     x_axis = [dates[0] + 1970, dates[-1] * 2 - dates[0] + 1970]
-    fig_main.update_xaxes(range=x_axis)  # Fixing the size of the X axis with users max + 10%
+    #fig_main.update_xaxes(range=x_axis)  # Fixing the size of the X axis with users max + 10%
     fig_main.update_yaxes(range=[0, k_scenarios[-1]*1.1])  # Fixing the size of the Y axis
-
     # Historical data
-
     # Highlight points considered for the approximation
-    fig_main.add_trace(go.Bar(name="Dataset", x=dates[number_ignored_data:data_len] + 1970,
+    fig_main.add_trace(go.Bar(name="Dataset", x=dates_raw[number_ignored_data:data_len],
                               y=users[number_ignored_data:data_len],
                               marker_color="Black", hoverinfo='none'))
     y_predicted = users
     formatted_y_values = [f"{y / 1e6:.1f} M" if y < 1e9 else f"{y / 1e9:.2f} B" for y in y_predicted]
-    fig_main.add_trace(go.Scatter(name="Historical data", x=dates + 1970,
+    fig_main.add_trace(go.Scatter(name="Historical data", x=dates_raw,
                               y=y_predicted, mode='lines', opacity=1,
                               marker_color="Black", showlegend=False, text=formatted_y_values, hovertemplate=hovertemplate_maingraph))
     # Highlight points not considered for the approximation
     fig_main.add_trace(
-        go.Bar(name="Data omitted", x=dates[0:number_ignored_data] + 1970, y=users[0:number_ignored_data],
+        go.Bar(name="Data omitted", x=dates_raw[0:number_ignored_data], y=users[0:number_ignored_data],
                marker_color="Grey", hoverinfo='none', showlegend=False))
     # Highlight points past the current date
-    fig_main.add_trace(go.Bar(name="Forecast Range", x=dates[data_len:] + 1970,
+    fig_main.add_trace(go.Bar(name="Forecast Range", x=dates_raw[data_len:],
                               y=users[data_len:],
                               marker_color='#e6ecf5', hoverinfo='none',))
+    print("AQUI", date_picked_formatted_original)
+    print(x_coordinate)
     # Add vertical line indicating the year of the prediction for retrofitting
-    fig_main.add_vline(x=history_value, line_width=1, line_dash="dot",
-                       opacity=0.5, annotation_text="   Forecast")
+    #fig_main.add_vline(x=history_value_graph, line_width=1, line_dash="dot",
+                       #opacity=0.5, annotation_text="   Forecast")
+    fig_main.add_shape(
+        go.layout.Shape(
+            type="line",
+            x0=x_coordinate,
+            x1=x_coordinate,
+            y0=0,
+            y1=k_scenarios[-1],
+            line=dict(color="gray", width=1, dash="dot"),
+        )
+    )
+    print("asdfasdf")
     # Update layout to customize the annotation
     fig_main.update_layout(
         hovermode="x unified",
         annotations=[
             dict(
-                x=history_value,
-                y=0.9,  # Adjust the y-position as needed
-                text="   F O R E C A S T",
+                x=x_coordinate,
+                y=0.9*k_scenarios[-1],  # Adjust the y-position as needed
+                text="                      F O R E C A S T",
                 showarrow=False,
                 font=dict(
                     size=8,  # Adjust the size as needed
@@ -1534,55 +1651,120 @@ def graph_update(data_slider, date_picked_formatted, df_dataset_dict, df_scenari
             fixedrange=True,
             title=graph_unit,
         ),
+        xaxis=dict(
+            # title="Timeline",
+            #linecolor="Grey",
+
+        ),
         dragmode="pan",
     )
+    fig_main.update_yaxes(fixedrange=True, secondary_y=True)
 
     # Prediction, S-Curves
 
+
+    date_a = datetime.strptime(dates_raw[0], "%Y-%m-%d")
+    date_b = datetime.strptime(dates_raw[-1], "%Y-%m-%d")
+
+    # Calculate date_end using the formula date_b + 2 * (date_b - date_a)
+    date_end = date_b + (date_b - date_a)
+    print(dates[-1]*2-dates[0])
+    print(date_end)
+
+    date_end_formatted = main.date_formatting_from_string(date_end.strftime("%Y-%m-%d"))
+    print(date_end_formatted)
+
     # Add S-curve - S-Curve the user can play with
-    x = np.linspace(dates[0], dates[-1]*2-dates[0], num=50)
+    x = np.linspace(dates[0], float(date_end_formatted)-1970, num=50)
     y_predicted = main.logisticfunction(k, r, p0, x)
+
+    x_scenarios = np.linspace(dates[-1], float(date_end_formatted)-1970, num=50)
+
+    # Generate x_dates array
+    x_dates = np.linspace(date_a.timestamp(), date_end.timestamp(), num=50)
+    x_dates_scenarios = np.linspace(date_b.timestamp(), date_end.timestamp(), num=50)
+    x_dates = [datetime.fromtimestamp(timestamp) for timestamp in x_dates]
+    x_dates_scenarios = [datetime.fromtimestamp(timestamp) for timestamp in x_dates_scenarios]
+    print(x_dates)
+    print(x)
+    #print(len(x_dates), x_dates)
+    #print(len(x), x)
     formatted_y_values = [f"{y / 1e6:.1f} M" if y < 1e9 else f"{y / 1e9:.2f} B" for y in y_predicted]
-    fig_main.add_trace(go.Scatter(name="Prediction", x=x+1970, y=y_predicted,
+    fig_main.add_trace(go.Scatter(name="Prediction", x=x_dates, y=y_predicted,
                                   mode="lines", line=dict(color='#4dabf7', width=2), opacity=0.8,
                                   text=formatted_y_values, hovertemplate=hovertemplate_maingraph))
     # Add 3 scenarios
     x0 = np.linspace(dates_actual[-1] + 0.25, dates_actual[-1]*2-dates_actual[0], num=10)  # Creates a future timeline the size of the data
 
     # Low growth scenario
-    x = np.linspace(dates[-1], dates[-1] * 2 - dates[0], num=50)
-    y_trace = main.logisticfunction(k_scenarios[0], r_scenarios[0], p0_scenarios[0], x)
+    #x = np.linspace(dates[-1], dates[-1] * 2 - dates[0], num=50)
+    y_trace = main.logisticfunction(k_scenarios[0], r_scenarios[0], p0_scenarios[0], x_scenarios)
     formatted_y_values = [f"{y / 1e6:.1f} M" if y < 1e9 else f"{y / 1e9:.2f} B" for y in y_trace]
-    fig_main.add_trace(go.Scatter(name="Low growth", x=x + 1970,
-                             y=main.logisticfunction(k_scenarios[0], r_scenarios[0], p0_scenarios[0], x), mode='lines',
+    fig_main.add_trace(go.Scatter(name="Low growth", x=x_dates_scenarios,
+                             y=main.logisticfunction(k_scenarios[0], r_scenarios[0], p0_scenarios[0], x_scenarios), mode='lines',
                              line=dict(color='LightGrey', width=0.5), showlegend=False, text=formatted_y_values, hovertemplate=hovertemplate_maingraph)),
     #fig.add_trace(go.Line(name="Predicted S Curve", x=x + 1970,
                              #y=main.logisticfunction(k_scenarios[1], r_scenarios[1], p0_scenarios[1], x), mode="lines"))
-    y_trace = main.logisticfunction(k_scenarios[-1], r_scenarios[-1], p0_scenarios[-1], x)
+    y_trace = main.logisticfunction(k_scenarios[-1], r_scenarios[-1], p0_scenarios[-1], x_scenarios)
     formatted_y_values = [f"{y / 1e6:.1f} M" if y < 1e9 else f"{y / 1e9:.2f} B" for y in y_trace]
     # High growth scenario, if existent
     if len(k_scenarios) > 1:
-        fig_main.add_trace(go.Scatter(name="High Growth", x=x + 1970,
+        fig_main.add_trace(go.Scatter(name="High Growth", x=x_dates_scenarios,
                              y=y_trace, mode='lines',
                              line=dict(color='LightGrey', width=0.5),
                                       textposition="top left", textfont_size=6, showlegend=False,
                                       text=formatted_y_values, hovertemplate=hovertemplate_maingraph))
-
+    y_trace = main.logisticfunction(k_scenarios[-1], r_scenarios[-1], p0_scenarios[-1], x)
     # Filling the area of possible scenarios
     x_area = np.append(x, np.flip(x))  # Creating one array made of two Xs
     y_area_low = main.logisticfunction(k_scenarios[0], r_scenarios[0], p0_scenarios[0], x) # Low growth array
     y_area_high = main.logisticfunction(k_scenarios[-1], r_scenarios[-1], p0_scenarios[-1], np.flip(x)) # High growth array
     y_area = np.append(y_area_low, y_area_high)
-    fig_main.add_trace(go.Scatter(x=x_area + 1970,
+    dates_area = np.append(x_dates, np.flip(x_dates))
+    fig_main.add_trace(go.Scatter(x=dates_area,
                                   y=y_area,
                                   fill='toself',
                                   line_color='LightGrey',
                                   fillcolor='LightGrey',
                                   opacity=0.2,
                                   hoverinfo='none',
-                                  showlegend=False
+                                  showlegend=False,
                                   )
                        )
+
+    # Add Revenue (if it exists)
+
+    revenue = np.array([entry['Revenue'] for entry in df_dataset_dict])*1_000_000
+    # Find the indices where cells in the second array are not equal to "N/A"
+    valid_indices = np.where(revenue != 0)
+
+    # Filter rows based on valid indices
+    dates_revenue = dates_raw[valid_indices]
+    users_revenue = users[valid_indices]
+    revenue = revenue[valid_indices]
+    if len(revenue) > 0:
+        annual_revenue_per_user = revenue*4/users_revenue
+        x_revenue = dates_revenue
+        y_revenue = annual_revenue_per_user
+        formatted_y_values = [f"${y:.1f}" if y < 1000 else f"${y / 1e3:.2f} K" for y in y_revenue]
+        fig_main.add_trace(go.Scatter(
+            name="Annual Revenue per User (arpu)",
+            x=x_revenue,
+            y=y_revenue,
+            mode='lines',
+            line=dict(color='Red', width=0.5),
+            showlegend=True,
+            text=formatted_y_values,
+            hovertemplate=hovertemplate_maingraph),
+        secondary_y=True,
+        )
+        fig_main.update_yaxes(range=[0, annual_revenue_per_user[-1] * 1.1],
+                              title_text="Annual Revenue per User [$]",
+                              color="red",
+                              secondary_y=True)
+
+    else:
+        print("No revenue to be added to the graph")
 
     # fig_main.update_traces(hovertemplate="%{x|%b %Y}")
     # Calculate custom x-axis labels based on the numeric values
@@ -1714,19 +1896,34 @@ def show_cards(data, launch_counter):
     Input("range-discount-rate", "value"),
     Input("range-slider-k", "value"),
     Input(component_id='current-market-cap', component_property='data'),
+    Input(component_id='current-arpu-stored', component_property='data'),
     ], prevent_initial_call=True
 )
-def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, current_market_cap):
+def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, current_market_cap, current_arpu):
+    # The entire callback is skipped if the current market cap = 0, i.e. if it is not a public company
+    if current_market_cap == 0:
+        raise PreventUpdate
     k_selected = df_sorted[row_index]['K']
     r_selected = df_sorted[row_index]['r']
     p0_selected = df_sorted[row_index]['p0']
+    print(profit_margin)
     profit_margin = profit_margin/100
     discount_rate = discount_rate/100
     YEARS_DCF = 10
     current_market_cap = current_market_cap * 1000000
+    print("datafor valuation")
+    print(k_selected)
+    print(r_selected)
+    print(p0_selected)
+    print(profit_margin)
+    print(discount_rate)
+    print(YEARS_DCF)
+    print(current_market_cap)
     arpu_needed = main.arpu_for_valuation(k_selected, r_selected, p0_selected, profit_margin,
                                           discount_rate, YEARS_DCF, current_market_cap)
-    printed_arpu = f"{arpu_needed:.0f} $" # formatting
+    arpu_difference = arpu_needed/current_arpu
+    printed_arpu = f"{arpu_needed:.0f} $. The current arpu " +f"({current_arpu:.0f} $)"+" should be multiplied by "+f"{arpu_difference:.2f}!" # formatting
+    print("printed arpu", printed_arpu, type(printed_arpu))
     return printed_arpu
 
 @app.callback(
