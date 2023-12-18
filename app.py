@@ -924,7 +924,7 @@ main_plot.update(
 
 # ----------------------------------------------------------------------------------
 # App Layout
-app.layout = html.Div(
+app.layout = html.Div(style={'backgroundColor': '#F9F9F9'}, children=
     [navbar6,
      dmc.Space(mb=20),  # Margin/space between the navbar and the content
      # Mantine Grid
