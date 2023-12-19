@@ -465,7 +465,7 @@ selector_card = dmc.Card(
         dmc.Text(
             "Select a dataset to visualize its historical data and utilize the prediction tool "
             "to forecast its future growth.",
-            size="sm",
+            size="xs",
             color="dimmed",
         ),
         dmc.Space(h=10),
@@ -498,8 +498,9 @@ functionalities_card = dmc.Card(
             mb="xs",
         ),
         dmc.Text(
-            "The following functionalities allow you to move the predicted curve or 'go back in time'",
-            size="sm",
+            "See where data is heading and move the predicted growth (blue) easily. "
+            "For companies, figure out if their worth makes sense right now.",
+            size="xs",
             color="dimmed",
         ),
         dmc.Space(h=10),
@@ -626,7 +627,7 @@ functionalities_card = dmc.Card(
                             label="Depending on the profit margin & discount rate you choose, the required Average "
                                   "Annual Revenue per user (ARPU) is displayed below to justify the current valuation."
                                   "Comparing this to the actual current ARPU gives you a clear indication of whether the"
-                                  "stock is over or undervalued.",
+                                  " stock is over or undervalued.",
                             transition="slide-down",
                             transitionDuration=300,
                             multiline=True,
@@ -784,7 +785,7 @@ graph_card = dmc.Card(
         html.Div([
         dmc.Text(
                     "Select a dataset first",
-                    size="sm",
+                    size="xs",
                     color="dimmed",
                     id='graph-subtitle',
                 ),
@@ -1760,7 +1761,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
         )
         fig_main.update_yaxes(range=[0, annual_revenue_per_user[-1] * 1.1],
                               title_text="Annual Revenue per User [$]",
-                              color="red",
+                              color="#ff6666",
                               secondary_y=True)
 
     else:
