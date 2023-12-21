@@ -337,6 +337,23 @@ def net_present_value(k, r, p0, arpu, profitmargin, discount_rate, years):
     discounted_cashflow = npf.npv(discount_rate, cashflow)
     return discounted_cashflow
 
+# Cashflow is calculated same way as above but by including a growth rate for the ARPU over time
+def net_present_value_arpu_growth(k, r, p0, arpu, arpu_growth, profitmargin, discount_rate, years):
+    current_year = datetime.now().year
+    t = np.linspace(1.0, years, years) + current_year - 1970 # definition of the time "cashflow size" in future years
+    cashflow = np.array(years)
+    arpu_over_time = [arpu * (1 + arpu_growth) ** year for year in range(years)]
+    cashflow = logisticfunction(k, r, p0, t) * arpu_over_time * profitmargin
+    discounted_cashflow = npf.npv(discount_rate, cashflow)
+    users_over_time = logisticfunction(k, r, p0, t)
+
+    print("k", k, "r", r, "p0", p0, "t", t, "discount rate", discount_rate, "profitmargin", profitmargin,
+          "arpu_over_time", arpu_over_time)
+    print("Users over time", users_over_time)
+    print("Cashflow", cashflow)
+    print("Net Present Value:", discounted_cashflow)
+    return discounted_cashflow
+
 
 # Calculating the arpu needed to reach a certain valuation
 def arpu_for_valuation(k, r, p0, profitmargin, discount_rate, years, valuation):
@@ -497,4 +514,24 @@ def datepicker_limit(dataset_df):
         # Return default values or handle as needed in case of an error
         print("An error occured while calculating the min & max of the datepicker")
         return "", "", "", [], []
+
+# Function defining the color and the text of the hype meter indicator, depending on the size of the hype compared to
+# the total market cap. The color changes the outline of the badge while the text changes its value
+def hype_meter_indicator_values(hype_ratio):
+    if hype_ratio <= 0: # if hype ratio is smaller than 10%
+        indicator_color = "green"
+        indicator_text = "Not Hyped!"
+    if hype_ratio < 0.1: # if hype ratio is smaller than 10%
+        indicator_color = "green"
+        indicator_text = "Marginally Hyped"
+    elif hype_ratio < 0.15: # if hype ratio is smaller than 15%
+        indicator_color = "yellow"
+        indicator_text = "Moderately Hyped"
+    elif hype_ratio < 0.2: # if hype ratio is smaller than 20%
+        indicator_color = "orange"
+        indicator_text = "Strongly Hyped"
+    else: # if hype ratio is higher than 20%
+        indicator_color = "red"
+        indicator_text = "Super hyped!"
+    return indicator_color, indicator_text
 

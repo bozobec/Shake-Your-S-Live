@@ -283,6 +283,7 @@ slider_k = dmc.Slider(
             size="sm",
             disabled=True,
             showLabelOnHover=False,
+            color="#4dabf7",
             )
 
 # Profit margin slider
@@ -296,6 +297,7 @@ slider_profit_margin = dmc.Slider(
             disabled=False,
             showLabelOnHover=False,
             precision=2,
+            step=0.1,
             )
 
 # Discount rate slider
@@ -305,6 +307,7 @@ slider_discount_rate = dmc.Slider(
             min=2,
             max=20,
             value=5,
+            step=0.1,
             marks=[
                 {"value": 2, "label": "2%"},
                 {"value": 10, "label": "10%"},
@@ -313,6 +316,27 @@ slider_discount_rate = dmc.Slider(
             size="sm",
             disabled=False,
             showLabelOnHover=False,
+            precision=2,
+            )
+
+# ARPU growth slider
+
+slider_arpu_growth = dmc.Slider(
+            id="range-arpu-growth",
+            min=0,
+            max=10,
+            value=2,
+            step=0.1,
+            color="red",
+            marks=[
+                {"value": 0, "label": "0%"},
+                {"value": 5, "label": "5%"},
+                {"value": 10, "label": "10%"},
+            ],
+            size="sm",
+            disabled=False,
+            showLabelOnHover=False,
+            precision=2,
             )
 
 # Date picker
@@ -456,7 +480,7 @@ selector_card = dmc.Card(
     children=[
         dmc.Group(
             [
-                dmc.Text("Dataset", weight=500),
+                dmc.Title("Dataset", order=5),
             ],
             position="apart",
             mt="md",
@@ -472,7 +496,7 @@ selector_card = dmc.Card(
         dropdown6,
         dmc.Group(
                             [
-                                dmc.Text("Analysis", weight=500),
+                                dmc.Title("Analysis", order=5),
                             ],
                             position="apart",
                             mt="md",
@@ -491,7 +515,7 @@ functionalities_card = dmc.Card(
     children=[
         dmc.Group(
             [
-                dmc.Text("Functionalities", weight=500),
+                dmc.Title("Functionalities", order=5),
             ],
             position="apart",
             mt="md",
@@ -608,9 +632,37 @@ functionalities_card = dmc.Card(
                 dmc.Space(h=40),
             ]),
 
+# ARPU Growth
+        html.Div(
+            style={'display': 'none'},
+            id="arpu-growth",
+            children=[
+
+                dmc.Group(
+                    style={'display': 'flex'},
+                    children=[
+                        dmc.Text(
+                            "Revenue (ARPU) Yearly Growth",
+                            size="sm",
+                            weight=700,
+                        ),
+                        dmc.Tooltip(
+                            DashIconify(icon="feather:info", width=15),
+                            label="Adjust the yearly growth of the average revenue per user for the next years. This"
+                                  "changes the projected arpu and therefore the value of future users",
+                            transition="slide-down",
+                            transitionDuration=300,
+                            multiline=True,
+                        ),
+                    ]),
+                dmc.Space(h=10),
+                dmc.Container(slider_arpu_growth),
+                dmc.Space(h=40),
+            ]),
+
 # ARPU
         html.Div(
-            style={'display': 'block'},
+            style={'display': 'none'},
             id="arpu-card",
             children=[
 
@@ -648,7 +700,7 @@ functionalities_card = dmc.Card(
                 dmc.Tooltip(
                     dmc.Group([
                         dmc.Text(
-                            "Datepicker",
+                            "Retrospective Growth",
                             size="sm",
                             weight=700,
                             ),
@@ -670,36 +722,6 @@ functionalities_card = dmc.Card(
     radius="md",
     style={'display': 'none'},
     #style={"height": 500},
-)
-
-arpu_card = dmc.Card(
-    children=[
-        dmc.Group(
-            [
-                dmc.Text("Average yearly revenue per user needed", weight=500),
-            ],
-            position="apart",
-            mt="md",
-            mb="xs",
-        ),
-        dmc.Text(
-            id="arpu-needed",
-            children="456$",
-            size="lg",
-            color="Black",
-        ),
-        dmc.Text(
-            id="current-arpu",
-            children="No data available",
-            size="lg",
-            color="dimmed",
-        ),
-    ],
-    id="arpu-card",
-    style={'display': 'none'},
-    withBorder=True,
-    shadow="sm",
-    radius="md",
 )
 
 # Welcome timeline introducing the user to Groowt
@@ -775,7 +797,7 @@ graph_card = dmc.Card(
         # Card Title
         dmc.Group(
                     [
-                        dmc.Text("Welcome to GROOWT", id="graph-title", weight=500),
+                        dmc.Title("Welcome to GROOWT", id="graph-title", order=5),
                     ],
                     position="apart",
                     mt="md",
@@ -815,6 +837,80 @@ graph_card = dmc.Card(
         id='graph-card-content',
         style={'display': 'none'})
     ],
+    withBorder=True,
+    shadow="sm",
+    radius="md",
+)
+
+
+
+# Hype meter
+hype_meter_bootstrap = dbc.Progress(
+    children=
+        [
+            dbc.Progress(value=30, color="#228BE6", bar=True, label="N-O Assets", id="hype-meter-noa"),
+            dbc.Progress(value=30, color="#74C0FC", bar=True, label="Customer Equity", id="hype-meter-users"),
+            #dbc.Progress(value=20, color="#D1D1D1", bar=True, animated=True, striped=True, id="hype-meter-delta"),
+            dbc.Progress(value=20, color="#D1D1D1", bar=True, animated=True, striped=True, label="Hype", id="hype-meter-hype"),
+            dbc.Tooltip("Non-Operating Assets: $3.0B", target="hype-meter-noa", id="hype-tooltip-noa", placement="top"),
+            dbc.Tooltip("Customer Equity: $3.0B", target="hype-meter-users", id="hype-tooltip-users", placement="top"),
+            #dbc.Tooltip("Delta depending on the chosen scenario", target="hype-meter-delta", id="tooltip-equity-text", placement="top"),
+            dbc.Tooltip("Hype: $4.0B", target="hype-meter-hype", id="hype-tooltip-hype", placement="top"),
+        ],
+    style={"height": "30px", "border-radius": "30px"},
+)
+
+
+
+hype_meter = dmc.Progress(
+    size=40,
+    radius="xl",
+    styles={"label": {"font-size": "15px", "font-weight": 600}},
+    #striped=True,
+    #animate=True,
+    sections=[
+        {"value": 50, "color": "#74C0FC", "label": "Users value", "tooltip": "Users value - $5.0B"},
+        {"value": 6, "color": "Gray", "tooltip": "Users value delta - $0.6B"},
+        {"value": 11, "color": "#228BE6", "label": "NO Assets", "tooltip": "Non-Operating Assets - $1.1B",
+         "animate": True, "striped":True},
+    ],
+)
+data = [
+        {"value": "Low", "label": "React", "color":"red"},
+        {"value": "Medium", "label": "Angular"},
+        {"value": "High", "label": "Svelte"},
+        {"value": "Huge", "label": "Vue"},
+]
+hype_meter_indicator = dmc.Badge("Super hyped", variant="outline", color="red", id="hype-meter-indicator")
+
+hype_meter_card = dmc.Card(
+    children=[
+        dmc.Group(
+            [
+                dmc.Title("Hype Meter", order=5), hype_meter_indicator,
+            ],
+            position="apart",
+            mt="md",
+            mb="xs",
+        ),
+        #hype_meter,
+        dmc.Stack([
+                dmc.Text("Market Cap: $10.1B", size="xs", weight=500, align="center", id="hype-market-cap"),
+                hype_meter_bootstrap,
+            ],
+            align="stretch"
+        ),
+        dmc.Space(h=20),
+        dmc.Text(
+            id="hype-meter-text",
+            children="Change the profit margin, discount rate & arpu to assess the company's hype, or in other words, "
+                     "how much its market capitalization differs from its actual value",
+            size="xs",
+            color="Black",
+        ),
+    ],
+    id="hype-meter-card",
+    style={'display': 'none'},
     withBorder=True,
     shadow="sm",
     radius="md",
@@ -935,7 +1031,7 @@ dmc.Container(fluid=True, children=[
         #dmc.Col(span=0.5, lg=0), # Empty left column
         dmc.Col(selector_card, span="auto"),
         dmc.Col(dmc.LoadingOverlay(graph_card), span=12, lg=6),
-        dmc.Col([dmc.LoadingOverlay(functionalities_card), dmc.Space(h=20)], span=12, lg=3),
+        dmc.Col([hype_meter_card, dmc.LoadingOverlay([dmc.Space(h=20), functionalities_card])], span=12, lg=3),
         # dmc.Col(span="auto", lg=0), # Empty right column
          ],
         gutter="xl",
@@ -965,6 +1061,7 @@ dmc.Container(fluid=True, children=[
         # Slider to go back in time and retrofit
 
         # Bottom graph of the regression
+        #hype_meter,
         dbc.Row(dbc.Col(bottom_card, width={"size": 7}), style={"margin-top": "20px"}, justify="center"),
         # Bottom graph of the evolution of r^2
         dbc.Row(dbc.Col(bottom_bottom_card, width={"size": 7}), style={"margin-top": "20px"}, justify="center"),
@@ -978,6 +1075,7 @@ dmc.Container(fluid=True, children=[
         dcc.Store(id='launch-counter', data={'flag': False}),  # Counter that shows 0 if no dataset has been selected, or 1 otherwise
         dcc.Store(id='revenue-dates'),  # DF Containing the quarterly revenue and the dates
         dcc.Store(id='current-arpu-stored'),  # DF Containing the current ARPU
+        dcc.Store(id='total-assets'),  # DF Containing the current total assets of the company
     ], fluid=True)])
 
 
@@ -1028,11 +1126,15 @@ def select_value(value):
     Output(component_id='main-plot-container', component_property='figure'), # Stores the users + dates formatted for computation
     Output(component_id='profit-margin', component_property='style'), # Show/hide depending on company or not
     Output(component_id='discount-rate', component_property='style'), # Show/hide depending on company or not
-    Output(component_id='arpu-card', component_property='style'), # Show/hide depending on company or not
+    #Output(component_id='arpu-card', component_property='style'), # Show/hide depending on company or not
+    Output(component_id='hype-meter-card', component_property='style'), # Show/hide depending on company or not
+    Output(component_id='arpu-growth', component_property='style'), # Show/hide depending on company or not
     Output(component_id='profit-margin-container', component_property='children'), # Change the text below the profit margin slider
     Output(component_id='range-profit-margin', component_property='marks'), # Adds a mark to the slider if the profit margin > 0
     Output(component_id='range-profit-margin', component_property='value'), # Sets the value to the current profit margin
     Output(component_id='current-arpu-stored', component_property='data'), # Stores the current arpu
+    Output(component_id='total-assets', component_property='data'), # Stores the current arpu
+    Output(component_id='hype-market-cap', component_property='children'), # Stores the current arpu
 
     Input(component_id='dataset-selection', component_property='value')], # Take dropdown value
     [State('main-plot-container', 'figure')],
@@ -1043,11 +1145,13 @@ def set_history_size(dropdown_value, existing_main_plot):
     try:
         # Fetch dataset from API
         df = dataAPI.get_airtable_data(dropdown_value)
+        key_unit = df.loc[0, 'Unit']
         print("DF", df)
 
         # Creating the title & subtitle for the graph
-        title = dropdown_value
-        subtitle = "Explore " + str(dropdown_value) + "'s Historical Data (Bars) and Future Growth Projections. Customize " \
+        title = dropdown_value + " - " + key_unit
+        subtitle = "Explore " + str(dropdown_value) + "'s Historical " + key_unit + " Data (Bars) and Future Growth " \
+                                                                                    "Projections. Customize " \
                                              "Predictions with the Slider in the 'Functionalities' Section and Adjust " \
                                              "the Forecast Start Date Using the Datepicker."
 
@@ -1072,18 +1176,15 @@ def set_history_size(dropdown_value, existing_main_plot):
         symbol_company = df.loc[0, 'Symbol']
         if symbol_company != "N/A":
             current_market_cap = dataAPI.get_marketcap(symbol_company)  # Sets valuation if symbol exists
+            hype_market_cap = f"Market Cap: ${current_market_cap/1000:.2f}B" # Formatted text for hype meter
             show_company_functionalities = {'display': 'block'}  # Style component showing the fin. function.
-            yearly_revenue = dataAPI.get_previous_quarter_revenue(symbol_company) # Getting with API
-            quarterly_revenue = np.array(df["Revenue"]) # Getting in database
-            yearly_revenue_quarters = sum(quarterly_revenue[-4:])*1_000_000
-            print("yearly revenue from quarters")
-            print(yearly_revenue_quarters)
-            print("yearly revenue")
-            print(yearly_revenue)
+            yearly_revenue, total_assets = dataAPI.get_previous_quarter_revenue(symbol_company) # Getting with API
+            quarterly_revenue = np.array(df["Revenue"]) * 1_000_000 # Getting in database
+            yearly_revenue_quarters = sum(quarterly_revenue[-4:])
             try:
                 if yearly_revenue != 0:
-                    current_arpu = yearly_revenue/current_users
-                    printed_current_arpu = f"{current_arpu:.0f} $ (current arpu)"  # formatting
+                    #current_arpu = yearly_revenue/current_users
+                    current_arpu = sum(quarterly_revenue[-4:] / users_formatted[-4:]) # More
                 else:
                     current_arpu = yearly_revenue_quarters/current_users
                     printed_current_arpu = f"{current_arpu:.0f} $ (current arpu)"  # formatting
@@ -1097,13 +1198,14 @@ def set_history_size(dropdown_value, existing_main_plot):
             # Profit margin text and marks
             current_annual_profit_margin = dataAPI.get_profit_margin(symbol_company)
             marks_profit_margin_slider = []
+            print("Company Current ARPU:", current_arpu)
             if current_annual_profit_margin > 1:
                 value_profit_margin_slider = float(current_annual_profit_margin)
                 marks_profit_margin_slider = [
                     {"value": 2, "label": "2%"},
                     {"value": 10, "label": "10%"},
                     {"value": 20, "label": "20%"},
-                    {"value": value_profit_margin_slider, "label": "⭐"},
+                    #{"value": value_profit_margin_slider, "label": "⭐"},
                     {"value": 50, "label": "50%"},
                 ]
                 text_profit_margin = "Latest annual profit margin: " + str(current_annual_profit_margin) + "% 🤩",
@@ -1123,6 +1225,8 @@ def set_history_size(dropdown_value, existing_main_plot):
         else:
             current_market_cap = 0  # Otherwise, market_cap = zero
             current_arpu = 0
+            total_assets = 0
+            hype_market_cap = ""
             show_company_functionalities = {'display': 'none'}
             printed_current_arpu = 0
             text_profit_margin =""
@@ -1152,7 +1256,10 @@ def set_history_size(dropdown_value, existing_main_plot):
         # Graph creation
         fig_main = go.Figure(layout=layout_main_graph)
         hovertemplate_maingraph = "%{text}"
+        y_legend_title = key_unit
 
+        # Trial to create the basis of a graph here to only update the lines in another callback, but couldn't manage it
+        '''
         # Calculate the desired X-axis range based on the first and last date in the dataset
         x_axis_start = dates_formatted[0]
         x_axis_end = dates_formatted[-1]+((dates_formatted[-1] - dates_formatted[0]) * 0.2)  # We see "20%" in the future
@@ -1163,7 +1270,6 @@ def set_history_size(dropdown_value, existing_main_plot):
         fig_main.update_xaxes(range=x_axis_range)
 
         # Set y legend
-        y_legend_title = df.loc[0, 'Unit']
         fig_main.update_layout(
             yaxis=dict(
                 title=str(y_legend_title),
@@ -1214,11 +1320,13 @@ def set_history_size(dropdown_value, existing_main_plot):
         # Vertical line for current date
         fig_main.add_vline(name="current-date", x=current_date, line_width=1, line_dash="dot",
                             opacity=0.5, annotation_text="   Forecast")
+        '''
 
         return min_history_datepicker, max_history_datepicker, date_value_datepicker, users_dates_dict, \
             users_dates_formatted_dict, current_market_cap, y_legend_title, fig_main, title, subtitle, existing_main_plot, \
             show_company_functionalities, show_company_functionalities, show_company_functionalities, \
-            text_profit_margin, marks_profit_margin_slider, value_profit_margin_slider, current_arpu
+            show_company_functionalities, text_profit_margin, marks_profit_margin_slider, \
+            value_profit_margin_slider, current_arpu, total_assets, hype_market_cap
 
     except Exception as e:
         print(f"Error fetching or processing dataset: {str(e)}")
@@ -1474,8 +1582,11 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict, curr
     Input(component_id='scenarios-sorted', component_property='data'),
     Input(component_id='graph-unit', component_property='data'),  # Stores the graph unit (y axis legend)
     Input(component_id='users-dates-raw', component_property='data'),
+    Input(component_id='range-arpu-growth', component_property='value'),
+    Input(component_id='current-arpu-stored', component_property='data'),
     ], prevent_initial_call=True)
-def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, df_scenarios_dict, graph_unit, df_raw):
+def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, df_scenarios_dict, graph_unit, df_raw,
+                 arpu_growth, current_arpu):
     # --------- Data Loading
 
     # Data prepared earlier is fetched here
@@ -1486,6 +1597,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     # Users are taken from the database and multiply by a million
     users = np.array([entry['Users'] for entry in df_dataset_dict])
     users = users.astype(float) * 1000000
+    arpu_growth = arpu_growth/100
 
     print("datepIckedinItial", date_picked_formatted_original)
     # Gets the date selected from the new date picker
@@ -1733,11 +1845,19 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
                                   )
                        )
 
-    # Add Revenue (if it exists)
+    # REVENUE Lines
 
     revenue = np.array([entry['Revenue'] for entry in df_dataset_dict])*1_000_000
     # Find the indices where cells in the second array are not equal to "N/A"
     valid_indices = np.where(revenue != 0)
+
+    years = 10
+    current_date = datetime.now()
+    future_arpu = [current_arpu * (1 + arpu_growth) ** year for year in range(years)]
+    future_arpu_dates = [current_date + timedelta(days=365 * year) for year in range(years)]
+    print("ARPU future")
+    print(future_arpu_dates)
+    print(future_arpu)
 
     # Filter rows based on valid indices
     dates_revenue = dates_raw[valid_indices]
@@ -1748,18 +1868,43 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
         x_revenue = dates_revenue
         y_revenue = annual_revenue_per_user
         formatted_y_values = [f"${y:.1f}" if y < 1000 else f"${y / 1e3:.2f} K" for y in y_revenue]
+        # Past revenue outline to increase the contrast
         fig_main.add_trace(go.Scatter(
             name="Annual Revenue per User (arpu)",
             x=x_revenue,
             y=y_revenue,
             mode='lines',
-            line=dict(color='Red', width=0.5),
+            line=dict(color='White', width=2),
+            opacity=0.8,
+            showlegend=False,
+            text=formatted_y_values,
+            hovertemplate=hovertemplate_maingraph),
+            secondary_y=True,
+        )
+        # Past revenue line
+        fig_main.add_trace(go.Scatter(
+            name="Annual Revenue per User (arpu)",
+            x=x_revenue,
+            y=y_revenue,
+            mode='lines',
+            line=dict(color='Red', width=1),
             showlegend=True,
             text=formatted_y_values,
             hovertemplate=hovertemplate_maingraph),
-        secondary_y=True,
+            secondary_y=True,
         )
-        fig_main.update_yaxes(range=[0, annual_revenue_per_user[-1] * 1.1],
+        fig_main.add_trace(go.Scatter(
+            name="Future Annual Revenue per User (arpu)",
+            x=future_arpu_dates,
+            y=future_arpu,
+            mode='markers',
+            marker=dict(color='#ff6666', size=4),
+            showlegend=True,
+            text=formatted_y_values,
+            hovertemplate=hovertemplate_maingraph),
+            secondary_y=True,
+        )
+        fig_main.update_yaxes(range=[min(annual_revenue_per_user) * 0.9, max(annual_revenue_per_user) * 1.5],
                               title_text="Annual Revenue per User [$]",
                               color="#ff6666",
                               secondary_y=True)
@@ -1907,25 +2052,91 @@ def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, current_m
     k_selected = df_sorted[row_index]['K']
     r_selected = df_sorted[row_index]['r']
     p0_selected = df_sorted[row_index]['p0']
-    print(profit_margin)
     profit_margin = profit_margin/100
     discount_rate = discount_rate/100
     YEARS_DCF = 10
     current_market_cap = current_market_cap * 1000000
-    print("datafor valuation")
-    print(k_selected)
-    print(r_selected)
-    print(p0_selected)
-    print(profit_margin)
-    print(discount_rate)
-    print(YEARS_DCF)
-    print(current_market_cap)
-    arpu_needed = main.arpu_for_valuation(k_selected, r_selected, p0_selected, profit_margin,
-                                          discount_rate, YEARS_DCF, current_market_cap)
+    # Ignored to avoid calculating this. Can be discommented to reuse this function
+    #arpu_needed = main.arpu_for_valuation(k_selected, r_selected, p0_selected, profit_margin, discount_rate, YEARS_DCF, current_market_cap)
+    arpu_needed = 0
     arpu_difference = arpu_needed/current_arpu
     printed_arpu = f"{arpu_needed:.0f} $. The current arpu " +f"({current_arpu:.0f} $)"+" should be multiplied by "+f"{arpu_difference:.2f}!" # formatting
     print("printed arpu", printed_arpu, type(printed_arpu))
     return printed_arpu
+
+# Callback Adapting the Hype-meter
+@app.callback(
+    Output(component_id="hype-meter-noa", component_property="value"),
+    Output(component_id="hype-tooltip-noa", component_property="children"),
+    Output(component_id="hype-meter-users", component_property="value"),
+    Output(component_id="hype-tooltip-users", component_property="children"),
+    Output(component_id="hype-meter-hype", component_property="value"),
+    Output(component_id="hype-tooltip-hype", component_property="children"),
+    Output(component_id="hype-meter-indicator", component_property="color"),
+    Output(component_id="hype-meter-indicator", component_property="children"),
+    [
+    Input(component_id='scenarios-sorted', component_property='data'),
+    Input("range-profit-margin", "value"),
+    Input("range-discount-rate", "value"),
+    Input("range-slider-k", "value"),
+    Input("range-arpu-growth", "value"),
+    Input(component_id='current-market-cap', component_property='data'),
+    Input(component_id='current-arpu-stored', component_property='data'),
+    Input(component_id='total-assets', component_property='data'),
+    Input(component_id='users-dates-formatted', component_property='data')
+    ], prevent_initial_call=True
+)
+def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, arpu_growth, current_market_cap, current_arpu,
+                   total_assets, df_dataset_dict):
+    # The entire callback is skipped if the current market cap = 0, i.e. if it is not a public company
+    if current_market_cap == 0:
+        raise PreventUpdate
+    # Parameters definition
+    users = np.array([entry['Users'] for entry in df_dataset_dict]) * 1_000_000
+    k_selected = df_sorted[row_index]['K']
+    r_selected = df_sorted[row_index]['r']
+    p0_selected = df_sorted[row_index]['p0']
+    profit_margin = profit_margin/100
+    discount_rate = discount_rate/100
+    arpu_growth = arpu_growth / 100
+    YEARS_DCF = 15
+    current_market_cap = current_market_cap * 1000000
+
+    print("K selected", k_selected)
+
+    # Analysis to be deleted
+    #current_customer_equity =
+
+    # Equity calculation
+    current_customer_equity = users[-1] * current_arpu * profit_margin
+    future_customer_equity = main.net_present_value_arpu_growth(k_selected, r_selected, p0_selected, current_arpu,
+                                                                arpu_growth, profit_margin, discount_rate, YEARS_DCF)
+    total_customer_equity = current_customer_equity + future_customer_equity
+
+    non_operating_assets = total_assets
+    hype_total = current_market_cap - total_customer_equity - non_operating_assets
+
+    # Calculating the values of the hype meter
+    non_operating_assets_ratio = non_operating_assets / current_market_cap *100
+    noa_tooltip = f"Non-Operating Assets: ${total_assets/1e9:.2f}B. The current arpu "
+    customer_equity_ratio = total_customer_equity / current_market_cap * 100
+    print("CE ratio for hype meter", customer_equity_ratio)
+    customer_equity_tooltip = f"Customer Equity: ${total_customer_equity / 1e9:.2f}B. The current arpu "
+    hype_ratio = hype_total / current_market_cap * 100
+    print("NOA Ratio", non_operating_assets_ratio, "CE ratio", customer_equity_ratio, "Hype ratio", hype_ratio)
+    if hype_total < 0.0:
+        hype_ratio = 0.0
+    hype_tooltip = f"Hype: ${hype_total / 1e9:.2f}B. The current arpu "
+
+    hype_indicator_color, hype_indicator_text = main.hype_meter_indicator_values(hype_ratio/100)
+
+    # Calculation of the ARPU needed for a given market cap, margin & growth rate
+    #arpu_needed = main.arpu_for_valuation(k_selected, r_selected, p0_selected, profit_margin,discount_rate, YEARS_DCF, current_market_cap)
+    #arpu_difference = arpu_needed/current_arpu
+    #printed_arpu = f"{arpu_needed:.0f} $. The current arpu " +f"({current_arpu:.0f} $)"+" should be multiplied by "+f"{arpu_difference:.2f}!" # formatting
+
+    return non_operating_assets_ratio, noa_tooltip, customer_equity_ratio, customer_equity_tooltip, hype_ratio, \
+        hype_tooltip, hype_indicator_color, hype_indicator_text
 
 @app.callback(
     Output("offcanvas", "is_open"),

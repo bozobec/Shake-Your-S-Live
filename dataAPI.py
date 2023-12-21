@@ -178,14 +178,21 @@ def get_previous_quarter_revenue(symbol_input):
                                              'to': to_date, 'token': auth_token})
         data = response.json()
         try:
-            revenue = next(item['value'] for item in data['data'][0]['report']['ic'] if item['label'] == 'Revenue')
+            total_assets = next(
+                item['value'] for item in data['data'][0]['report']['bs'] if item['label'] == 'Total current assets')
+        except:
+            total_assets = 0.0
+            print("Error fetching total assets")
+        try:
+            revenue = next(item['value'] for item in data['data'][0]['report']['ic'] if item['label'] == 'Revenue'
+                           or item['label'] == 'Revenues' or item['label'] == 'Revenue:')
         except:
             revenue = next(item['value'] for item in data['data'][0]['report']['ic'] if item['label'] == 'Revenues')
 
-        return revenue / year_percentage
+        return revenue / year_percentage, total_assets
     except Exception as e:
         print(f"Error fetching quarterly revenue: {str(e)}")
-        return 0
+        return 0, total_assets
 
 # API Fetching the profit margin of the past year
 def get_profit_margin(symbol_input):
