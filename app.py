@@ -1031,7 +1031,7 @@ dmc.Container(fluid=True, children=[
         #dmc.Col(span=0.5, lg=0), # Empty left column
         dmc.Col(selector_card, span="auto"),
         dmc.Col(dmc.LoadingOverlay(graph_card), span=12, lg=6),
-        dmc.Col([hype_meter_card, dmc.LoadingOverlay([dmc.Space(h=20), functionalities_card])], span=12, lg=3),
+        dmc.Col([hype_meter_card, dmc.Space(h=20), functionalities_card], span=12, lg=3),
         # dmc.Col(span="auto", lg=0), # Empty right column
          ],
         gutter="xl",
