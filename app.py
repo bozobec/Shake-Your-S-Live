@@ -1857,7 +1857,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     # Find the indices where cells in the second array are not equal to "N/A"
     valid_indices = np.where(revenue != 0)
 
-    years = 10
+    years = 5
     current_date = datetime.now()
     future_arpu = [current_arpu * (1 + arpu_growth) ** year for year in range(years)]
     future_arpu_dates = [current_date + timedelta(days=365 * year) for year in range(years)]
