@@ -838,7 +838,7 @@ hype_meter_bootstrap = dbc.Progress(
             dbc.Progress(value=30, color="#228BE6", bar=True, label="N-O Assets", id="hype-meter-noa"),
             dbc.Progress(value=30, color="#74C0FC", bar=True, label="Customer Equity", id="hype-meter-users"),
             #dbc.Progress(value=20, color="#D1D1D1", bar=True, animated=True, striped=True, id="hype-meter-delta"),
-            dbc.Progress(value=20, color="#D1D1D1", bar=True, animated=True, striped=True, label="Hype", id="hype-meter-hype"),
+            dbc.Progress(value=20, color="#FFE066", bar=True, animated=True, striped=True, label="Hype", id="hype-meter-hype"),
             dbc.Tooltip("Non-Operating Assets: $3.0B", target="hype-meter-noa", id="hype-tooltip-noa", placement="top"),
             dbc.Tooltip("Customer Equity: $3.0B", target="hype-meter-users", id="hype-tooltip-users", placement="top"),
             #dbc.Tooltip("Delta depending on the chosen scenario", target="hype-meter-delta", id="tooltip-equity-text", placement="top"),
@@ -890,10 +890,16 @@ hype_meter_card = dmc.Card(
         dmc.Space(h=20),
         dmc.Text(
             id="hype-meter-text",
-            children="Change the profit margin, discount rate & arpu to assess the company's hype, or in other words, "
-                     "how much its market capitalization differs from its actual value",
+            children=["Adjust profit margin, discount rate, and ARPU to evaluate the company's hype through its "
+                     "three components: Non-Operating Assets, Customer Equity, and Hype.",
+                        dmc.Text("Non-Operating Assets represent additional valuable company assets.", color="#228BE6"),
+                        dmc.Text("Customer Equity signifies current and future customer-generated profit.", color="#74C0FC"),
+                        dmc.Text("Hype reflects the current overvaluation of the company in terms of market "
+                                 "capitalization versus actual value.", color="#FAB005"),
+                        ],
             size="xs",
             color="Black",
+            style={'display':'inline-block'}
         ),
     ],
     id="hype-meter-card",
@@ -1025,9 +1031,9 @@ app.layout = html.Div(style={'backgroundColor': '#F9F9F9'}, children=
 dmc.Container(fluid=True, children=[
      dmc.Grid([
         #dmc.Col(span=0.5, lg=0), # Empty left column
-        dmc.Col(selector_card, span="auto"),
-        dmc.Col(dmc.LoadingOverlay(graph_card), span=12, lg=6),
-        dmc.Col([hype_meter_card, dmc.Space(h=20), functionalities_card], span=12, lg=3),
+        dmc.Col(selector_card, span="auto", order=1),
+        dmc.Col(dmc.LoadingOverlay(graph_card), span=12, lg=6, orderXs=3, orderSm=3),
+        dmc.Col([hype_meter_card, dmc.Space(h=20), functionalities_card], span=12, lg=3, orderXs=2, orderSm=2),
         # dmc.Col(span="auto", lg=0), # Empty right column
          ],
         gutter="xl",
@@ -2123,15 +2129,15 @@ def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, arpu_grow
 
     # Calculating the values of the hype meter
     non_operating_assets_ratio = non_operating_assets / current_market_cap *100
-    noa_tooltip = f"Non-Operating Assets: ${total_assets/1e9:.2f}B. The current arpu "
+    noa_tooltip = f"Non-Operating Assets: ${total_assets/1e9:.2f} B."
     customer_equity_ratio = total_customer_equity / current_market_cap * 100
     print("CE ratio for hype meter", customer_equity_ratio)
-    customer_equity_tooltip = f"Customer Equity: ${total_customer_equity / 1e9:.2f}B. The current arpu "
+    customer_equity_tooltip = f"Customer Equity: ${total_customer_equity / 1e9:.2f} B."
     hype_ratio = hype_total / current_market_cap * 100
     print("NOA Ratio", non_operating_assets_ratio, "CE ratio", customer_equity_ratio, "Hype ratio", hype_ratio)
     if hype_total < 0.0:
         hype_ratio = 0.0
-    hype_tooltip = f"Hype: ${hype_total / 1e9:.2f}B. The current arpu "
+    hype_tooltip = f"Hype: ${hype_total / 1e9:.2f} B."
 
     hype_indicator_color, hype_indicator_text = main.hype_meter_indicator_values(hype_ratio/100)
 
