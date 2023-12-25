@@ -820,19 +820,6 @@ graph_card = dmc.Card(
                                      )
                            ]
                  ),
-        html.Div(id='graph-container0',
-                 children=[dcc.Graph(id='main-graph0', config={'displayModeBar': False, 'scrollZoom': True}, style={'display': 'none'},
-                                     )
-                           ]
-                 ),
-        html.Div(id='main-plot-container0',
-                         children=[dcc.Graph(id='main-plot-container',
-                                             figure=main_plot,
-                                             config={'displayModeBar': False, 'scrollZoom': True},
-                                             style={'display': 'none'},
-                                             )
-                                   ]
-                         )
         ],
         id='graph-card-content',
         style={'display': 'none'})
@@ -935,9 +922,18 @@ layout_main_graph = go.Layout(
         # Adjust click behavior
         itemclick="toggleothers",
         itemdoubleclick="toggle",
-        orientation="h",
-        x=0.5,
-        y=-0.1,
+        #orientation="h",
+        #x=0.5,
+        #y=-0.1,
+        yanchor="bottom",
+        y=0.01,
+        xanchor="right",
+        x=0.92,
+        font=dict(
+            #family="Courier",
+            size=10,
+            #color="black"
+        ),
     ),
     xaxis=dict(
         # title="Timeline",
@@ -1120,10 +1116,10 @@ def select_value(value):
     Output(component_id='users-dates-formatted', component_property='data'), # Stores the users + dates formatted for computation
     Output(component_id='current-market-cap', component_property='data'), # Stores the company market cap
     Output(component_id='graph-unit', component_property='data'), # Stores the graph unit (y axis legend)
-    Output(component_id='main-graph0', component_property='figure'), # Stores the users + dates formatted for computation
+    #Output(component_id='main-graph0', component_property='figure'), # Stores the users + dates formatted for computation
     Output("graph-title", "children"),
     Output("graph-subtitle", "children"),
-    Output(component_id='main-plot-container', component_property='figure'), # Stores the users + dates formatted for computation
+    #Output(component_id='main-plot-container', component_property='figure'), # Stores the users + dates formatted for computation
     Output(component_id='profit-margin', component_property='style'), # Show/hide depending on company or not
     Output(component_id='discount-rate', component_property='style'), # Show/hide depending on company or not
     #Output(component_id='arpu-card', component_property='style'), # Show/hide depending on company or not
@@ -1137,11 +1133,11 @@ def select_value(value):
     Output(component_id='hype-market-cap', component_property='children'), # Stores the current arpu
 
     Input(component_id='dataset-selection', component_property='value')], # Take dropdown value
-    [State('main-plot-container', 'figure')],
+    #[State('main-plot-container', 'figure')],
     prevent_initial_call=True,
 )
-def set_history_size(dropdown_value, existing_main_plot):
-
+def set_history_size(dropdown_value):
+    t1 = time.perf_counter(), time.process_time()
     try:
         # Fetch dataset from API
         df = dataAPI.get_airtable_data(dropdown_value)
@@ -1321,13 +1317,15 @@ def set_history_size(dropdown_value, existing_main_plot):
         fig_main.add_vline(name="current-date", x=current_date, line_width=1, line_dash="dot",
                             opacity=0.5, annotation_text="   Forecast")
         '''
-
+        t2 = time.perf_counter(), time.process_time()
+        print(f" Calculation of the different sliders")
+        print(f" Real time: {t2[0] - t1[0]:.2f} seconds")
+        print(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
         return min_history_datepicker, max_history_datepicker, date_value_datepicker, users_dates_dict, \
-            users_dates_formatted_dict, current_market_cap, y_legend_title, fig_main, title, subtitle, existing_main_plot, \
+            users_dates_formatted_dict, current_market_cap, y_legend_title, title, subtitle, \
             show_company_functionalities, show_company_functionalities, show_company_functionalities, \
             show_company_functionalities, text_profit_margin, marks_profit_margin_slider, \
             value_profit_margin_slider, current_arpu, total_assets, hype_market_cap
-
     except Exception as e:
         print(f"Error fetching or processing dataset: {str(e)}")
         return "", "", "", "", "", "", "", "", "",
@@ -1359,6 +1357,7 @@ def set_history_size(dropdown_value, existing_main_plot):
 # Analysis to load the different scenarios (low & high) when a dropdown value is selected
 def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict, current_market_cap):
     print("Starting scenarios calculation")
+    t1 = time.perf_counter(), time.process_time()
     date_picked_formatted = main.date_formatting_from_string(date_picked)
 
     # The data is loaded from airtable
@@ -1549,16 +1548,16 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict, curr
                 {"value": highest_r2_index, "label": "★"},
                 {"value": data_ignored_array[-1], "label": f"{k_scenarios[-1]/1000:.0f}K"},
             ]
-    print("MARKSK", type(marks_slider), marks_slider)
 
     # Updating the datepicker graph traces, the high & the low growth scenario
     main_plot.update_traces(
         selector=dict(name="current-date"),
         x=date_picked_formatted,
     )
-
-    print("Scenarios calculation completed")
-    print(df_sorted)
+    t2 = time.perf_counter(), time.process_time()
+    print(f" Scenarios calculation")
+    print(f" Real time: {t2[0] - t1[0]:.2f} seconds")
+    print(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
     return highest_r2_index, growth_message_title, growth_message_body, growth_message_color, \
         "customization", plateau_message_title, plateau_message_body, "blue", valuation_message_title, \
         valuation_message_body, valuation_message_color, df_sorted_dict, slider_max_value, marks_slider
@@ -1588,7 +1587,7 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict, curr
 def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, df_scenarios_dict, graph_unit, df_raw,
                  arpu_growth, current_arpu):
     # --------- Data Loading
-
+    t1 = time.perf_counter(), time.process_time()
     # Data prepared earlier is fetched here
     # Dates array definition from dictionary
     dates = np.array([entry['Date'] for entry in df_dataset_dict])
@@ -1713,12 +1712,13 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     # Highlight points considered for the approximation
     fig_main.add_trace(go.Bar(name="Dataset", x=dates_raw[number_ignored_data:data_len],
                               y=users[number_ignored_data:data_len],
-                              marker_color="Black", hoverinfo='none'))
+                              marker_color="Black", showlegend=False, hoverinfo='none'))
     y_predicted = users
     formatted_y_values = [f"{y / 1e6:.1f} M" if y < 1e9 else f"{y / 1e9:.2f} B" for y in y_predicted]
+    # Line linking the historical data for smoothing the legend hover
     fig_main.add_trace(go.Scatter(name="Historical data", x=dates_raw,
-                              y=y_predicted, mode='lines', opacity=1,
-                              marker_color="Black", showlegend=False, text=formatted_y_values, hovertemplate=hovertemplate_maingraph))
+                              y=y_predicted, mode='lines', opacity=0,
+                              marker_color="Black", text=formatted_y_values, hovertemplate=hovertemplate_maingraph))
     # Highlight points not considered for the approximation
     fig_main.add_trace(
         go.Bar(name="Data omitted", x=dates_raw[0:number_ignored_data], y=users[0:number_ignored_data],
@@ -1798,6 +1798,8 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     x_dates_scenarios = np.linspace(date_b.timestamp(), date_end.timestamp(), num=50)
     x_dates = [datetime.fromtimestamp(timestamp) for timestamp in x_dates]
     x_dates_scenarios = [datetime.fromtimestamp(timestamp) for timestamp in x_dates_scenarios]
+
+
     print(x_dates)
     print(x)
     #print(len(x_dates), x_dates)
@@ -2005,7 +2007,10 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     else:
         date_plateau_displayed = "Plateau could not be calculated"
     print("2. CALLBACK END")
-
+    t2 = time.perf_counter(), time.process_time()
+    print(f" Creating graph")
+    print(f" Real time: {t2[0] - t1[0]:.2f} seconds")
+    print(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
     return fig_main, sections, False, graph_message
 
 # Callback displaying the functionalities & graph cards, and hiding the text
