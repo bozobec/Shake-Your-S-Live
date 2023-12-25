@@ -64,8 +64,6 @@ dropdown2 = dbc.DropdownMenu(id='dropdown2', label="Select dataset", children=dr
 dropdown3 = dbc.DropdownMenu(id='dropdown3', label="Select dataset", children=[dbc.DropdownMenuItem(i) for i in labels])
 dropdown4 = dbc.DropdownMenu(id='dropdown4', label="Select dataset", children=[dbc.DropdownMenuItem(i) for i in labels])
 dropdown5 = dcc.Dropdown(id='dropdown5', placeholder="awdsfsdfsadf", options=[{'label': i, 'value': i} for i in labels])
-
-
 #company_test = "testtest"
 #labels_new.append({"value": company_test, "label": f" {company_test}", "disabled": True})
 
@@ -1032,8 +1030,8 @@ dmc.Container(fluid=True, children=[
      dmc.Grid([
         #dmc.Col(span=0.5, lg=0), # Empty left column
         dmc.Col(selector_card, span="auto", order=1),
-        dmc.Col(dmc.LoadingOverlay(graph_card), span=12, lg=6, orderXs=3, orderSm=3),
-        dmc.Col([hype_meter_card, dmc.Space(h=20), functionalities_card], span=12, lg=3, orderXs=2, orderSm=2),
+        dmc.Col(dmc.LoadingOverlay(graph_card), span=12, lg=6, orderXs=3, orderSm=3, orderLg=2),
+        dmc.Col([hype_meter_card, dmc.Space(h=20), functionalities_card], span=12, lg=3, orderXs=2, orderSm=2, orderLg=3),
         # dmc.Col(span="auto", lg=0), # Empty right column
          ],
         gutter="xl",
