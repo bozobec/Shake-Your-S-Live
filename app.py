@@ -836,7 +836,7 @@ hype_meter_bootstrap = dbc.Progress(
             dbc.Progress(value=30, color="#228BE6", bar=True, label="N-O Assets", id="hype-meter-noa"),
             dbc.Progress(value=30, color="#74C0FC", bar=True, label="Customer Equity", id="hype-meter-users"),
             #dbc.Progress(value=20, color="#D1D1D1", bar=True, animated=True, striped=True, id="hype-meter-delta"),
-            dbc.Progress(value=20, color="#FFE066", bar=True, animated=True, striped=True, label="Hype", id="hype-meter-hype"),
+            dbc.Progress(value=20, color="#D1D1D1", bar=True, animated=True, striped=True, label="Hype", id="hype-meter-hype"),
             dbc.Tooltip("Non-Operating Assets: $3.0B", target="hype-meter-noa", id="hype-tooltip-noa", placement="top"),
             dbc.Tooltip("Customer Equity: $3.0B", target="hype-meter-users", id="hype-tooltip-users", placement="top"),
             #dbc.Tooltip("Delta depending on the chosen scenario", target="hype-meter-delta", id="tooltip-equity-text", placement="top"),
@@ -893,7 +893,7 @@ hype_meter_card = dmc.Card(
                         dmc.Text("Non-Operating Assets represent additional valuable company assets.", color="#228BE6"),
                         dmc.Text("Customer Equity signifies current and future customer-generated profit.", color="#74C0FC"),
                         dmc.Text("Hype reflects the current overvaluation of the company in terms of market "
-                                 "capitalization versus actual value.", color="#FAB005"),
+                                 "capitalization versus actual value.", color="dimmed"),
                         ],
             size="xs",
             color="Black",
