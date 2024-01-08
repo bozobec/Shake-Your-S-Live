@@ -174,9 +174,13 @@ def get_previous_quarter_revenue(symbol_input):
         to_date = current_date.strftime('%Y-%m-%d')
 
         # Response
-        response = requests.get(url, params={'symbol': symbol, 'freq': frequency, 'from': from_date,
-                                             'to': to_date, 'token': auth_token})
+        response = requests.get(url, params={'symbol': symbol,
+                                             'freq': frequency,
+                                             #'from': from_date,
+                                             #'to': to_date,
+                                             'token': auth_token})
         data = response.json()
+        print(response)
         try:
             total_assets = next(
                 item['value'] for item in data['data'][0]['report']['bs'] if item['label'] == 'Total current assets')

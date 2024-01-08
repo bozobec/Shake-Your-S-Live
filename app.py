@@ -891,7 +891,9 @@ hype_meter_card = dmc.Card(
             children=["Adjust profit margin, discount rate, and ARPU to evaluate the company's hype through its "
                      "three components: Non-Operating Assets, Customer Equity, and Hype.",
                         dmc.Text("Non-Operating Assets represent additional valuable company assets.", color="#228BE6"),
-                        dmc.Text("Customer Equity signifies current and future customer-generated profit.", color="#74C0FC"),
+                        dmc.Text("Customer Equity signifies current and future customer-generated profit,"
+                                 " calculated with the selected parameters with a discounted cashflow "
+                                 "method", color="#74C0FC"),
                         dmc.Text("Hype reflects the current overvaluation of the company in terms of market "
                                  "capitalization versus actual value.", color="dimmed"),
                         ],
@@ -2112,6 +2114,7 @@ def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, arpu_grow
     current_market_cap = current_market_cap * 1000000
 
     print("K selected", k_selected)
+    print("total asserts", total_assets)
 
     # Analysis to be deleted
     #current_customer_equity =
