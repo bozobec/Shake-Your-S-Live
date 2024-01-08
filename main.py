@@ -127,6 +127,19 @@ def logfuncgeneric(qinf, alpha, thalf, dates):
     y = qinf/(1 + math.exp(-alpha*(dates-thalf)))
     return y
 
+# Simple linear regression function returning R^2. Used to assess the correlation between users & revenue
+# a high correlation signifies that the metric used is most probably the right one because it perfectly describes
+# the revenue
+
+def linear_regression(users, revenue):
+    reg = linear_model.LinearRegression()
+    x = users.reshape(-1, 1)
+    y = revenue.reshape(-1, 1)
+    regression = reg.fit(x, y)
+    coefficient = regression.coef_
+    intercept = regression.intercept_
+
+    return regression
 
 # Function calculating K, r & P0 given the discrete growth rate and the dates
 # A linear regression is done on the calculated discrete growth rate to obtain the carrying capacity K

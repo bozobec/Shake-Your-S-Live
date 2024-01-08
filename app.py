@@ -890,13 +890,14 @@ hype_meter_card = dmc.Card(
             id="hype-meter-text",
             children=["Adjust profit margin, discount rate, and ARPU to evaluate the company's hype through its "
                      "three components: Non-Operating Assets, Customer Equity, and Hype.",
-                        dmc.Text("Non-Operating Assets represent additional valuable company assets.", color="#228BE6"),
-                        dmc.Text("Customer Equity signifies current and future customer-generated profit,"
-                                 " calculated with the selected parameters with a discounted cashflow "
-                                 "method", color="#74C0FC"),
-                        dmc.Text("Hype reflects the current overvaluation of the company in terms of market "
-                                 "capitalization versus actual value.", color="dimmed"),
-                        ],
+                        #dmc.Text("Non-Operating Assets represent additional valuable company assets.", color="#228BE6"),
+                        #dmc.Text("Customer Equity signifies current and future customer-generated profit,"
+                        #         " calculated with the selected parameters with a discounted cashflow "
+                        #         "method", color="#74C0FC"),
+                        #dmc.Text("Hype reflects the current overvaluation of the company in terms of market "
+                        #         "capitalization versus actual value.", color="dimmed"),
+                        ]
+                      ,
             size="xs",
             color="Black",
             style={'display':'inline-block'}
@@ -1254,6 +1255,10 @@ def set_history_size(dropdown_value):
         max_history_datepicker = max_history_datepicker_date.strftime("%Y-%m-%d")
         date_value_datepicker = max_history_datepicker  # Sets the value of the datepicker as the max date
         current_date = dates_formatted[-1]
+
+        # Regression between Users and revenue
+        users_revenue_regression = main.linear_regression(users_formatted[-len(quarterly_revenue):], quarterly_revenue)
+        print("Users revenue regression", users_revenue_regression)
 
         # Graph creation
         fig_main = go.Figure(layout=layout_main_graph)
@@ -2130,15 +2135,19 @@ def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, arpu_grow
 
     # Calculating the values of the hype meter
     non_operating_assets_ratio = non_operating_assets / current_market_cap *100
-    noa_tooltip = f"Non-Operating Assets: ${total_assets/1e9:.2f} B."
+    noa_tooltip = f"Non-Operating Assets: ${total_assets/1e9:.2f} B. \n They represent additional valuable company " \
+                  f"assets, such as Goodwill"
     customer_equity_ratio = total_customer_equity / current_market_cap * 100
     print("CE ratio for hype meter", customer_equity_ratio)
-    customer_equity_tooltip = f"Customer Equity: ${total_customer_equity / 1e9:.2f} B."
+    customer_equity_tooltip = f"Customer Equity: ${total_customer_equity / 1e9:.2f} B.   It represents current and " \
+                              f"future customer-generated profit, calculated with the selected parameters with a " \
+                              f"discounted cashflow method"
     hype_ratio = hype_total / current_market_cap * 100
     print("NOA Ratio", non_operating_assets_ratio, "CE ratio", customer_equity_ratio, "Hype ratio", hype_ratio)
     if hype_total < 0.0:
         hype_ratio = 0.0
-    hype_tooltip = f"Hype: ${hype_total / 1e9:.2f} B."
+    hype_tooltip = f"Hype: ${hype_total / 1e9:.2f} B.  It reflects the current overvaluation of the company in terms " \
+                   f"of market capitalization versus actual value."
 
     hype_indicator_color, hype_indicator_text = main.hype_meter_indicator_values(hype_ratio/100)
 
