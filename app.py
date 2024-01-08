@@ -374,8 +374,15 @@ valuation_message = dmc.Alert(
     title="",
     color="gray"),
 
+# Correlation
+correlation_message = dmc.Alert(
+    children=dmc.Text(""),
+    id="correlation-message",
+    title="",
+    color="gray"),
+
 # Accordion
-accordion = dmc.Accordion(
+accordion = dmc.AccordionMultiple(
     value="customization",
     variant="separated",
     radius="xl",
@@ -418,6 +425,20 @@ accordion = dmc.Accordion(
                                      ),
                 dmc.AccordionPanel(
                     valuation_message
+                ),
+            ],
+            value="customization",
+        ),
+        dmc.AccordionItem(
+            [
+                dmc.AccordionControl(
+                    "Correlation",
+                    id="accordion-correlation",
+                    disabled=True,
+                    icon=DashIconify(icon="uit:chart-growth", width=20)
+                ),
+                dmc.AccordionPanel(
+                    correlation_message
                 ),
             ],
             value="customization",
@@ -1079,6 +1100,8 @@ dmc.Container(fluid=True, children=[
         dcc.Store(id='revenue-dates'),  # DF Containing the quarterly revenue and the dates
         dcc.Store(id='current-arpu-stored'),  # DF Containing the current ARPU
         dcc.Store(id='total-assets'),  # DF Containing the current total assets of the company
+        dcc.Store(id='users-revenue-correlation'),  # R^2 indicating the strength of the correlation between the KPI
+                                                    # used and the revenue
     ], fluid=True)])
 
 
@@ -1104,6 +1127,7 @@ def enable_slider(scenario_value, data_selection):
     Output("accordion-growth", "disabled"),
     Output("accordion-plateau", "disabled"),
     Output("accordion-valuation", "disabled"),
+    Output("accordion-correlation", "disabled"),
 
     Input("dataset-selection", "value")
     ],prevent_initial_call=True)
@@ -1112,7 +1136,7 @@ def select_value(value):
     subtitle = "Explore "+str(value)+"'s Historical Data (Bars) and Future Growth Projections. Customize " \
                                      "Predictions with the Slider in the 'Functionalities' Section and Adjust " \
                                      "the Forecast Start Date Using the Datepicker."
-    return False, False, False
+    return False, False, False, False
 
 # Callback defining the minimum and the maximum date of the datepicker and loading the dataset
 @app.callback([
@@ -1127,17 +1151,19 @@ def select_value(value):
     Output("graph-title", "children"),
     Output("graph-subtitle", "children"),
     #Output(component_id='main-plot-container', component_property='figure'), # Stores the users + dates formatted for computation
-    Output(component_id='profit-margin', component_property='style'), # Show/hide depending on company or not
-    Output(component_id='discount-rate', component_property='style'), # Show/hide depending on company or not
-    #Output(component_id='arpu-card', component_property='style'), # Show/hide depending on company or not
-    Output(component_id='hype-meter-card', component_property='style'), # Show/hide depending on company or not
-    Output(component_id='arpu-growth', component_property='style'), # Show/hide depending on company or not
-    Output(component_id='profit-margin-container', component_property='children'), # Change the text below the profit margin slider
-    Output(component_id='range-profit-margin', component_property='marks'), # Adds a mark to the slider if the profit margin > 0
-    Output(component_id='range-profit-margin', component_property='value'), # Sets the value to the current profit margin
-    Output(component_id='current-arpu-stored', component_property='data'), # Stores the current arpu
-    Output(component_id='total-assets', component_property='data'), # Stores the current arpu
-    Output(component_id='hype-market-cap', component_property='children'), # Stores the current arpu
+    Output(component_id='profit-margin', component_property='style'),  # Show/hide depending on company or not
+    Output(component_id='discount-rate', component_property='style'),  # Show/hide depending on company or not
+    #Output(component_id='arpu-card', component_property='style'),  # Show/hide depending on company or not
+    Output(component_id='hype-meter-card', component_property='style'),  # Show/hide depending on company or not
+    Output(component_id='arpu-growth', component_property='style'),  # Show/hide depending on company or not
+    Output(component_id='profit-margin-container', component_property='children'),  # Change the text below the profit margin slider
+    Output(component_id='range-profit-margin', component_property='marks'),  # Adds a mark to the slider if the profit margin > 0
+    Output(component_id='range-profit-margin', component_property='value'),  # Sets the value to the current profit margin
+    Output(component_id='current-arpu-stored', component_property='data'),  # Stores the current arpu
+    Output(component_id='total-assets', component_property='data'),  # Stores the current arpu
+    Output(component_id='hype-market-cap', component_property='children'),  # Stores the current arpu
+    Output(component_id='users-revenue-correlation', component_property='data'),  # Stores the correlation between
+    # the chosen KPI and the revenue
 
     Input(component_id='dataset-selection', component_property='value')], # Take dropdown value
     #[State('main-plot-container', 'figure')],
@@ -1182,8 +1208,12 @@ def set_history_size(dropdown_value):
             hype_market_cap = f"Market Cap: ${current_market_cap/1000:.2f}B" # Formatted text for hype meter
             show_company_functionalities = {'display': 'block'}  # Style component showing the fin. function.
             yearly_revenue, total_assets = dataAPI.get_previous_quarter_revenue(symbol_company) # Getting with API
-            quarterly_revenue = np.array(df["Revenue"]) * 1_000_000 # Getting in database
+            filtered_revenue_df = df[df["Revenue"] != 0] # Getting rid of the revenue != 0
+            quarterly_revenue = np.array(filtered_revenue_df["Revenue"]) * 1_000_000 # Getting in database
             yearly_revenue_quarters = sum(quarterly_revenue[-4:])
+            # Regression between Users and revenue
+            users_revenue_regression = main.linear_regression(users_formatted[-len(quarterly_revenue):],
+                                                              quarterly_revenue)
             try:
                 if yearly_revenue != 0:
                     #current_arpu = yearly_revenue/current_users
@@ -1231,6 +1261,7 @@ def set_history_size(dropdown_value):
             total_assets = 0
             hype_market_cap = ""
             show_company_functionalities = {'display': 'none'}
+            users_revenue_regression = 0
             printed_current_arpu = 0
             text_profit_margin =""
             value_profit_margin_slider = 5.0
@@ -1256,9 +1287,7 @@ def set_history_size(dropdown_value):
         date_value_datepicker = max_history_datepicker  # Sets the value of the datepicker as the max date
         current_date = dates_formatted[-1]
 
-        # Regression between Users and revenue
-        users_revenue_regression = main.linear_regression(users_formatted[-len(quarterly_revenue):], quarterly_revenue)
-        print("Users revenue regression", users_revenue_regression)
+
 
         # Graph creation
         fig_main = go.Figure(layout=layout_main_graph)
@@ -1336,7 +1365,7 @@ def set_history_size(dropdown_value):
             users_dates_formatted_dict, current_market_cap, y_legend_title, title, subtitle, \
             show_company_functionalities, show_company_functionalities, show_company_functionalities, \
             show_company_functionalities, text_profit_margin, marks_profit_margin_slider, \
-            value_profit_margin_slider, current_arpu, total_assets, hype_market_cap
+            value_profit_margin_slider, current_arpu, total_assets, hype_market_cap, users_revenue_regression
     except Exception as e:
         print(f"Error fetching or processing dataset: {str(e)}")
         return "", "", "", "", "", "", "", "", "",
@@ -1354,19 +1383,25 @@ def set_history_size(dropdown_value):
     Output(component_id="valuation-message", component_property="title"),
     Output(component_id="valuation-message", component_property="children"),
     Output(component_id="valuation-message", component_property="color"),
+    Output(component_id="correlation-message", component_property="title"),
+    Output(component_id="correlation-message", component_property="children"),
+    Output(component_id="correlation-message", component_property="color"),
     Output(component_id='scenarios-sorted', component_property='data'),
     Output(component_id='range-slider-k', component_property='max'),
     Output(component_id='range-slider-k', component_property='marks'),
 
     Input(component_id='dataset-selection', component_property='value'),  # Take dropdown value
-    Input(component_id='date-picker', component_property='value'), # Take date-picker date
-    Input("scenarios-picker", "value"), # Input the scenario to reset the position of the slider to the best scenario
+    Input(component_id='date-picker', component_property='value'),  # Take date-picker date
+    Input("scenarios-picker", "value"),  # Input the scenario to reset the position of the slider to the best scenario
     Input(component_id='users-dates-formatted', component_property='data'),
     Input(component_id='current-market-cap', component_property='data'),
+    Input(component_id='users-revenue-correlation', component_property='data'),
+    Input(component_id='graph-unit', component_property='data'),  # Getting the Unit used
     prevent_initial_call=True)
 
 # Analysis to load the different scenarios (low & high) when a dropdown value is selected
-def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict, current_market_cap):
+def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict, current_market_cap,
+              users_revenue_correlation, key_unit):
     print("Starting scenarios calculation")
     t1 = time.perf_counter(), time.process_time()
     date_picked_formatted = main.date_formatting_from_string(date_picked)
@@ -1498,8 +1533,31 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict, curr
         valuation_message_color = "green"
     else:
         valuation_message_title = "Valuation not applicable"
-        valuation_message_body = "No valuation can be assessed with the selected dataset"
+        valuation_message_body = "The valuation information is only relevant for companies"
         valuation_message_color = "gray"
+
+    # Formatting of the displayed correlation message
+    print("CORRELATION", users_revenue_correlation)
+    # Formating the displayed r^2:
+    formatted_correlation = f"{users_revenue_correlation:.2f}"
+    if users_revenue_correlation >= 0.9:
+        correlation_message_title = "Great metric selected!"
+        correlation_message_body = "The " + str(key_unit) + " you are using seem to be the right metric to " \
+                                                            "estimate the valuation, because there is a very strong " \
+                                                            "correlation between the " + str(key_unit) +\
+                                 " and the revenue (R^2 = " + str(formatted_correlation) +")"
+        correlation_message_color = "green"
+    elif users_revenue_correlation > 0:
+        correlation_message_title = "Another metric could be better"
+        correlation_message_body = str(key_unit) + "do not have a strong correlation with the revenue over time. " \
+                                                   "You may want to consider another metric to estimate this " \
+                                                   "company's valuation (R^2 = " + str(formatted_correlation) +")"
+        correlation_message_color = "Yellow"
+
+    else:
+        correlation_message_title = "Correlation not applicable"
+        correlation_message_body = "The correlation information is only relevant for companies"
+        correlation_message_color = "gray"
 
     # Slider definition
     df_scenarios = df_sorted
@@ -1571,7 +1629,8 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict, curr
     print(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
     return highest_r2_index, growth_message_title, growth_message_body, growth_message_color, \
         "customization", plateau_message_title, plateau_message_body, "blue", valuation_message_title, \
-        valuation_message_body, valuation_message_color, df_sorted_dict, slider_max_value, marks_slider
+        valuation_message_body, valuation_message_color, correlation_message_title, correlation_message_body, \
+        correlation_message_color,  df_sorted_dict, slider_max_value, marks_slider
 
 @app.callback([
     Output(component_id='main-graph1', component_property='figure'),  # Update graph 1
@@ -1863,11 +1922,13 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     revenue = np.array([entry['Revenue'] for entry in df_dataset_dict])*1_000_000
     # Find the indices where cells in the second array are not equal to "N/A"
     valid_indices = np.where(revenue != 0)
+    print(date_picked_formatted_original, type(date_picked_formatted_original))
 
-    years = 5
+    years = 6
     current_date = datetime.now()
+    print(current_date, type(current_date))
     future_arpu = [current_arpu * (1 + arpu_growth) ** year for year in range(years)]
-    future_arpu_dates = [current_date + timedelta(days=365 * year) for year in range(years)]
+    future_arpu_dates = [datetime.strptime(date_picked_formatted_original, '%Y-%m-%d') + timedelta(days=365 * year) for year in range(years)]
     print("ARPU future")
     print(future_arpu_dates)
     print(future_arpu)
@@ -1875,6 +1936,10 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     # Filter rows based on valid indices
     dates_revenue = dates_raw[valid_indices]
     users_revenue = users[valid_indices]
+    dates_revenue_actual = main.get_earlier_dates(dates[valid_indices], history_value_formatted)
+    #users_revenue_actual = main.get_earlier_dates(users_revenue, history_value_formatted)
+    data_len_revenue_array = dates_raw[data_len:]
+    data_len_revenue = len(data_len_revenue_array[data_len_revenue_array != 0])
     revenue = revenue[valid_indices]
     if len(revenue) > 0:
         annual_revenue_per_user = revenue*4/users_revenue
@@ -1913,6 +1978,18 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
             mode='markers',
             marker=dict(color='#ff6666', size=4),
             showlegend=True,
+            text=formatted_y_values,
+            hovertemplate=hovertemplate_maingraph),
+            secondary_y=True,
+        )
+        # Revenue past the selected date that are known [data_len:]
+        fig_main.add_trace(go.Scatter(
+            name="Annual Revenue per User (arpu)",
+            x=x_revenue[len(dates_revenue_actual):],
+            y=y_revenue[len(dates_revenue_actual):],
+            mode='lines',
+            line=dict(color='Gray', width=1),
+            showlegend=False,
             text=formatted_y_values,
             hovertemplate=hovertemplate_maingraph),
             secondary_y=True,

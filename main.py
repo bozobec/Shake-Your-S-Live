@@ -138,8 +138,10 @@ def linear_regression(users, revenue):
     regression = reg.fit(x, y)
     coefficient = regression.coef_
     intercept = regression.intercept_
+    r_squared = regression.score(x, y)
+    #revenue_predicted = predict(revenue)
 
-    return regression
+    return r_squared
 
 # Function calculating K, r & P0 given the discrete growth rate and the dates
 # A linear regression is done on the calculated discrete growth rate to obtain the carrying capacity K
