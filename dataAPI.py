@@ -95,19 +95,23 @@ def get_airtable_data(filter):
                "&fields%5B%5D=Unit" \
                "&fields%5B%5D=Symbol" \
                "&fields%5B%5D=Quarterly_Revenue_Mio$" \
+               "&fields%5B%5D=Net_Profit_Margin" \
+               "&fields%5B%5D=Market_Cap" \
                "&filterByFormula=Company%3D%22{}%22" \
                "&sort%5B0%5D%5Bfield%5D=Date" \
                "&sort%5B0%5D%5Bdirection%5D=asc".format(filter)  # Add the filter to the URL to get only
                                                                             # the company needed
         url = "https://api.airtable.com/v0/appm3ffcu38jyqhi3/tbl7LiTDpXk9DeRUB?fields%5B%5D=Company" \
-               "&fields%5B%5D=Date" \
-               "&fields%5B%5D=Users" \
-               "&fields%5B%5D=Unit" \
-               "&fields%5B%5D=Symbol" \
-               "&fields%5B%5D=Quarterly_Revenue_Mio$" \
-               "&filterByFormula=Company%3D%22{}%22" \
-               "&sort%5B0%5D%5Bfield%5D=Date" \
-               "&sort%5B0%5D%5Bdirection%5D=asc".format(filter)
+              "&fields%5B%5D=Date" \
+              "&fields%5B%5D=Users" \
+              "&fields%5B%5D=Unit" \
+              "&fields%5B%5D=Symbol" \
+              "&fields%5B%5D=Quarterly_Revenue_Mio$" \
+              "&fields%5B%5D=Net_Profit_Margin" \
+              "&fields%5B%5D=Market_Cap" \
+              "&filterByFormula=Company%3D%22{}%22" \
+              "&sort%5B0%5D%5Bfield%5D=Date" \
+              "&sort%5B0%5D%5Bdirection%5D=asc".format(filter)
         auth_token = "patUQKc4meIVaiLIw.efa35a957210ca18edc4fc00ae1b599a6a49851b8b7c59994e4384c19c20fcd1"
         headers = {
             "Authorization": f"Bearer {auth_token}"
@@ -124,7 +128,9 @@ def get_airtable_data(filter):
                 'Users': record['fields']['Users'],
                 'Unit': record['fields']['Unit'],
                 'Symbol': record['fields']['Symbol'],
-                'Revenue': record['fields']['Quarterly_Revenue_Mio$']
+                'Revenue': record['fields']['Quarterly_Revenue_Mio$'],
+                'Profit Margin': record['fields']['Net_Profit_Margin'],
+                'Market Cap': record['fields']['Market_Cap'],
             })
         df = pd.DataFrame(formatted_data)  # Create a DataFrame from the sample data
         # sorted_df = df.sort_values(by='Date')  # Sort df to avoid bugs linked to wrong API call

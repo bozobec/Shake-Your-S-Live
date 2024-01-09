@@ -290,6 +290,12 @@ slider_profit_margin = dmc.Slider(
             id="range-profit-margin",
             min=1,
             max=50,
+            marks=[
+                {"value": 2, "label": "2%"},
+                {"value": 10, "label": "10%"},
+                {"value": 20, "label": "20%"},
+                {"value": 50, "label": "50%"}
+                ],
             value=20,
             size="sm",
             disabled=False,
@@ -1145,7 +1151,6 @@ def select_value(value):
     Output(component_id='date-picker', component_property='value'), # Resets the date to the last available date of the dataset
     Output(component_id='users-dates-raw', component_property='data'), # Stores the users + dates data
     Output(component_id='users-dates-formatted', component_property='data'), # Stores the users + dates formatted for computation
-    Output(component_id='current-market-cap', component_property='data'), # Stores the company market cap
     Output(component_id='graph-unit', component_property='data'), # Stores the graph unit (y axis legend)
     #Output(component_id='main-graph0', component_property='figure'), # Stores the users + dates formatted for computation
     Output("graph-title", "children"),
@@ -1159,9 +1164,7 @@ def select_value(value):
     Output(component_id='profit-margin-container', component_property='children'),  # Change the text below the profit margin slider
     Output(component_id='range-profit-margin', component_property='marks'),  # Adds a mark to the slider if the profit margin > 0
     Output(component_id='range-profit-margin', component_property='value'),  # Sets the value to the current profit margin
-    Output(component_id='current-arpu-stored', component_property='data'),  # Stores the current arpu
     Output(component_id='total-assets', component_property='data'),  # Stores the current arpu
-    Output(component_id='hype-market-cap', component_property='children'),  # Stores the current arpu
     Output(component_id='users-revenue-correlation', component_property='data'),  # Stores the correlation between
     # the chosen KPI and the revenue
 
@@ -1272,13 +1275,14 @@ def set_history_size(dropdown_value):
                 {"value": 50, "label": "50%"},
             ]
 
-        print("MARKSFINAL", marks_profit_margin_slider)
 
         df_formatted = df
         df_formatted["Date"] = dates_formatted
 
         # Final DF containing dates, users, Units, Symbols & Quarterly revenue
         users_dates_formatted_dict = df_formatted.to_dict(orient='records')
+        print("Formatted dict")
+        print(users_dates_formatted_dict)
 
         min_history_datepicker = str(dates_unformatted[MIN_DATE_INDEX])  # Minimum date that can be picked
         max_dataset_date = datetime.strptime(dates_unformatted[-1], "%Y-%m-%d") # Fetching the last date of the dataset
@@ -1362,10 +1366,10 @@ def set_history_size(dropdown_value):
         print(f" Real time: {t2[0] - t1[0]:.2f} seconds")
         print(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
         return min_history_datepicker, max_history_datepicker, date_value_datepicker, users_dates_dict, \
-            users_dates_formatted_dict, current_market_cap, y_legend_title, title, subtitle, \
+            users_dates_formatted_dict, y_legend_title, title, subtitle, \
             show_company_functionalities, show_company_functionalities, show_company_functionalities, \
             show_company_functionalities, text_profit_margin, marks_profit_margin_slider, \
-            value_profit_margin_slider, current_arpu, total_assets, hype_market_cap, users_revenue_regression
+            value_profit_margin_slider, total_assets, users_revenue_regression
     except Exception as e:
         print(f"Error fetching or processing dataset: {str(e)}")
         return "", "", "", "", "", "", "", "", "",
@@ -1389,41 +1393,56 @@ def set_history_size(dropdown_value):
     Output(component_id='scenarios-sorted', component_property='data'),
     Output(component_id='range-slider-k', component_property='max'),
     Output(component_id='range-slider-k', component_property='marks'),
+    Output(component_id='current-arpu-stored', component_property='data'),  # Stores the current arpu
+    Output(component_id='hype-market-cap', component_property='children'),  # Stores the current arpu
+    Output(component_id='current-market-cap', component_property='data'), # Stores the company market cap
 
     Input(component_id='dataset-selection', component_property='value'),  # Take dropdown value
     Input(component_id='date-picker', component_property='value'),  # Take date-picker date
     Input("scenarios-picker", "value"),  # Input the scenario to reset the position of the slider to the best scenario
     Input(component_id='users-dates-formatted', component_property='data'),
-    Input(component_id='current-market-cap', component_property='data'),
     Input(component_id='users-revenue-correlation', component_property='data'),
     Input(component_id='graph-unit', component_property='data'),  # Getting the Unit used
+    Input(component_id='users-dates-raw', component_property='data'),
     prevent_initial_call=True)
 
 # Analysis to load the different scenarios (low & high) when a dropdown value is selected
-def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict, current_market_cap,
-              users_revenue_correlation, key_unit):
+def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
+              users_revenue_correlation, key_unit, df_raw):
     print("Starting scenarios calculation")
+    print(df_dataset_dict)
     t1 = time.perf_counter(), time.process_time()
     date_picked_formatted = main.date_formatting_from_string(date_picked)
-
+    df_dataset = pd.DataFrame(df_dataset_dict)
+    print(df_dataset)
+    print("Date selected")
+    print(type(date_picked), date_picked, date_picked_formatted)
     # The data is loaded from airtable
     #df = dataAPI.get_airtable_data(dropdown_value)
 
     # Dates array definition from dictionary
+    dates_raw = np.array([entry['Date'] for entry in df_raw])
     dates_new = np.array([entry['Date'] for entry in df_dataset_dict])
     dates = dates_new - 1970
+    data_len = len(main.get_earlier_dates(dates, date_picked_formatted-1970))
     # Users are taken from the database and multiply by a million
     users_new = np.array([entry['Users'] for entry in df_dataset_dict])
-    users = users_new.astype(float) * 1000000
+    users_original = users_new.astype(float) * 1000000
     #print(df)
 
     # Test to be deleted, changing dates & users to use moving average
-    dates, users = main.moving_average_smoothing(dates, users, 1)
+    dates, users = main.moving_average_smoothing(dates, users_original, 1)
 
     # Resizing of the dataset taking into account the date picked
     history_value_formatted = date_picked_formatted-1970  # New slider: Puts back the historical value to the format for computations
     dates_actual = main.get_earlier_dates(dates, history_value_formatted)
-    data_len = len(dates_actual)  # length of the dataset to consider for retrofitting
+    #data_len = len(dates_actual)  # length of the dataset to consider for retrofitting
+    closest_index = data_len - 1  # Index of the last data matching the date selected
+    current_users_array = users_new * 1e6
+    current_users = current_users_array[closest_index]
+    print("closest index", closest_index)
+    print(dates_actual)
+
 
     # All parameters are calculated by ignoring data 1 by 1, taking the history reference as the end point
     df_full = main.parameters_dataframe(dates[0:data_len], users[0:data_len])  # Dataframe containing all parameters with all data ignored
@@ -1517,25 +1536,6 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict, curr
                               "future, the best growth scenario is likely to reach its plateau in " \
                               + main.string_formatting_to_date(time_best_growth) + " with " + str(plateau_best_growth) + " users"
 
-    # Plateau Accordion
-    arpu_needed = main.arpu_for_valuation(k_scenarios[highest_r2_index], r_scenarios[highest_r2_index],
-                                          p0_scenarios[highest_r2_index], 0.2, 0.05, 10, current_market_cap*1000000)
-    # Formating the displayed market cap:
-    if current_market_cap >= 1000:
-        formatted_market_cap = f"{current_market_cap / 1000:.2f} B$"
-    else:
-        formatted_market_cap = f"{current_market_cap} mio$"
-    if current_market_cap != 0:
-        valuation_message_title = "Current market cap is " + str(formatted_market_cap)
-        valuation_message_body = "Given the projected user growth, " + str(dropdown_value) + " should make " + \
-                                 f"{arpu_needed:.0f} $" + " per user and per year to justify the current market cap " \
-                                                    "(assuming a 20% profit margin & a 5% discount rate)"
-        valuation_message_color = "green"
-    else:
-        valuation_message_title = "Valuation not applicable"
-        valuation_message_body = "The valuation information is only relevant for companies"
-        valuation_message_color = "gray"
-
     # Formatting of the displayed correlation message
     print("CORRELATION", users_revenue_correlation)
     # Formating the displayed r^2:
@@ -1623,6 +1623,102 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict, curr
         selector=dict(name="current-date"),
         x=date_picked_formatted,
     )
+
+    # Financial Values Calculation
+
+    # Calculating the date picked (removing one day that is added previously
+    date_str = date_picked
+    date_obj = datetime.strptime(date_str, '%Y-%m-%d')
+
+    # Remove one day
+    new_date_obj = date_obj - timedelta(days=1)
+
+    # Convert back to string
+    new_date_str = new_date_obj.strftime('%Y-%m-%d')
+
+    print("Actual last date picked", new_date_str, new_date_obj)
+    print(dates_raw[-1])
+
+    # Logic to be used when implementing changing the ARPU depending on the date picked
+    #date_last_quarter = main.previous_quarter_calculation().strftime("%Y-%m-%d")
+
+
+    print("Current users", current_users)
+
+    # Check whether it is a public company: Market cap fetching & displaying profit margin,
+    # discount rate and arpu for Companies
+    symbol_company = df_dataset.loc[0, 'Symbol']
+    if symbol_company != "N/A":
+        # If the date picked is the latest, then API call
+        if new_date_str == dates_raw[-1]:
+            current_market_cap = dataAPI.get_marketcap(symbol_company)  # Sets valuation if symbol exists
+        # Otherwise, the market cap of the last quarter is picked
+        else:
+            current_market_cap = df_dataset.loc[closest_index, 'Market Cap'] * 1e3
+        print("current Market Cap", current_market_cap)
+        current_annual_profit_margin = df_dataset.loc[closest_index, 'Profit Margin']
+        print("current profit margin", current_annual_profit_margin)
+        current_revenue_array = np.array(df_dataset['Revenue'])
+        current_revenue_array = current_revenue_array[:closest_index+1]
+        print("current_revenue_array", current_revenue_array)
+        current_revenue_df = df_dataset.iloc[:-closest_index].copy()
+        print("current_revenue_df", current_revenue_df)
+        filtered_revenue = current_revenue_array[current_revenue_array != 0]
+        hype_market_cap = f"Market Cap: ${current_market_cap / 1000:.2f}B"  # Formatted text for hype meter
+        print("current printed market cap", hype_market_cap)
+        show_company_functionalities = {'display': 'block'}  # Style component showing the fin. function.
+        #yearly_revenue, total_assets = dataAPI.get_previous_quarter_revenue(symbol_company)  # Getting with API
+        quarterly_revenue = filtered_revenue * 1_000_000  # Getting in database
+        print("quarterly revenue", quarterly_revenue)
+        yearly_revenue_quarters = sum(quarterly_revenue[-4:])
+        print("yearly_revenue_quarters", yearly_revenue_quarters)
+        # Regression between Users and revenue
+        #users_revenue_regression = main.linear_regression(users[-len(quarterly_revenue):],
+        #                                                  quarterly_revenue)
+        average_users_past_year = (current_users + current_users_array[closest_index-4])/2
+        print("Current users", current_users, "Users 1 year before", current_users_array[closest_index-4])
+        current_arpu = yearly_revenue_quarters / average_users_past_year
+        print("Current ARPU", current_arpu)
+        printed_current_arpu = f"{current_arpu:.0f} $ (current arpu)"  # formatting
+        marks_profit_margin_slider = []
+        print("Company Current ARPU:", current_arpu)
+        if current_annual_profit_margin > 1:
+            value_profit_margin_slider = float(current_annual_profit_margin)
+            text_profit_margin = "Latest annual profit margin: " + str(current_annual_profit_margin) + "% 🤩",
+
+        else:
+
+            text_profit_margin = "Latest annual profit margin: " + str(current_annual_profit_margin) + "% 😰",
+
+    else:
+        current_market_cap = 0  # Otherwise, market_cap = zero
+        current_arpu = 0
+        total_assets = 0
+        hype_market_cap = ""
+        show_company_functionalities = {'display': 'none'}
+        users_revenue_regression = 0
+        printed_current_arpu = 0
+        text_profit_margin = ""
+
+    # Plateau Accordion
+    arpu_needed = main.arpu_for_valuation(k_scenarios[highest_r2_index], r_scenarios[highest_r2_index],
+                                          p0_scenarios[highest_r2_index], 0.2, 0.05, 10,
+                                          current_market_cap * 1000000)
+    # Formating the displayed market cap:
+    if current_market_cap >= 1000:
+        formatted_market_cap = f"{current_market_cap / 1000:.2f} B$"
+    else:
+        formatted_market_cap = f"{current_market_cap} mio$"
+    if current_market_cap != 0:
+        valuation_message_title = "Current market cap is " + str(formatted_market_cap)
+        valuation_message_body = "Given the projected user growth, " + str(dropdown_value) + " should make " + \
+                                 f"{arpu_needed:.0f} $" + " per user and per year to justify the current market cap " \
+                                                          "(assuming a 20% profit margin & a 5% discount rate)"
+        valuation_message_color = "green"
+    else:
+        valuation_message_title = "Valuation not applicable"
+        valuation_message_body = "The valuation information is only relevant for companies"
+        valuation_message_color = "gray"
     t2 = time.perf_counter(), time.process_time()
     print(f" Scenarios calculation")
     print(f" Real time: {t2[0] - t1[0]:.2f} seconds")
@@ -1630,7 +1726,7 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict, curr
     return highest_r2_index, growth_message_title, growth_message_body, growth_message_color, \
         "customization", plateau_message_title, plateau_message_body, "blue", valuation_message_title, \
         valuation_message_body, valuation_message_color, correlation_message_title, correlation_message_body, \
-        correlation_message_color,  df_sorted_dict, slider_max_value, marks_slider
+        correlation_message_color,  df_sorted_dict, slider_max_value, marks_slider, current_arpu, hype_market_cap, current_market_cap
 
 @app.callback([
     Output(component_id='main-graph1', component_property='figure'),  # Update graph 1
@@ -1851,11 +1947,8 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
 
     # Calculate date_end using the formula date_b + 2 * (date_b - date_a)
     date_end = date_b + (date_b - date_a)
-    print(dates[-1]*2-dates[0])
-    print(date_end)
 
     date_end_formatted = main.date_formatting_from_string(date_end.strftime("%Y-%m-%d"))
-    print(date_end_formatted)
 
     # Add S-curve - S-Curve the user can play with
     x = np.linspace(dates[0], float(date_end_formatted)-1970, num=50)
