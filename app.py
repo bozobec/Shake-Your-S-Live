@@ -90,6 +90,157 @@ dropdown6 = html.Div(
     ]
 )
 
+# Hype meter indicator
+hype_meter_indicator_progress = dbc.Progress(
+    children=
+        [
+            dbc.Progress(value=5, color="#D3F9D8", bar=True, id="marginally-hyped"),
+            dbc.Progress(value=5, color="#FFF3BF", bar=True, id="moderately-hyped"),
+            dbc.Progress(value=5, color="#FFE8CC", bar=True, id="strongly-hyped"),
+            dbc.Progress(value=85, color="#C92A2A", bar=True, animated=True, striped=True, id="super-hyped"),
+            dbc.Tooltip("Customer Equity: $3.0B", target="marginally-hyped", placement="top"),
+            dbc.Tooltip("Delta depending on the chosen scenario", target="moderately-hyped", placement="top"),
+            dbc.Tooltip("Hype: $4.0B", target="strongly-hyped", placement="top"),
+            dbc.Tooltip("Super Hyped", target="super-hyped", placement="top"),
+        ],
+    style={"height": "5px", "border-radius": "0px"},
+)
+
+# Hype meter
+hype_meter_bootstrap = dbc.Progress(
+    children=
+        [
+            dbc.Progress(value=30, color="#228BE6", bar=True, label="N-O Assets", id="hype-meter-noa-example"),
+            dbc.Progress(value=30, color="#74C0FC", bar=True, label="Customer Equity", id="hype-meter-users-example"),
+            #dbc.Progress(value=20, color="#D1D1D1", bar=True, animated=True, striped=True, id="hype-meter-delta"),
+            dbc.Progress(value=40, color="#D1D1D1", bar=True, animated=True, striped=True, label="Hype"),
+            dbc.Tooltip("Non-Operating Assets: $3.0B", target="hype-meter-noa-example", placement="top"),
+            dbc.Tooltip("Customer Equity: $3.0B", target="hype-meter-users-example", placement="top"),
+            #dbc.Tooltip("Delta depending on the chosen scenario", target="hype-meter-delta", id="tooltip-equity-text", placement="top"),
+            dbc.Tooltip("Hype: $4.0B", target="hype-meter-hype-example", placement="top"),
+        ],
+    style={"height": "30px", "border-radius": "30px"},
+)
+
+hype_meter_example = dbc.Progress(
+    children=
+        [
+            dbc.Progress(value=30, color="#228BE6", bar=True, label="N-O Assets", id="hype-meter-noa"),
+            dbc.Progress(value=40, color="#74C0FC", bar=True, label="Customer Equity", id="hype-meter-users"),
+            dbc.Progress(value=30, color="#D1D1D1", bar=True, animated=True, striped=True, label="Hype", id="hype-meter-hype"),
+            dbc.Tooltip("Non-Operating Assets: $3.0B", target="hype-meter-noa", id="hype-tooltip-noa", placement="top"),
+            dbc.Tooltip("Customer Equity: $3.0B", target="hype-meter-users", id="hype-tooltip-users", placement="top"),
+            #dbc.Tooltip("Delta depending on the chosen scenario", target="hype-meter-delta", id="tooltip-equity-text", placement="top"),
+            dbc.Tooltip("Hype: $4.0B", target="hype-meter-hype", id="hype-tooltip-hype", placement="top"),
+        ],
+    style={"height": "30px", "border-radius": "30px"},
+)
+offcanvas_card_growth_analysis = dmc.Card(
+    children=[
+        dmc.Group(
+            [
+                dmc.Title("GROWTH", order=6),
+                dmc.Text("For all datasets", size="xs", color="dimmed")
+            ],
+            position="apart",
+            mt="md",
+            #mb="xs",
+        ),
+        dmc.Space(h=20),
+        dmc.Text(
+            #id="hype-meter-text",
+            children=[dmc.List([
+                    dmc.ListItem([dmc.Text("Dataset Selection", weight=500),
+                                  "Quickly choose your dataset from the dropdown menu. We are continuously adding new "
+                                  "datasets."]),
+                    dmc.ListItem([dmc.Text("Historical Data Visualization", weight=500),
+                                  "Dive into your selected dataset's past performance, unveiling growth trends "
+                                  "over time."]),
+                    dmc.ListItem([dmc.Text("Predictive Analysis", weight=500),
+                                  "Harness Groowt's advanced predictive capabilities to forecast future dataset "
+                                  "growth."]),
+                ], size="sm", listStyleType="decimal")]
+                      ,
+            size="xs",
+            color="Black",
+            #style={'display':'inline-block'}
+        ),
+    ],
+    #id="hype-meter-card",
+    #style={'display': 'none'},
+    withBorder=True,
+    shadow="sm",
+    radius="md",
+)
+
+offcanvas_card_valuation_analysis = dmc.Card(
+    children=[
+        dmc.Group(
+            [
+                dmc.Title("COMPANY VALUATION", order=6),
+            ],
+            position="apart",
+            mt="md",
+            #mb="xs",
+        ),
+        dmc.Space(h=20),
+        dmc.Text(
+            #id="hype-meter-text",
+            children=[dmc.Text("Methodology", size="sm", weight=700),
+                dmc.Space(h=5),
+                dmc.Text("In user-dependent companies, their value is tied to the number of users and the revenue each "
+                         "user generates. The total worth, known as 'Customer Equity', combines current and future "
+                         "value. To calculate the overall company value, add non-operating assets and subtract debt: "
+                         , size="sm"),
+                dmc.Text("Company Value = Non-Operating Assets + Customer Equity - Debt", align="center", size="sm", weight=500),
+                dmc.Text("Comparing this value to the "
+                         "market cap reveals investor sentiments, showing how much 'hope' or 'hype' surrounds "
+                         "the company. In the example below, we observe that the hype accounts for 30% of the company's "
+                         "current valuation. This suggests that unless there's a notable enhancement in its business "
+                         "model, there's a high likelihood that the value may decrease."
+                , size="sm"),
+                dmc.Space(h=10),
+                hype_meter_example,
+                dmc.Space(h=15),
+                dmc.Text("Functionalities", size="sm", weight=700),
+                dmc.Space(h=5),
+                dmc.List([
+                    dmc.ListItem([dmc.Text("Hypemeter", weight=500),
+                                  "Get a quick read on a company's hype level. A company is considered Super Hyped when "
+                                  "the hype exceeds 20% of the total value. Hover over categories for precise "
+                                  "insights."]),
+                    dmc.Space(h=3),
+                    dmc.ListItem([dmc.Text("Prediction Line", weight=500),
+                                  "Slide through different growth scenarios, correlating stronger growth with higher "
+                                  "future value and current valuation."]),
+                    dmc.Space(h=3),
+                    dmc.ListItem([dmc.Text("Profit Margin", weight=500),
+                                  "Evaluate a company's value by considering its profit margin. A positive margin "
+                                  "indicates revenue generation, and the higher the margin, the higher the current value."]),
+                    dmc.Space(h=3),
+                    dmc.ListItem([dmc.Text("Discount Rate", weight=500),
+                                    "Factor in future uncertainties with the discount rate. The higher the rate, "
+                                    "the more uncertainty about the future, leading to a lower current valuation."]),
+                    dmc.Space(h=3),
+                    dmc.ListItem([dmc.Text("Revenue (ARPU) per year", weight=500),
+                                    "Assess customer equity by changing the annual average revenue generated per user "
+                                    "(ARPU). "
+                                    "For example, Netflix users contribute around $130 per year based on their annual "
+                                    "subscription value."]),
+                ], size="sm", listStyleType="decimal"),
+            ]
+                      ,
+            size="xs",
+            color="Black",
+            #style={'display':'inline-block'}
+        ),
+    ],
+    #id="hype-meter-card",
+    #style={'display': 'none'},
+    withBorder=True,
+    shadow="sm",
+    radius="md",
+)
 
 
 # OffCanvas (side panel that opens to give more information)
@@ -99,35 +250,18 @@ offcanvas = html.Div(
         dbc.Offcanvas([
             dmc.Container(children=[
                 dmc.Text(
-                    "GROOWT is a powerful and user-friendly resource designed to help you analyze and predict the future "
-                    "trajectory of selected datasets. With this tool, you can gain valuable insights into the growth "
-                    "patterns of your chosen dataset, allowing you to make informed decisions and projections.", size="sm"),
+                    "Are you a Tech investor, journalist or simply curious about tech valuation? We got you."
+                    " Meet GROOWT, your go-to tool for predicting dataset growth and determining the "
+                    "value of publicly traded Tech companies.", size="sm"),
                 dmc.Space(h=15),
-                dmc.Text("GROOWT's key features include:", size="sm"),
-                dmc.Space(h=10),
-                dmc.List([
-                    dmc.ListItem([dmc.Text("Dataset Selection", weight=700),"Easily choose the dataset you want to analyze from the dropdown menu. "
-                    "The tool supports a wide range of datasets, enabling you to select the one that suits your needs."]),
-                    dmc.ListItem([dmc.Text("Historical Data Visualization", weight=700),"Visualize the historical data of your selected dataset, providing "
-                    "a clear overview of its past performance and growth trends. This visualization helps you understand "
-                    "how the dataset has evolved over time."]),
-                    dmc.ListItem([dmc.Text("Predictive Analysis", weight=700),"Leverage the advanced predictive capabilities of GROOWT to forecast the "
-                    "future growth of your dataset."]),
-                    dmc.ListItem([dmc.Text("Customization Options", weight=700),"Tailor your analysis by adjusting parameters ""and variables to fine-tune your "
-                    "predictions. The tool offers flexibility in adapting the analysis to your specific requirements."]),
-                    dmc.ListItem([dmc.Text("Decision Support", weight=700)," Use the insights generated by the Growth Estimation Tool to inform your "
-                    "decision-making processes. Whether you're a data analyst, business strategist, or simply curious "
-                    "about the dataset's future, this tool provides the information you need to plan and strategize "
-                    "effectively."]),
-                ], size="sm", listStyleType="decimal"),
+                offcanvas_card_growth_analysis,
                 dmc.Space(h=15),
-                dmc.Text("With the GROOWT, you can explore the potential future outcomes of your dataset, "
-                    "helping you make more informed choices and better understand the dynamics of the data"
-                    " you're working with. If you're tracking financial metrics, website traffic, or any other "
-                    "data-driven variable, this tool empowers you to harness the power of data for better decision-making."
-                , size="sm"),
+                offcanvas_card_valuation_analysis,
                 dmc.Space(h=15),
-                dmc.Text("Contact: groowt@proton.me")]
+                dmc.Text("We're continually adding new datasets & functionalities. Interested in specific datasets or have "
+                         "a feature request? Drop us a line! 🚀 groowt@proton.me.", size="sm"),
+                #dmc.Group(hype_meter_indicator_progress),
+            ]
             ),
         ],
             id="offcanvas",
@@ -673,8 +807,8 @@ functionalities_card = dmc.Card(
                         ),
                         dmc.Tooltip(
                             DashIconify(icon="feather:info", width=15),
-                            label="Adjust the yearly growth of the average revenue per user for the next years. This"
-                                  "changes the projected arpu and therefore the value of future users",
+                            label="Adjust the yearly growth of the Average Revenue Per User for the next years. This"
+                                  " changes the projected ARPU and therefore the value of future users",
                             transition="slide-down",
                             transitionDuration=300,
                             multiline=True,
@@ -758,6 +892,9 @@ welcome_timeline = html.Div([
     lineWidth=2,
     id='welcome-timeline',
     children=[
+        dmc.Text("Are you a Tech investor, journalist or simply curious about tech valuation? We got you."
+                    " Meet GROOWT, your go-to tool for predicting dataset growth and determining the "
+                    "value of publicly traded Tech companies.", color="blue", size="sm", mb="sm", weight=300),
         dmc.TimelineItem(
             title="Choose Your Dataset",
             bullet=DashIconify(icon="teenyicons:add-solid", width=12),
@@ -782,8 +919,8 @@ welcome_timeline = html.Div([
             children=[
                 dmc.Text(
                     [
-                        "For publicly traded user-based companies, Assess how much a company "
-                        "needs to do to justify its current valuation.",
+                        "For publicly traded user-based companies, assess whether their current valuation is justified"
+                        "or strongly 'hyped'",
                         dmc.Anchor(
                             "",
                             href="#",
@@ -802,6 +939,7 @@ welcome_timeline = html.Div([
             children=[
                 dmc.Text(
                     [
+                        "We are continuously adding new datasets and metrics. "
                         "Have new datasets or feature requests? Contact us",
                         dmc.Anchor(
                             " here!",
@@ -856,21 +994,6 @@ graph_card = dmc.Card(
 
 
 
-# Hype meter
-hype_meter_bootstrap = dbc.Progress(
-    children=
-        [
-            dbc.Progress(value=30, color="#228BE6", bar=True, label="N-O Assets", id="hype-meter-noa"),
-            dbc.Progress(value=30, color="#74C0FC", bar=True, label="Customer Equity", id="hype-meter-users"),
-            #dbc.Progress(value=20, color="#D1D1D1", bar=True, animated=True, striped=True, id="hype-meter-delta"),
-            dbc.Progress(value=20, color="#D1D1D1", bar=True, animated=True, striped=True, label="Hype", id="hype-meter-hype"),
-            dbc.Tooltip("Non-Operating Assets: $3.0B", target="hype-meter-noa", id="hype-tooltip-noa", placement="top"),
-            dbc.Tooltip("Customer Equity: $3.0B", target="hype-meter-users", id="hype-tooltip-users", placement="top"),
-            #dbc.Tooltip("Delta depending on the chosen scenario", target="hype-meter-delta", id="tooltip-equity-text", placement="top"),
-            dbc.Tooltip("Hype: $4.0B", target="hype-meter-hype", id="hype-tooltip-hype", placement="top"),
-        ],
-    style={"height": "30px", "border-radius": "30px"},
-)
 
 
 
@@ -899,7 +1022,8 @@ hype_meter_card = dmc.Card(
     children=[
         dmc.Group(
             [
-                dmc.Title("Hype Meter", order=5), hype_meter_indicator,
+                dmc.Title("Hype Meter", order=5),
+                hype_meter_indicator,
             ],
             position="apart",
             mt="md",
@@ -1713,7 +1837,10 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
         valuation_message_title = "Current market cap is " + str(formatted_market_cap)
         valuation_message_body = "Given the projected user growth, " + str(dropdown_value) + " should make " + \
                                  f"{arpu_needed:.0f} $" + " per user and per year to justify the current market cap " \
-                                                          "(assuming a 20% profit margin & a 5% discount rate)"
+                                                          "(assuming a 20% profit margin & a 5% discount rate). They are" \
+                                                          " currently making " + f"{current_arpu:.0f} $" + " per user" \
+                                                          " and have a " + f"{current_annual_profit_margin:.1f} % " + "" \
+                                                         "net profit margin."
         valuation_message_color = "green"
     else:
         valuation_message_title = "Valuation not applicable"
@@ -1870,10 +1997,9 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     hovertemplate_maingraph = "%{text}"
     #fig_main = go.Figure(layout=layout_main_graph)
     fig_main = make_subplots(specs=[[{"secondary_y": True}]])
-    fig_main.update_layout(layout_main_graph)
+
     x_axis = [dates[0] + 1970, dates[-1] * 2 - dates[0] + 1970]
     #fig_main.update_xaxes(range=x_axis)  # Fixing the size of the X axis with users max + 10%
-    fig_main.update_yaxes(range=[0, k_scenarios[-1]*1.1])  # Fixing the size of the Y axis
     # Historical data
     # Highlight points considered for the approximation
     fig_main.add_trace(go.Bar(name="Dataset", x=dates_raw[number_ignored_data:data_len],
@@ -1908,8 +2034,9 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
             line=dict(color="gray", width=1, dash="dot"),
         )
     )
-    print("asdfasdf")
     # Update layout to customize the annotation
+    fig_main.update_layout(layout_main_graph)
+    #fig_main.update_yaxes(range=[0, k_scenarios[-1]*1.1])  # Fixing the size of the Y axis
     fig_main.update_layout(
         hovermode="x unified",
         annotations=[
@@ -1927,12 +2054,16 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
             )
         ],
         yaxis=dict(
+            range=[0, k_scenarios[-1] * 1.1],
             fixedrange=True,
             title=graph_unit,
+            minallowed=0,
+            #maxallowed=k_scenarios[-1] * 1.5,
         ),
         xaxis=dict(
-            # title="Timeline",
-            #linecolor="Grey",
+            #fixedrange=True,
+            constrain='domain',
+            minallowed=dates_raw[0],
 
         ),
         dragmode="pan",
@@ -2063,12 +2194,14 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
             text=formatted_y_values,
             hovertemplate=hovertemplate_maingraph),
             secondary_y=True,
+            #visible='legendonly',
         )
         fig_main.add_trace(go.Scatter(
             name="Future Annual Revenue per User (arpu)",
             x=future_arpu_dates,
             y=future_arpu,
-            mode='markers',
+            mode='lines',
+            line_dash="dot",
             marker=dict(color='#ff6666', size=4),
             showlegend=True,
             text=formatted_y_values,
