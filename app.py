@@ -110,14 +110,14 @@ hype_meter_indicator_progress = dbc.Progress(
 hype_meter_bootstrap = dbc.Progress(
     children=
         [
-            dbc.Progress(value=30, color="#228BE6", bar=True, label="N-O Assets", id="hype-meter-noa-example"),
-            dbc.Progress(value=30, color="#74C0FC", bar=True, label="Customer Equity", id="hype-meter-users-example"),
+            dbc.Progress(value=10, color="#228BE6", bar=True, label="N-O Assets", id="hype-meter-noa"),
+            dbc.Progress(value=10, color="#74C0FC", bar=True, label="Customer Equity", id="hype-meter-users"),
             #dbc.Progress(value=20, color="#D1D1D1", bar=True, animated=True, striped=True, id="hype-meter-delta"),
-            dbc.Progress(value=40, color="#D1D1D1", bar=True, animated=True, striped=True, label="Hype"),
-            dbc.Tooltip("Non-Operating Assets: $3.0B", target="hype-meter-noa-example", placement="top"),
-            dbc.Tooltip("Customer Equity: $3.0B", target="hype-meter-users-example", placement="top"),
+            dbc.Progress(value=10, color="#D1D1D1", bar=True, animated=True, striped=True, label="Hype", id="hype-meter-hype"),
+            dbc.Tooltip("Non-Operating Assets: $3.0B", target="hype-meter-noa", id='hype-tooltip-noa', placement="top"),
+            dbc.Tooltip("Customer Equity: $3.0B", target="hype-meter-users", id='hype-tooltip-users', placement="top"),
             #dbc.Tooltip("Delta depending on the chosen scenario", target="hype-meter-delta", id="tooltip-equity-text", placement="top"),
-            dbc.Tooltip("Hype: $4.0B", target="hype-meter-hype-example", placement="top"),
+            dbc.Tooltip("Hype: $4.0B", target="hype-meter-hype", id='hype-tooltip-hype', placement="top"),
         ],
     style={"height": "30px", "border-radius": "30px"},
 )
@@ -125,13 +125,13 @@ hype_meter_bootstrap = dbc.Progress(
 hype_meter_example = dbc.Progress(
     children=
         [
-            dbc.Progress(value=30, color="#228BE6", bar=True, label="N-O Assets", id="hype-meter-noa"),
-            dbc.Progress(value=40, color="#74C0FC", bar=True, label="Customer Equity", id="hype-meter-users"),
-            dbc.Progress(value=30, color="#D1D1D1", bar=True, animated=True, striped=True, label="Hype", id="hype-meter-hype"),
-            dbc.Tooltip("Non-Operating Assets: $3.0B", target="hype-meter-noa", id="hype-tooltip-noa", placement="top"),
-            dbc.Tooltip("Customer Equity: $3.0B", target="hype-meter-users", id="hype-tooltip-users", placement="top"),
+            dbc.Progress(value=30, color="#228BE6", bar=True, label="N-O Assets", id="hype-meter-noa-ex"),
+            dbc.Progress(value=40, color="#74C0FC", bar=True, label="Customer Equity", id="hype-meter-users-ex"),
+            dbc.Progress(value=30, color="#D1D1D1", bar=True, animated=True, striped=True, label="Hype", id="hype-meter-hype-ex"),
+            dbc.Tooltip("Non-Operating Assets: $3.0B", target="hype-meter-noa-ex", placement="top"),
+            dbc.Tooltip("Customer Equity: $3.0B", target="hype-meter-users-ex", placement="top"),
             #dbc.Tooltip("Delta depending on the chosen scenario", target="hype-meter-delta", id="tooltip-equity-text", placement="top"),
-            dbc.Tooltip("Hype: $4.0B", target="hype-meter-hype", id="hype-tooltip-hype", placement="top"),
+            dbc.Tooltip("Hype: $4.0B", target="hype-meter-hype-ex", placement="top"),
         ],
     style={"height": "30px", "border-radius": "30px"},
 )
