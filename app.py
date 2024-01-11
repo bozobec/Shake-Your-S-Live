@@ -52,6 +52,7 @@ labels = dataAPI.get_airtable_labels_new()
 # Constants for the calculation
 YEAR_OFFSET = 1970  # The year "zero" for all the calculations
 MIN_DATE_INDEX = 4  # Defines the minimum year below which no date can be picked in the datepicker
+YEARS_DCF = 15 # Amount of years taken into account for DCF calculation
 
 # ------------------------------------------------------------------------------------------------------------
 # Components definition
@@ -210,7 +211,7 @@ offcanvas_card_valuation_analysis = dmc.Card(
                                   "the hype exceeds 20% of the total value. Hover over categories for precise "
                                   "insights."]),
                     dmc.Space(h=3),
-                    dmc.ListItem([dmc.Text("Prediction Line", weight=500),
+                    dmc.ListItem([dmc.Text("Growth Forecast", weight=500),
                                   "Slide through different growth scenarios, correlating stronger growth with higher "
                                   "future value and current valuation."]),
                     dmc.Space(h=3),
@@ -590,7 +591,7 @@ accordion = dmc.AccordionMultiple(
 graph_message = dmc.Alert(
     children=dmc.Text("About the graph"),
     id="graph-message",
-    title="About the prediction line",
+    title="About the Growth Forecast",
     color="blue",
     hide="True",
     withCloseButton="True"),
@@ -693,7 +694,7 @@ functionalities_card = dmc.Card(
             children=[
                 dmc.Group([
                     dmc.Text(
-                        "Prediction Line",
+                        "Growth Forecast",
                         size="sm",
                         weight=700,
                         ),
@@ -1232,7 +1233,9 @@ dmc.Container(fluid=True, children=[
         dcc.Store(id='total-assets'),  # DF Containing the current total assets of the company
         dcc.Store(id='users-revenue-correlation'),  # R^2 indicating the strength of the correlation between the KPI
                                                     # used and the revenue
-    ], fluid=True)])
+        dcc.Store(id='data-selection-counter', data={'flag': False}), # Counter that shows if a new dataset has been selected
+
+     ], fluid=True)])
 
 
 # ----------------------------------------------------------------------------------
@@ -1534,16 +1537,10 @@ def set_history_size(dropdown_value):
 def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
               users_revenue_correlation, key_unit, df_raw):
     print("Starting scenarios calculation")
-    print(df_dataset_dict)
     t1 = time.perf_counter(), time.process_time()
     date_picked_formatted = main.date_formatting_from_string(date_picked)
     df_dataset = pd.DataFrame(df_dataset_dict)
-    print(df_dataset)
-    print("Date selected")
-    print(type(date_picked), date_picked, date_picked_formatted)
-    # The data is loaded from airtable
-    #df = dataAPI.get_airtable_data(dropdown_value)
-
+    print("DF_dataset_first", df_dataset)
     # Dates array definition from dictionary
     dates_raw = np.array([entry['Date'] for entry in df_raw])
     dates_new = np.array([entry['Date'] for entry in df_dataset_dict])
@@ -1560,12 +1557,9 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
     # Resizing of the dataset taking into account the date picked
     history_value_formatted = date_picked_formatted-1970  # New slider: Puts back the historical value to the format for computations
     dates_actual = main.get_earlier_dates(dates, history_value_formatted)
-    #data_len = len(dates_actual)  # length of the dataset to consider for retrofitting
     closest_index = data_len - 1  # Index of the last data matching the date selected
     current_users_array = users_new * 1e6
     current_users = current_users_array[closest_index]
-    print("closest index", closest_index)
-    print(dates_actual)
 
 
     # All parameters are calculated by ignoring data 1 by 1, taking the history reference as the end point
@@ -1641,29 +1635,37 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
         plateau_best_growth = f"{k_scenarios[highest_r2_index] / 1e6:.1f} M"
     else:
         plateau_best_growth = f"{k_scenarios[highest_r2_index] / 1e9:.1f} B"
+
     time_best_growth = main.time_to_population(k_scenarios[highest_r2_index],
                                                r_scenarios[highest_r2_index],
                                                p0_scenarios[highest_r2_index],
-                                               k_scenarios[highest_r2_index] * 0.9)+1970
+                                               k_scenarios[highest_r2_index] * 0.95)+1970
 
     # Plateau Accordion
     if diff_r2lin_log > 0.1:
-        plateau_message_title = "Plateau could be reached in " + main.string_formatting_to_date(time_high_growth) \
+        plateau_message_title = "Plateau (95%) could be reached in " + main.string_formatting_to_date(time_high_growth) \
                                + " with " + str(plateau_high_growth) + " users "
         plateau_message_body = "Given the likelihood of exponential growth in the foreseeable " \
-                              "future, the high growth scenario is likely with a plateau at " + \
+                              "future, the high growth scenario is likely with 95% of its plateau at " + \
                               str(plateau_high_growth) + " users which should happen in " + main.string_formatting_to_date(time_high_growth)
     else:
         plateau_message_title = "Plateau could be reached in " + main.string_formatting_to_date(time_best_growth) \
                                + " with " + str(plateau_best_growth) + " users"
         plateau_message_body = "Given the likelihood of a stable growth in the foreseeable " \
-                              "future, the best growth scenario is likely to reach its plateau in " \
+                              "future, the best growth scenario is likely to reach 95% of its plateau in " \
                               + main.string_formatting_to_date(time_best_growth) + " with " + str(plateau_best_growth) + " users"
+    # Plateau message color
+    if time_best_growth < date_picked_formatted:
+        plateau_message_color = "red"
+    else:
+        plateau_message_color = "green"
+
+    print("Time growth", time_best_growth, date_picked, date_picked_formatted)
+    print(plateau_message_color)
 
     # Formatting of the displayed correlation message
-    print("CORRELATION", users_revenue_correlation)
-    # Formating the displayed r^2:
-    formatted_correlation = f"{users_revenue_correlation:.2f}"
+
+    formatted_correlation = f"{users_revenue_correlation:.2f}"  # Formatting the displayed r^2:
     if users_revenue_correlation >= 0.9:
         correlation_message_title = "Great metric selected!"
         correlation_message_body = "The " + str(key_unit) + " you are using seem to be the right metric to " \
@@ -1760,15 +1762,6 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
     # Convert back to string
     new_date_str = new_date_obj.strftime('%Y-%m-%d')
 
-    print("Actual last date picked", new_date_str, new_date_obj)
-    print(dates_raw[-1])
-
-    # Logic to be used when implementing changing the ARPU depending on the date picked
-    #date_last_quarter = main.previous_quarter_calculation().strftime("%Y-%m-%d")
-
-
-    print("Current users", current_users)
-
     # Check whether it is a public company: Market cap fetching & displaying profit margin,
     # discount rate and arpu for Companies
     symbol_company = df_dataset.loc[0, 'Symbol']
@@ -1779,33 +1772,19 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
         # Otherwise, the market cap of the last quarter is picked
         else:
             current_market_cap = df_dataset.loc[closest_index, 'Market Cap'] * 1e3
-        print("current Market Cap", current_market_cap)
         current_annual_profit_margin = df_dataset.loc[closest_index, 'Profit Margin']
-        print("current profit margin", current_annual_profit_margin)
         current_revenue_array = np.array(df_dataset['Revenue'])
         current_revenue_array = current_revenue_array[:closest_index+1]
-        print("current_revenue_array", current_revenue_array)
         current_revenue_df = df_dataset.iloc[:-closest_index].copy()
-        print("current_revenue_df", current_revenue_df)
         filtered_revenue = current_revenue_array[current_revenue_array != 0]
         hype_market_cap = f"Market Cap: ${current_market_cap / 1000:.2f}B"  # Formatted text for hype meter
-        print("current printed market cap", hype_market_cap)
-        show_company_functionalities = {'display': 'block'}  # Style component showing the fin. function.
         #yearly_revenue, total_assets = dataAPI.get_previous_quarter_revenue(symbol_company)  # Getting with API
         quarterly_revenue = filtered_revenue * 1_000_000  # Getting in database
-        print("quarterly revenue", quarterly_revenue)
         yearly_revenue_quarters = sum(quarterly_revenue[-4:])
-        print("yearly_revenue_quarters", yearly_revenue_quarters)
-        # Regression between Users and revenue
-        #users_revenue_regression = main.linear_regression(users[-len(quarterly_revenue):],
-        #                                                  quarterly_revenue)
         average_users_past_year = (current_users + current_users_array[closest_index-4])/2
-        print("Current users", current_users, "Users 1 year before", current_users_array[closest_index-4])
         current_arpu = yearly_revenue_quarters / average_users_past_year
-        print("Current ARPU", current_arpu)
         printed_current_arpu = f"{current_arpu:.0f} $ (current arpu)"  # formatting
         marks_profit_margin_slider = []
-        print("Company Current ARPU:", current_arpu)
         if current_annual_profit_margin > 1:
             value_profit_margin_slider = float(current_annual_profit_margin)
             text_profit_margin = "Latest annual profit margin: " + str(current_annual_profit_margin) + "% 🤩",
@@ -1846,14 +1825,17 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
         valuation_message_title = "Valuation not applicable"
         valuation_message_body = "The valuation information is only relevant for companies"
         valuation_message_color = "gray"
+
     t2 = time.perf_counter(), time.process_time()
     print(f" Scenarios calculation")
+    print(plateau_message_color)
     print(f" Real time: {t2[0] - t1[0]:.2f} seconds")
     print(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
     return highest_r2_index, growth_message_title, growth_message_body, growth_message_color, \
-        "customization", plateau_message_title, plateau_message_body, "blue", valuation_message_title, \
+        "customization", plateau_message_title, plateau_message_body, plateau_message_color, valuation_message_title, \
         valuation_message_body, valuation_message_color, correlation_message_title, correlation_message_body, \
-        correlation_message_color,  df_sorted_dict, slider_max_value, marks_slider, current_arpu, hype_market_cap, current_market_cap
+        correlation_message_color,  df_sorted_dict, slider_max_value, marks_slider, current_arpu, hype_market_cap, \
+        current_market_cap
 
 @app.callback([
     Output(component_id='main-graph1', component_property='figure'),  # Update graph 1
@@ -2009,14 +1991,14 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     formatted_y_values = [f"{y / 1e6:.1f} M" if y < 1e9 else f"{y / 1e9:.2f} B" for y in y_predicted]
     # Line linking the historical data for smoothing the legend hover
     fig_main.add_trace(go.Scatter(name="Historical data", x=dates_raw,
-                              y=y_predicted, mode='lines', opacity=0,
+                              y=y_predicted, mode='lines', opacity=1,
                               marker_color="Black", text=formatted_y_values, hovertemplate=hovertemplate_maingraph))
     # Highlight points not considered for the approximation
     fig_main.add_trace(
         go.Bar(name="Data omitted", x=dates_raw[0:number_ignored_data], y=users[0:number_ignored_data],
                marker_color="Grey", hoverinfo='none', showlegend=False))
     # Highlight points past the current date
-    fig_main.add_trace(go.Bar(name="Forecast Range", x=dates_raw[data_len:],
+    fig_main.add_trace(go.Bar(name="Future data", x=dates_raw[data_len:],
                               y=users[data_len:],
                               marker_color='#e6ecf5', hoverinfo='none',))
     print("AQUI", date_picked_formatted_original)
@@ -2099,7 +2081,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     #print(len(x_dates), x_dates)
     #print(len(x), x)
     formatted_y_values = [f"{y / 1e6:.1f} M" if y < 1e9 else f"{y / 1e9:.2f} B" for y in y_predicted]
-    fig_main.add_trace(go.Scatter(name="Prediction", x=x_dates, y=y_predicted,
+    fig_main.add_trace(go.Scatter(name="Growth Forecast", x=x_dates, y=y_predicted,
                                   mode="lines", line=dict(color='#4dabf7', width=2), opacity=0.8,
                                   text=formatted_y_values, hovertemplate=hovertemplate_maingraph))
     # Add 3 scenarios
@@ -2338,12 +2320,10 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     , prevent_initial_call=True
 )
 def show_cards(data, launch_counter):
-    print("Displaying cards", launch_counter, type(launch_counter))
     if launch_counter['flag'] is not True:
         launch_counter['flag'] = True
         show_graph_card = {'display': 'block'}
         hide_graph_card = {'display': 'none'}
-        print(launch_counter)
         return show_graph_card, show_graph_card, hide_graph_card, launch_counter
 
     else:
@@ -2380,7 +2360,6 @@ def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, current_m
     arpu_needed = 0
     arpu_difference = arpu_needed/current_arpu
     printed_arpu = f"{arpu_needed:.0f} $. The current arpu " +f"({current_arpu:.0f} $)"+" should be multiplied by "+f"{arpu_difference:.2f}!" # formatting
-    print("printed arpu", printed_arpu, type(printed_arpu))
     return printed_arpu
 
 # Callback Adapting the Hype-meter
@@ -2418,14 +2397,8 @@ def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, arpu_grow
     profit_margin = profit_margin/100
     discount_rate = discount_rate/100
     arpu_growth = arpu_growth / 100
-    YEARS_DCF = 15
     current_market_cap = current_market_cap * 1000000
 
-    print("K selected", k_selected)
-    print("total asserts", total_assets)
-
-    # Analysis to be deleted
-    #current_customer_equity =
 
     # Equity calculation
     current_customer_equity = users[-1] * current_arpu * profit_margin
@@ -2441,26 +2414,118 @@ def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, arpu_grow
     noa_tooltip = f"Non-Operating Assets: ${total_assets/1e9:.2f} B. \n They represent additional valuable company " \
                   f"assets, such as Goodwill"
     customer_equity_ratio = total_customer_equity / current_market_cap * 100
-    print("CE ratio for hype meter", customer_equity_ratio)
     customer_equity_tooltip = f"Customer Equity: ${total_customer_equity / 1e9:.2f} B.   It represents current and " \
                               f"future customer-generated profit, calculated with the selected parameters with a " \
                               f"discounted cashflow method"
     hype_ratio = hype_total / current_market_cap * 100
-    print("NOA Ratio", non_operating_assets_ratio, "CE ratio", customer_equity_ratio, "Hype ratio", hype_ratio)
     if hype_total < 0.0:
         hype_ratio = 0.0
     hype_tooltip = f"Hype: ${hype_total / 1e9:.2f} B.  It reflects the current overvaluation of the company in terms " \
                    f"of market capitalization versus actual value."
-
     hype_indicator_color, hype_indicator_text = main.hype_meter_indicator_values(hype_ratio/100)
-
-    # Calculation of the ARPU needed for a given market cap, margin & growth rate
-    #arpu_needed = main.arpu_for_valuation(k_selected, r_selected, p0_selected, profit_margin,discount_rate, YEARS_DCF, current_market_cap)
-    #arpu_difference = arpu_needed/current_arpu
-    #printed_arpu = f"{arpu_needed:.0f} $. The current arpu " +f"({current_arpu:.0f} $)"+" should be multiplied by "+f"{arpu_difference:.2f}!" # formatting
 
     return non_operating_assets_ratio, noa_tooltip, customer_equity_ratio, customer_equity_tooltip, hype_ratio, \
         hype_tooltip, hype_indicator_color, hype_indicator_text
+
+# Callback displaying the functionalities & graph cards, and hiding the text
+@app.callback(
+    Output(component_id='data-selection-counter', component_property='data'),
+    Input(component_id='users-dates-formatted', component_property='data'),
+    Input(component_id='total-assets', component_property='data'),
+    Input(component_id='dataset-selection', component_property='value'),
+    [State('dataset-selection', 'data')]
+    , prevent_initial_call=True
+)
+def historical_valuation_calculation(df_formatted, total_assets, data, dataset_counter):
+    t1 = time.perf_counter(), time.process_time()
+    df_dataset = pd.DataFrame(df_formatted)
+    print("DF_dataset_second", df_dataset)
+    dates_new = np.array([entry['Date'] for entry in df_formatted])
+    revenue_df = np.array([entry['Revenue'] for entry in df_formatted])
+    dates = dates_new - 1970
+    # Users are taken from the database and multiplied by a million
+    users_new = np.array([entry['Users'] for entry in df_formatted])
+    users_original = users_new.astype(float) * 1_000_000
+
+
+    # Iteration range for valuation calculation
+    iteration_range = [4, len(dates)]
+    i = len(dates)  # Iteration going through all the dates
+
+    dates_valuation = dates[:i]
+    users_valuation = users_original[:i]
+    quarterly_revenue = revenue_df * 1_000_000  # Getting in database
+    revenue_valuation = quarterly_revenue[:i]
+    print("Valuation data")
+    print(dates_valuation)
+    print(users_valuation)
+
+    # Test to be deleted, changing dates & users to use moving average
+    dates, users = main.moving_average_smoothing(dates_valuation, users_valuation, 1)
+
+
+    # Dataframe creation for all the valuation over time
+    columns = ['Date', 'K', 'r', 'p0', 'Profit Margin', 'ARPU', 'Valuation']
+    df_valuation_over_time = pd.DataFrame(columns=columns)
+
+    # All parameters are calculated by ignoring data 1 by 1, taking the history reference as the end point
+    df_full = main.parameters_dataframe(dates, users)  # Dataframe containing all parameters with all data ignored
+    df_sorted = main.parameters_dataframe_cleaning(df_full, users)  # Dataframe where inadequate scenarios are eliminated
+    if df_sorted.empty:
+        print("No good scenario could be calculated")
+        df_sorted = main.parameters_dataframe_cleaning_minimal(df_full, users)
+    else:
+        print("Successful scenarios exist")
+    # Number of scenarios to store
+    i = 0
+
+    # Profit margin assessment
+    profit_margin = np.empty(2)
+    profit_margin[0] = 0.05 # Low scenario
+    profit_margin[1] = 0.15 # High scenario
+
+    # Discount Rate assessment
+    discount_rate = np.empty(2)
+    discount_rate[0] = 0.05  # Low scenario
+    discount_rate[1] = 0.05  # High scenario
+
+    # Arpu growth assessment
+    arpu_growth = np.empty(2)
+    arpu_growth[0] = 0.01  # Low scenario
+    arpu_growth[1] = 0.05  # High scenario
+
+    # Current ARPU calculation
+    yearly_revenue_quarters = sum(revenue_valuation[-4:])
+    average_users_past_year = (users_valuation[-1] + users_valuation[-5]) / 2
+    current_arpu = yearly_revenue_quarters / average_users_past_year
+
+    # Valuation calculation
+    non_operating_assets = total_assets
+
+    num_iterations = 2
+    # Storing the data of two scenarios for a given date
+    for j in range(num_iterations):
+        df_valuation_over_time.at[i + j, 'Date'] = dates_new[-1]
+        df_valuation_over_time.at[i+j, 'K'] = k_selected = df_sorted.at[j*(len(df_sorted)-1), 'K']
+        df_valuation_over_time.at[i+j, 'r'] = r_selected = df_sorted.at[j*(len(df_sorted)-1), 'r']
+        df_valuation_over_time.at[i+j, 'p0'] = p0_selected = df_sorted.at[j*(len(df_sorted)-1), 'p0']
+        df_valuation_over_time.at[i + j, 'Profit Margin'] = profit_margin[j]
+        df_valuation_over_time.at[i + j, 'ARPU'] = current_arpu
+        print("Calculdeouf", k_selected, r_selected, p0_selected, current_arpu, arpu_growth[j], profit_margin[j], discount_rate[j],
+                                                                    YEARS_DCF)
+        future_customer_equity = main.net_present_value_arpu_growth(k_selected, r_selected, p0_selected, current_arpu, arpu_growth[j], profit_margin[j], discount_rate[j], YEARS_DCF)
+        current_customer_equity = users_valuation[-1] * current_arpu * profit_margin[j]
+        df_valuation_over_time.at[i + j, 'Valuation'] = future_customer_equity + current_customer_equity + non_operating_assets
+
+    print("DF VALUATION OVER TIME")
+    print(df_valuation_over_time)
+
+
+    t2 = time.perf_counter(), time.process_time()
+    print(f" Performance of the valuation over time")
+    print(f" Real time: {t2[0] - t1[0]:.2f} seconds")
+    print(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
+    return 1
 
 @app.callback(
     Output("offcanvas", "is_open"),
