@@ -2484,6 +2484,7 @@ def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, arpu_grow
     Output(component_id='valuation-graph', component_property='figure'),  # Update valuation graph
     Output(component_id='valuation-graph-message', component_property='children'),
     Output(component_id='valuation-graph-message', component_property='color'),
+    Output(component_id='valuation-graph-message', component_property='title'),
     Input(component_id='users-dates-formatted', component_property='data'),
     Input(component_id='total-assets', component_property='data'),
     Input(component_id='dataset-selection', component_property='value'),
@@ -2677,10 +2678,12 @@ def historical_valuation_calculation(df_formatted, total_assets, data, df_raw, l
     # Valuation message
 
     if market_cap_array[-1]<high_scenario_valuation[-1]:
+        valuation_graph_title = "Promising investment!"
         valuation_graph_message = "The Current Market Cap is lower than the most optimistic valuation (" + \
                               f"{high_scenario_valuation[-1]/1e9:.2f} B$). It could be a good time to invest!"
         valuation_graph_color = "green"
     else:
+        valuation_graph_title = "Risky investment!"
         valuation_graph_message = "The Current Market Cap is higher than the most optimistic valuation (" + \
                               f"{high_scenario_valuation[-1]/1e9:.2f} B$). It could be a good time to sell!"
         valuation_graph_color = "yellow"
@@ -2694,7 +2697,7 @@ def historical_valuation_calculation(df_formatted, total_assets, data, df_raw, l
     print(f" Performance of the valuation over time")
     print(f" Real time: {t2[0] - t1[0]:.2f} seconds")
     print(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
-    return 1, fig_valuation, valuation_graph_message, valuation_graph_color
+    return 1, fig_valuation, valuation_graph_message, valuation_graph_color, valuation_graph_title
 
 @app.callback(
     Output("offcanvas", "is_open"),
