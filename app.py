@@ -979,7 +979,7 @@ valuation_over_time = html.Div(children=[dcc.Graph(id='valuation-graph', config=
 tabs_graph = dmc.Tabs(
     [
         dmc.TabsList(
-            grow=True,
+            #grow=True,
             children=
                 [
                     dmc.Tab("Future Outlook", icon=DashIconify(icon="simple-icons:futurelearn"), value="1"),
