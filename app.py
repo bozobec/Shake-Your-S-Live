@@ -51,7 +51,7 @@ labels = dataAPI.get_airtable_labels_new()
 
 # Constants for the calculation
 YEAR_OFFSET = 1970  # The year "zero" for all the calculations
-MIN_DATE_INDEX = 4  # Defines the minimum year below which no date can be picked in the datepicker
+MIN_DATE_INDEX = 5  # Defines the minimum year below which no date can be picked in the datepicker
 YEARS_DCF = 15 # Amount of years taken into account for DCF calculation
 
 # ------------------------------------------------------------------------------------------------------------
@@ -247,7 +247,7 @@ offcanvas_card_valuation_analysis = dmc.Card(
 # OffCanvas (side panel that opens to give more information)
 offcanvas = html.Div(
     [
-        dbc.Button("About", id="open-offcanvas", n_clicks=0),
+        dbc.Button("How it works?", id="open-offcanvas", n_clicks=0),
         dbc.Offcanvas([
             dmc.Container(children=[
                 dmc.Text(
@@ -393,6 +393,12 @@ bottom_bottom_card = dbc.Card(id="bottom-bottom-card", children=[
                         html.Div(id='graph-container3', children=[dcc.Graph(id='main-graph3',
                                                                             config={'displayModeBar': False})])
                       ], style={'display': 'none'})
+
+# Card that contains the valuation calculation over time
+valuation_over_time_card = dbc.Card(id="valuation-card", children=[
+                        html.Div(id='graph-valuation-container', children=[dcc.Graph(id='valuation-graph',
+                                                                            config={'displayModeBar': True})])
+                      ])
 # Card containing the history slider
 top_card = dbc.Card(id="top-card", children=[
                         dbc.CardBody(
@@ -1185,7 +1191,10 @@ dmc.Container(fluid=True, children=[
      dmc.Grid([
         #dmc.Col(span=0.5, lg=0), # Empty left column
         dmc.Col(selector_card, span="auto", order=1),
-        dmc.Col(dmc.LoadingOverlay(graph_card), span=12, lg=6, orderXs=3, orderSm=3, orderLg=2),
+        dmc.Col([
+            dmc.LoadingOverlay(graph_card),
+            #valuation_over_time_card  # Comment this line to remove the analysis graphs
+        ], span=12, lg=6, orderXs=3, orderSm=3, orderLg=2),
         dmc.Col([hype_meter_card, dmc.Space(h=20), functionalities_card], span=12, lg=3, orderXs=2, orderSm=2, orderLg=3),
         # dmc.Col(span="auto", lg=0), # Empty right column
          ],
@@ -2430,6 +2439,7 @@ def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, arpu_grow
 # Callback displaying the functionalities & graph cards, and hiding the text
 @app.callback(
     Output(component_id='data-selection-counter', component_property='data'),
+    Output(component_id='valuation-graph', component_property='figure'),  # Update valuation graph
     Input(component_id='users-dates-formatted', component_property='data'),
     Input(component_id='total-assets', component_property='data'),
     Input(component_id='dataset-selection', component_property='value'),
@@ -2438,94 +2448,120 @@ def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, arpu_grow
 )
 def historical_valuation_calculation(df_formatted, total_assets, data, dataset_counter):
     t1 = time.perf_counter(), time.process_time()
-    df_dataset = pd.DataFrame(df_formatted)
-    print("DF_dataset_second", df_dataset)
     dates_new = np.array([entry['Date'] for entry in df_formatted])
     revenue_df = np.array([entry['Revenue'] for entry in df_formatted])
-    dates = dates_new - 1970
+    dates_original = dates_new - 1970
     # Users are taken from the database and multiplied by a million
     users_new = np.array([entry['Users'] for entry in df_formatted])
     users_original = users_new.astype(float) * 1_000_000
-
+    MIN_REVENUE_INDEX = MIN_DATE_INDEX
 
     # Iteration range for valuation calculation
-    iteration_range = [4, len(dates)]
-    i = len(dates)  # Iteration going through all the dates
-
-    dates_valuation = dates[:i]
-    users_valuation = users_original[:i]
-    quarterly_revenue = revenue_df * 1_000_000  # Getting in database
-    revenue_valuation = quarterly_revenue[:i]
-    print("Valuation data")
-    print(dates_valuation)
-    print(users_valuation)
-
-    # Test to be deleted, changing dates & users to use moving average
-    dates, users = main.moving_average_smoothing(dates_valuation, users_valuation, 1)
-
-
+    iteration_range = [MIN_DATE_INDEX, len(dates_original)]  # Range for calculating all the valuations, starting from the 4th date
+    dates_valuation = []
+    users_valuation = []
     # Dataframe creation for all the valuation over time
     columns = ['Date', 'K', 'r', 'p0', 'Profit Margin', 'ARPU', 'Valuation']
-    df_valuation_over_time = pd.DataFrame(columns=columns)
-
-    # All parameters are calculated by ignoring data 1 by 1, taking the history reference as the end point
-    df_full = main.parameters_dataframe(dates, users)  # Dataframe containing all parameters with all data ignored
-    df_sorted = main.parameters_dataframe_cleaning(df_full, users)  # Dataframe where inadequate scenarios are eliminated
-    if df_sorted.empty:
-        print("No good scenario could be calculated")
-        df_sorted = main.parameters_dataframe_cleaning_minimal(df_full, users)
-    else:
-        print("Successful scenarios exist")
-    # Number of scenarios to store
-    i = 0
-
-    # Profit margin assessment
-    profit_margin = np.empty(2)
-    profit_margin[0] = 0.05 # Low scenario
-    profit_margin[1] = 0.15 # High scenario
-
-    # Discount Rate assessment
-    discount_rate = np.empty(2)
-    discount_rate[0] = 0.05  # Low scenario
-    discount_rate[1] = 0.05  # High scenario
-
-    # Arpu growth assessment
-    arpu_growth = np.empty(2)
-    arpu_growth[0] = 0.01  # Low scenario
-    arpu_growth[1] = 0.05  # High scenario
-
-    # Current ARPU calculation
-    yearly_revenue_quarters = sum(revenue_valuation[-4:])
-    average_users_past_year = (users_valuation[-1] + users_valuation[-5]) / 2
-    current_arpu = yearly_revenue_quarters / average_users_past_year
 
     # Valuation calculation
     non_operating_assets = total_assets
+    #df_valuation_over_time = pd.DataFrame(columns=columns)
+    valuation_data = []
+    for i in range(iteration_range[0], iteration_range[1]):
+        dates_valuation = dates_original[:i]
+        users_valuation = users_original[:i]
+        quarterly_revenue = revenue_df * 1_000_000  # Getting in database
+        revenue_valuation = quarterly_revenue[:i]
 
-    num_iterations = 2
-    # Storing the data of two scenarios for a given date
-    for j in range(num_iterations):
-        df_valuation_over_time.at[i + j, 'Date'] = dates_new[-1]
-        df_valuation_over_time.at[i+j, 'K'] = k_selected = df_sorted.at[j*(len(df_sorted)-1), 'K']
-        df_valuation_over_time.at[i+j, 'r'] = r_selected = df_sorted.at[j*(len(df_sorted)-1), 'r']
-        df_valuation_over_time.at[i+j, 'p0'] = p0_selected = df_sorted.at[j*(len(df_sorted)-1), 'p0']
-        df_valuation_over_time.at[i + j, 'Profit Margin'] = profit_margin[j]
-        df_valuation_over_time.at[i + j, 'ARPU'] = current_arpu
-        print("Calculdeouf", k_selected, r_selected, p0_selected, current_arpu, arpu_growth[j], profit_margin[j], discount_rate[j],
-                                                                    YEARS_DCF)
-        future_customer_equity = main.net_present_value_arpu_growth(k_selected, r_selected, p0_selected, current_arpu, arpu_growth[j], profit_margin[j], discount_rate[j], YEARS_DCF)
-        current_customer_equity = users_valuation[-1] * current_arpu * profit_margin[j]
-        df_valuation_over_time.at[i + j, 'Valuation'] = future_customer_equity + current_customer_equity + non_operating_assets
+        # Smoothing the data
+        dates, users = main.moving_average_smoothing(dates_valuation, users_valuation, 1)
 
-    print("DF VALUATION OVER TIME")
+        # All parameters are calculated by ignoring data 1 by 1, taking the history reference as the end point
+        df_full = main.parameters_dataframe(dates, users)  # Dataframe containing all parameters with all data ignored
+        df_sorted = main.parameters_dataframe_cleaning(df_full, users)  # Dataframe where inadequate scenarios are eliminated
+        if df_sorted.empty:
+            print("No good scenario could be calculated")
+            df_sorted = main.parameters_dataframe_cleaning_minimal(df_full, users)
+        else:
+            print("Successful scenarios exist")
+        # Number of scenarios to store
+        i -= MIN_DATE_INDEX
+
+        # Profit margin assessment
+        profit_margin = np.empty(2)
+        profit_margin[0] = 0.05 # Low scenario
+        profit_margin[1] = 0.15 # High scenario
+
+        # Discount Rate assessment
+        discount_rate = np.empty(2)
+        discount_rate[0] = 0.05  # Low scenario
+        discount_rate[1] = 0.05  # High scenario
+
+        # Arpu growth assessment
+        arpu_growth = np.empty(2)
+        arpu_growth[0] = 0.01  # Low scenario
+        arpu_growth[1] = 0.05  # High scenario
+
+        # Current ARPU calculation
+        yearly_revenue_quarters = sum(revenue_valuation[-4:])
+        average_users_past_year = (users_valuation[-1] + users_valuation[-5]) / 2
+        current_arpu = yearly_revenue_quarters / average_users_past_year
+
+        num_iterations = 2
+        # Storing the data of two scenarios for a given date
+        for j in range(num_iterations):
+            k_selected = df_sorted.at[j*(len(df_sorted)-1), 'K']
+            r_selected = df_sorted.at[j*(len(df_sorted)-1), 'r']
+            p0_selected = df_sorted.at[j*(len(df_sorted)-1), 'p0']
+            future_customer_equity = main.net_present_value_arpu_growth(k_selected, r_selected, p0_selected, current_arpu, arpu_growth[j], profit_margin[j], discount_rate[j], YEARS_DCF)
+            current_customer_equity = users_valuation[-1] * current_arpu * profit_margin[j]
+            valuation_data.append([
+                dates_new[i + MIN_DATE_INDEX],
+                k_selected,
+                r_selected,
+                p0_selected,
+                profit_margin[j],
+                current_arpu,
+                future_customer_equity + current_customer_equity + non_operating_assets
+            ])
+    # Convert the list to a DataFrame
+    columns = ['Date', 'K', 'r', 'p0', 'Profit Margin', 'ARPU', 'Valuation']
+    df_valuation_over_time = pd.DataFrame(valuation_data, columns=columns)
+
+    # Creating the plot of the market cap - valuations
+    dates_valuation_graph = df_valuation_over_time['Date'].values
+    valuation_values = df_valuation_over_time['Valuation'].values
+
+    # Separate scenarios (odd and even rows)
+    low_scenario_valuation = valuation_values[::2]  # Start from index 0, step by 2
+    high_scenario_valuation = valuation_values[1::2]  # Start from index 1, step by 2
+    dates_valuation_graph = dates_valuation_graph[::2]
+    dates_valuation_graph = dates_valuation_graph[MIN_DATE_INDEX:]
+
+    # Create market cap array
+    market_cap_array = np.array([entry['Market Cap'] for entry in df_formatted])*1e9
+    market_cap_array = market_cap_array[MIN_DATE_INDEX:]
+
+
+    fig_valuation = go.Figure()
+    fig_valuation.add_trace(go.Scatter(name="low-valuation", x=dates_valuation_graph, y=low_scenario_valuation,
+                                       mode="lines"))
+    fig_valuation.add_trace(go.Scatter(name="high-valuation", x=dates_valuation_graph, y=high_scenario_valuation,
+                                       mode="lines"))
+    fig_valuation.add_trace(go.Scatter(name="market-cap", x=dates_valuation_graph, y=market_cap_array,
+                                       mode="lines"))
+
+
+
+
+    print("DF Valuation over time")
     print(df_valuation_over_time)
-
-
+    #print(df_valuation_over_time2)
     t2 = time.perf_counter(), time.process_time()
     print(f" Performance of the valuation over time")
     print(f" Real time: {t2[0] - t1[0]:.2f} seconds")
     print(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
-    return 1
+    return 1, fig_valuation
 
 @app.callback(
     Output("offcanvas", "is_open"),

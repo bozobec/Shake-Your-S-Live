@@ -362,11 +362,6 @@ def net_present_value_arpu_growth(k, r, p0, arpu, arpu_growth, profitmargin, dis
     discounted_cashflow = npf.npv(discount_rate, cashflow)
     users_over_time = logisticfunction(k, r, p0, t)
 
-    print("k", k, "r", r, "p0", p0, "t", t, "discount rate", discount_rate, "profitmargin", profitmargin,
-          "arpu_over_time", arpu_over_time)
-    print("Users over time", users_over_time)
-    print("Cashflow", cashflow)
-    print("Net Present Value:", discounted_cashflow)
     return discounted_cashflow
 
 
