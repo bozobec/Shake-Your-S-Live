@@ -14,7 +14,7 @@ import main
 import dash_bootstrap_components as dbc
 from dash import html
 #import datetime
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import math
 from plotly.subplots import make_subplots
 from dash_iconify import DashIconify
@@ -394,11 +394,7 @@ bottom_bottom_card = dbc.Card(id="bottom-bottom-card", children=[
                                                                             config={'displayModeBar': False})])
                       ], style={'display': 'none'})
 
-# Card that contains the valuation calculation over time
-valuation_over_time_card = dbc.Card(id="valuation-card", children=[
-                        html.Div(id='graph-valuation-container', children=[dcc.Graph(id='valuation-graph',
-                                                                            config={'displayModeBar': True})])
-                      ])
+
 # Card containing the history slider
 top_card = dbc.Card(id="top-card", children=[
                         dbc.CardBody(
@@ -498,6 +494,7 @@ datepicker = html.Div(
                 ]
             )
 
+
 # Scenarios in the accordion
 # -------
 # Growth
@@ -595,12 +592,21 @@ accordion = dmc.AccordionMultiple(
 
 # Graph message
 graph_message = dmc.Alert(
-    children=dmc.Text("About the graph"),
+    dmc.Text("About the graph"),
     id="graph-message",
     title="About the Growth Forecast",
     color="blue",
-    hide="True",
-    withCloseButton="True"),
+    #hide="False",
+    withCloseButton="True")
+
+# Graph message
+valuation_graph_message = dmc.Alert(
+    dmc.Text("About the Current Market Cap"),
+    id="valuation-graph-message",
+    title="About the Current Market Cap",
+    color="blue",
+    #hide="False",
+    withCloseButton="True")
 
 
 # Scenario picker
@@ -962,6 +968,38 @@ welcome_timeline = html.Div([
     ],
 )])
 
+main_graph = dcc.Graph(id='main-graph1', config={'displayModeBar': False, 'scrollZoom': True})
+
+
+# Graph that contains the valuation calculation over time
+valuation_over_time = html.Div(children=[dcc.Graph(id='valuation-graph', config={'displayModeBar': False,
+                                                                                 'scrollZoom': True})])
+
+# Tabs
+tabs_graph = dmc.Tabs(
+    [
+        dmc.TabsList(
+            grow=True,
+            children=
+                [
+                    dmc.Tab("Future Outlook", icon=DashIconify(icon="simple-icons:futurelearn"), value="1"),
+                    dmc.Tab("Past Performance",
+                            icon=DashIconify(icon="material-symbols:history"),
+                            value="2",
+                            #disabled=True
+                            ),
+                ],
+        ),
+        dmc.TabsPanel(html.Div(children=[graph_message, main_graph]),
+            id="tab-one", value="1"),
+        dmc.TabsPanel(html.Div(children=[valuation_graph_message, valuation_over_time]), id="tab-two", value="2"),
+    ],
+    value="1",
+    variant="outline",
+    #id='graph-card-content',
+    #style={'display': 'none'}
+)
+
 graph_card = dmc.Card(
     children=[
         # Card Title
@@ -981,18 +1019,17 @@ graph_card = dmc.Card(
                     color="dimmed",
                     id='graph-subtitle',
                 ),
-        dmc.Space(h=20),
-        html.Div(graph_message),
-
+        dmc.Space(h=10),
+        #html.Div(graph_message),
+        dmc.Space(h=10),
+        html.Div(tabs_graph),
+        #html.Div(graph_message),
         # Card Content
-        html.Div(id='graph-container1',
-                 children=[dcc.Graph(id='main-graph1', config={'displayModeBar': False, 'scrollZoom': True}
-                                     )
-                           ]
-                 ),
+        #html.Div(main_graph),
         ],
         id='graph-card-content',
-        style={'display': 'none'})
+        style={'display': 'none'}
+        )
     ],
     withBorder=True,
     shadow="sm",
@@ -1046,7 +1083,7 @@ hype_meter_card = dmc.Card(
         dmc.Space(h=20),
         dmc.Text(
             id="hype-meter-text",
-            children=["Adjust profit margin, discount rate, and ARPU to evaluate the company's hype through its "
+            children=["Adjust profit margin, discount rate, and ARPU to evaluate the company's current hype through its "
                      "three components: Non-Operating Assets, Customer Equity, and Hype.",
                         #dmc.Text("Non-Operating Assets represent additional valuable company assets.", color="#228BE6"),
                         #dmc.Text("Customer Equity signifies current and future customer-generated profit,"
@@ -1090,10 +1127,10 @@ layout_main_graph = go.Layout(
         #orientation="h",
         #x=0.5,
         #y=-0.1,
-        yanchor="bottom",
-        y=0.01,
-        xanchor="right",
-        x=0.92,
+        yanchor="top",
+        y=0.96,
+        xanchor="left",
+        x=0.01,
         font=dict(
             #family="Courier",
             size=10,
@@ -1234,7 +1271,8 @@ dmc.Container(fluid=True, children=[
         dcc.Store(id='users-dates-raw'),  # DF containing the initial users/dates from the API
         dcc.Store(id='users-dates-formatted'),  # DF containing the users & dates in float for computation
         dcc.Store(id='scenarios-sorted'),  # DF containing all the possible growth scenarios
-        dcc.Store(id='current-market-cap'),  # Market cap of the company selected, 0 if N/A
+        dcc.Store(id='current-market-cap'),  # Market cap of the company selected, 0 if N/A at the relative current time (depending on the date picked)
+        dcc.Store(id='latest-market-cap'),  # Market cap of the company at the absolute current time (now)
         dcc.Store(id='graph-unit'),  # Graph unit (MAU, Population, etc.)
         dcc.Store(id='launch-counter', data={'flag': False}),  # Counter that shows 0 if no dataset has been selected, or 1 otherwise
         dcc.Store(id='revenue-dates'),  # DF Containing the quarterly revenue and the dates
@@ -1275,9 +1313,10 @@ def enable_slider(scenario_value, data_selection):
     ],prevent_initial_call=True)
 def select_value(value):
     title = value
-    subtitle = "Explore "+str(value)+"'s Historical Data (Bars) and Future Growth Projections. Customize " \
+    subtitle = "Explore "+str(value)+"'s Future Outlook to assess its current valuation and explore GROOWT's past valuations. Customize " \
                                      "Predictions with the Slider in the 'Functionalities' Section and Adjust " \
-                                     "the Forecast Start Date Using the Datepicker."
+                                     "the Forecast Start Date Using the Datepicker. Use the 'Past performance' section " \
+                                     "to see GROOWT's calculated hype over time."
     return False, False, False, False
 
 # Callback defining the minimum and the maximum date of the datepicker and loading the dataset
@@ -1532,6 +1571,7 @@ def set_history_size(dropdown_value):
     Output(component_id='current-arpu-stored', component_property='data'),  # Stores the current arpu
     Output(component_id='hype-market-cap', component_property='children'),  # Stores the current arpu
     Output(component_id='current-market-cap', component_property='data'), # Stores the company market cap
+    Output(component_id='latest-market-cap', component_property='data'),  # Stores the current (now) company market cap
 
     Input(component_id='dataset-selection', component_property='value'),  # Take dropdown value
     Input(component_id='date-picker', component_property='value'),  # Take date-picker date
@@ -1674,20 +1714,20 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
 
     # Formatting of the displayed correlation message
 
-    formatted_correlation = f"{users_revenue_correlation:.2f}"  # Formatting the displayed r^2:
+    formatted_correlation = f"{users_revenue_correlation*100:.2f}"  # Formatting the displayed r^2:
     if users_revenue_correlation >= 0.9:
         correlation_message_title = "Great metric selected!"
         correlation_message_body = "The " + str(key_unit) + " you are using seem to be the right metric to " \
-                                                            "estimate the valuation, because there is a very strong " \
-                                                            "correlation between the " + str(key_unit) +\
-                                 " and the revenue (R^2 = " + str(formatted_correlation) +")"
+                                                            "estimate the valuation, because " + str(key_unit) + \
+                                 " account for " + str(formatted_correlation) +"% of the revenue variability."
         correlation_message_color = "green"
     elif users_revenue_correlation > 0:
         correlation_message_title = "Another metric could be better"
         correlation_message_body = str(key_unit) + "do not have a strong correlation with the revenue over time. " \
                                                    "You may want to consider another metric to estimate this " \
-                                                   "company's valuation (R^2 = " + str(formatted_correlation) +")"
-        correlation_message_color = "Yellow"
+                                                   "company's valuation, since only " + str(formatted_correlation) +\
+                                   "% of the revenue variability is explained by this metric."
+        correlation_message_color = "yellow"
 
     else:
         correlation_message_title = "Correlation not applicable"
@@ -1776,8 +1816,9 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
     symbol_company = df_dataset.loc[0, 'Symbol']
     if symbol_company != "N/A":
         # If the date picked is the latest, then API call
+        latest_market_cap = dataAPI.get_marketcap(symbol_company)
         if new_date_str == dates_raw[-1]:
-            current_market_cap = dataAPI.get_marketcap(symbol_company)  # Sets valuation if symbol exists
+            current_market_cap = latest_market_cap  # Sets valuation if symbol exists
         # Otherwise, the market cap of the last quarter is picked
         else:
             current_market_cap = df_dataset.loc[closest_index, 'Market Cap'] * 1e3
@@ -1844,7 +1885,7 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
         "customization", plateau_message_title, plateau_message_body, plateau_message_color, valuation_message_title, \
         valuation_message_body, valuation_message_color, correlation_message_title, correlation_message_body, \
         correlation_message_color,  df_sorted_dict, slider_max_value, marks_slider, current_arpu, hype_market_cap, \
-        current_market_cap
+        current_market_cap, latest_market_cap
 
 @app.callback([
     Output(component_id='main-graph1', component_property='figure'),  # Update graph 1
@@ -1854,7 +1895,7 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
     Output(component_id='r2-ring-progress', component_property='sections'),  # Update regression
     #Output(component_id='range-slider-k', component_property='max'),
     #Output(component_id='range-slider-k', component_property='marks'),
-    Output(component_id='graph-message', component_property='hide'),
+    #Output(component_id='graph-message', component_property='hide'),
     Output(component_id='graph-message', component_property='children'),
     ],
 
@@ -2030,6 +2071,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     #fig_main.update_yaxes(range=[0, k_scenarios[-1]*1.1])  # Fixing the size of the Y axis
     fig_main.update_layout(
         hovermode="x unified",
+        # Styling of the "FORECAST" text
         annotations=[
             dict(
                 x=x_coordinate,
@@ -2084,7 +2126,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     x_dates = [datetime.fromtimestamp(timestamp) for timestamp in x_dates]
     x_dates_scenarios = [datetime.fromtimestamp(timestamp) for timestamp in x_dates_scenarios]
 
-
+    print("DTdates")
     print(x_dates)
     print(x)
     #print(len(x_dates), x_dates)
@@ -2316,7 +2358,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     print(f" Creating graph")
     print(f" Real time: {t2[0] - t1[0]:.2f} seconds")
     print(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
-    return fig_main, sections, False, graph_message
+    return fig_main, sections, graph_message
 
 # Callback displaying the functionalities & graph cards, and hiding the text
 @app.callback(
@@ -2440,16 +2482,23 @@ def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, arpu_grow
 @app.callback(
     Output(component_id='data-selection-counter', component_property='data'),
     Output(component_id='valuation-graph', component_property='figure'),  # Update valuation graph
+    Output(component_id='valuation-graph-message', component_property='children'),
+    Output(component_id='valuation-graph-message', component_property='color'),
     Input(component_id='users-dates-formatted', component_property='data'),
     Input(component_id='total-assets', component_property='data'),
     Input(component_id='dataset-selection', component_property='value'),
+    Input(component_id='users-dates-raw', component_property='data'),
+    Input(component_id='latest-market-cap', component_property='data'),  # Stores the current (now) company market cap
     [State('dataset-selection', 'data')]
     , prevent_initial_call=True
 )
-def historical_valuation_calculation(df_formatted, total_assets, data, dataset_counter):
+def historical_valuation_calculation(df_formatted, total_assets, data, df_raw, latest_market_cap, df_rawdataset_counter):
     t1 = time.perf_counter(), time.process_time()
+    dates_raw = np.array([entry['Date'] for entry in df_raw])
     dates_new = np.array([entry['Date'] for entry in df_formatted])
     revenue_df = np.array([entry['Revenue'] for entry in df_formatted])
+    profit_margin_df = np.array([entry['Profit Margin'] for entry in df_formatted])
+    profit_margin_original = profit_margin_df / 100
     dates_original = dates_new - 1970
     # Users are taken from the database and multiplied by a million
     users_new = np.array([entry['Users'] for entry in df_formatted])
@@ -2467,30 +2516,47 @@ def historical_valuation_calculation(df_formatted, total_assets, data, dataset_c
     non_operating_assets = total_assets
     #df_valuation_over_time = pd.DataFrame(columns=columns)
     valuation_data = []
+    print("Iteration range", iteration_range)
+    print("Final date", dates_original[:iteration_range[1]])
     for i in range(iteration_range[0], iteration_range[1]):
         dates_valuation = dates_original[:i]
         users_valuation = users_original[:i]
+        print("Dates", i)
+        print(dates_valuation)
         quarterly_revenue = revenue_df * 1_000_000  # Getting in database
         revenue_valuation = quarterly_revenue[:i]
+        profit_margin_valuation = profit_margin_original[:i]
 
         # Smoothing the data
         dates, users = main.moving_average_smoothing(dates_valuation, users_valuation, 1)
 
         # All parameters are calculated by ignoring data 1 by 1, taking the history reference as the end point
         df_full = main.parameters_dataframe(dates, users)  # Dataframe containing all parameters with all data ignored
+        print(df_full)
         df_sorted = main.parameters_dataframe_cleaning(df_full, users)  # Dataframe where inadequate scenarios are eliminated
         if df_sorted.empty:
             print("No good scenario could be calculated")
-            df_sorted = main.parameters_dataframe_cleaning_minimal(df_full, users)
+            #df_sorted = main.parameters_dataframe_cleaning_minimal(df_full, users)
+            continue
         else:
             print("Successful scenarios exist")
         # Number of scenarios to store
         i -= MIN_DATE_INDEX
+        print("Date added", dates_new[i + MIN_DATE_INDEX])
 
         # Profit margin assessment
         profit_margin = np.empty(2)
-        profit_margin[0] = 0.05 # Low scenario
-        profit_margin[1] = 0.15 # High scenario
+        profit_margin_previous_year = profit_margin_valuation[-4:]
+        average_profit_margin = sum(profit_margin_previous_year) / 4
+        if average_profit_margin <= 0:
+            min_profit_margin = 0.01
+            max_profit_margin = 0.1
+        else:
+            min_profit_margin = average_profit_margin
+            max_profit_margin = average_profit_margin + 0.05
+
+        profit_margin[0] = min_profit_margin # Low scenario
+        profit_margin[1] = max_profit_margin # High scenario
 
         # Discount Rate assessment
         discount_rate = np.empty(2)
@@ -2510,6 +2576,7 @@ def historical_valuation_calculation(df_formatted, total_assets, data, dataset_c
         num_iterations = 2
         # Storing the data of two scenarios for a given date
         for j in range(num_iterations):
+            print("Iteration index", j)
             k_selected = df_sorted.at[j*(len(df_sorted)-1), 'K']
             r_selected = df_sorted.at[j*(len(df_sorted)-1), 'r']
             p0_selected = df_sorted.at[j*(len(df_sorted)-1), 'p0']
@@ -2517,6 +2584,7 @@ def historical_valuation_calculation(df_formatted, total_assets, data, dataset_c
             current_customer_equity = users_valuation[-1] * current_arpu * profit_margin[j]
             valuation_data.append([
                 dates_new[i + MIN_DATE_INDEX],
+                dates_raw[i + MIN_DATE_INDEX],
                 k_selected,
                 r_selected,
                 p0_selected,
@@ -2525,32 +2593,97 @@ def historical_valuation_calculation(df_formatted, total_assets, data, dataset_c
                 future_customer_equity + current_customer_equity + non_operating_assets
             ])
     # Convert the list to a DataFrame
-    columns = ['Date', 'K', 'r', 'p0', 'Profit Margin', 'ARPU', 'Valuation']
+    columns = ['Date', 'Date Raw', 'K', 'r', 'p0', 'Profit Margin', 'ARPU', 'Valuation']
     df_valuation_over_time = pd.DataFrame(valuation_data, columns=columns)
+    print("DF Valuation over time")
+    print(df_valuation_over_time)
 
     # Creating the plot of the market cap - valuations
-    dates_valuation_graph = df_valuation_over_time['Date'].values
+    dates_valuation_graph = df_valuation_over_time['Date Raw'].values
+    #dates_valuation_graph_raw = df_valuation_over_time['Date Raw'].values
     valuation_values = df_valuation_over_time['Valuation'].values
+
 
     # Separate scenarios (odd and even rows)
     low_scenario_valuation = valuation_values[::2]  # Start from index 0, step by 2
     high_scenario_valuation = valuation_values[1::2]  # Start from index 1, step by 2
     dates_valuation_graph = dates_valuation_graph[::2]
-    dates_valuation_graph = dates_valuation_graph[MIN_DATE_INDEX:]
+    #dates_valuation_graph = dates_valuation_graph[MIN_DATE_INDEX:]
 
     # Create market cap array
     market_cap_array = np.array([entry['Market Cap'] for entry in df_formatted])*1e9
     market_cap_array = market_cap_array[MIN_DATE_INDEX:]
 
+    # Append today's date and latest market cap
+    today_date = date.today()
+    market_cap_array = np.append(market_cap_array, latest_market_cap*1e6)
+    dates_raw_market_cap = np.append(dates_raw, today_date)
+    print("Dddates")
+    print(market_cap_array)
+    print(dates_raw_market_cap)
+    # today_date_formatted = main.date_formatting_from_string(today_date)
 
-    fig_valuation = go.Figure()
-    fig_valuation.add_trace(go.Scatter(name="low-valuation", x=dates_valuation_graph, y=low_scenario_valuation,
-                                       mode="lines"))
-    fig_valuation.add_trace(go.Scatter(name="high-valuation", x=dates_valuation_graph, y=high_scenario_valuation,
-                                       mode="lines"))
-    fig_valuation.add_trace(go.Scatter(name="market-cap", x=dates_valuation_graph, y=market_cap_array,
-                                       mode="lines"))
+    # Graph Creation
+    dates_raw_graph = dates_raw[MIN_DATE_INDEX:]
 
+    fig_valuation = go.Figure(layout=layout_main_graph)
+    # Confidence Interval
+    # Filling the area of possible scenarios
+    x_area = np.append(dates_valuation_graph, np.flip(dates_valuation_graph))  # Creating one array made of two Xs
+    y_area_low = low_scenario_valuation  # Low growth array
+    y_area_high = np.flip(high_scenario_valuation)  # High growth array
+    y_area = np.append(y_area_low, y_area_high)
+    dates_area = np.append(dates_valuation_graph, np.flip(dates_valuation_graph))
+    fig_valuation.add_trace(go.Scatter(x=dates_area,
+                                  y=y_area,
+                                  fill='toself',
+                                  line_color='rgba(255,255,255,0)',
+                                  fillcolor='#E7F5FF',
+                                  opacity=0.3,
+                                  hoverinfo='none',
+                                  showlegend=False,
+                                  )
+                       )
+    hovertemplate_maingraph = "%{text}"
+    # Low Valuation
+    formatted_y_values = [f"{y / 1e6:.1f} M" if y < 1e9 else f"{y / 1e9:.2f} B" for y in low_scenario_valuation]
+    fig_valuation.add_trace(go.Scatter(name="Low Valuation", x=dates_valuation_graph, y=low_scenario_valuation,
+                                       mode="lines", line=dict(color='#74C0FC', width=1, dash="dash"), text=formatted_y_values, hovertemplate=hovertemplate_maingraph))
+    # High Valuation
+    formatted_y_values = [f"{y / 1e6:.1f} M" if y < 1e9 else f"{y / 1e9:.2f} B" for y in high_scenario_valuation]
+    fig_valuation.add_trace(go.Scatter(name="High Valuation", x=dates_valuation_graph, y=high_scenario_valuation,
+                                       mode="lines", line=dict(color="#228BE6", width=1, dash="dash"), text=formatted_y_values, hovertemplate=hovertemplate_maingraph))
+    # Market Cap
+    formatted_y_values = [f"{y / 1e6:.1f} M" if y < 1e9 else f"{y / 1e9:.2f} B" for y in market_cap_array]
+    fig_valuation.add_trace(go.Scatter(name="Market Cap", x=dates_raw_market_cap[MIN_DATE_INDEX:], y=market_cap_array,
+                                       mode="lines", line=dict(color="#51CF66", width=2), text=formatted_y_values, hovertemplate=hovertemplate_maingraph))
+    fig_valuation.update_layout(
+        hovermode="x unified",
+        yaxis=dict(
+            #range=[0, k_scenarios[-1] * 1.1],
+            fixedrange=True,
+            title="Valuation & Market Cap [$B]",
+            minallowed=0,
+            # maxallowed=k_scenarios[-1] * 1.5,
+        ),
+        xaxis=dict(
+            # fixedrange=True,
+            constrain='domain',
+            minallowed=dates_valuation_graph[0],
+
+        ),
+        dragmode="pan",
+    )
+    # Valuation message
+
+    if market_cap_array[-1]<high_scenario_valuation[-1]:
+        valuation_graph_message = "The Current Market Cap is lower than the most optimistic valuation (" + \
+                              f"{high_scenario_valuation[-1]/1e9:.2f} B$). It could be a good time to invest!"
+        valuation_graph_color = "green"
+    else:
+        valuation_graph_message = "The Current Market Cap is higher than the most optimistic valuation (" + \
+                              f"{high_scenario_valuation[-1]/1e9:.2f} B$). It could be a good time to sell!"
+        valuation_graph_color = "yellow"
 
 
 
@@ -2561,7 +2694,7 @@ def historical_valuation_calculation(df_formatted, total_assets, data, dataset_c
     print(f" Performance of the valuation over time")
     print(f" Real time: {t2[0] - t1[0]:.2f} seconds")
     print(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
-    return 1, fig_valuation
+    return 1, fig_valuation, valuation_graph_message, valuation_graph_color
 
 @app.callback(
     Output("offcanvas", "is_open"),
