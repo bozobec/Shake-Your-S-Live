@@ -239,7 +239,7 @@ def parameters_dataframe(dates, users):
             dataframe[i, 2] = r  # r (growth rate) column
             dataframe[i, 3] = p0  # p0 (initial population) column
             dataframe[i, 4] = r_squared  # r squared column
-            dataframe[i, 5] = rootmeansquare  # Root Mean Square Deviation column
+            dataframe[i, 5] = rootmeansquare / ((users[0]+users[-1])/2)  # Root Mean Square Deviation column
             dataframe[i, 6] = approximated_values_log  # Root Mean Square Deviation of the log approximation column
             dataframe[i, 7] = diff_lin_log  # Difference between the linear R^2 and the log R^2
         except RuntimeError as e:
@@ -402,8 +402,8 @@ def log_approximation(dates, users):
 def moving_average_smoothing(dates, users, window_size):
     dates_series = pd.Series(dates)
     users_series = pd.Series(users)
-    smoothed_dates = dates_series.rolling(3, min_periods=1).mean()
-    smoothed_users = users_series.rolling(3, min_periods=1).mean()
+    smoothed_dates = dates_series.rolling(2, min_periods=1).mean()
+    smoothed_users = users_series.rolling(2, min_periods=1).mean()
     smoothed_dates_array = smoothed_dates.values
     smoothed_users_array = smoothed_users.values
     return smoothed_dates_array, smoothed_users_array

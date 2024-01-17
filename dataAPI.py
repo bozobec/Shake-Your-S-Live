@@ -221,6 +221,3 @@ def get_profit_margin(symbol_input):
     except Exception as e:
         print(f"Error fetching yearly profit_margin: {str(e)}")
         return 0
-
-
-print(get_profit_margin("NFLX"))
