@@ -932,9 +932,6 @@ welcome_timeline = html.Div([
     lineWidth=2,
     id='welcome-timeline',
     children=[
-        dmc.Text("Are you a Tech investor, journalist or simply curious about tech valuation? We got you."
-                    " Meet GROOWT, your go-to tool for predicting dataset growth and determining the "
-                    "value of publicly traded Tech companies.", color="blue", size="sm", mb="sm", weight=300),
         dmc.TimelineItem(
             title="Choose Your Dataset",
             bullet=DashIconify(icon="teenyicons:add-solid", width=12),

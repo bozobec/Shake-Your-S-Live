@@ -132,9 +132,9 @@ fourth_card = dmc.Card(
         dmc.Space(h=21),
         dmc.CardSection(
             dmc.Image(
-                src="/assets/past_performance.svg",
-                height=180,
-            )
+                src="/assets/past_performance.png",
+                height=240,
+            ), style={'marginBottom': 10, 'marginLeft': 10, 'marginRight': 10}
         ),
     ],
     withBorder=True,
@@ -275,7 +275,8 @@ def layout():
                         dmc.Col(span=2),
                         dmc.Col(dmc.Stack([
                             dmc.Title("STEP UP YOUR TECH INVESTMENT GAME.", order=1, color="black", align="left"),
-                            dmc.Text("Predict Market Hype by Unveiling Companies' True Value.", size="xl",
+                            dmc.Text("Whether you are a Tech investor, journalist or simply curious about tech "
+                                     "valuation, predict Market Hype by unveiling companies' True Value.", size="xl",
                                      color="dimmed", align="left"),
                             html.A(dmc.Button("Try GROOWT Beta Version", leftIcon=html.Img(src="/assets/Vector_white.svg",
                                                                                     height="15px")), href="/app"),
@@ -287,8 +288,8 @@ def layout():
                     ],
                     ),
                 dmc.Space(h=150),
-                dmc.Title("4 steps away from", order=1, align="center", color="black"),
-                dmc.Title("getting a Tech's instrinsic value", order=1, align="center",
+                dmc.Title("Discover Tech Company Hype", order=1, align="center", color="black"),
+                dmc.Title("in Just 4 Steps", order=1, align="center",
                           color="black"),
                 dmc.Space(h=60),
                 dmc.Grid(
