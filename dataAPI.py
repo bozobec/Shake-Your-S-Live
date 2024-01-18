@@ -105,6 +105,7 @@ def get_airtable_data(filter):
               "&fields%5B%5D=Date" \
               "&fields%5B%5D=Users" \
               "&fields%5B%5D=Unit" \
+              "&fields%5B%5D=Source" \
               "&fields%5B%5D=Symbol" \
               "&fields%5B%5D=Quarterly_Revenue_Mio$" \
               "&fields%5B%5D=Net_Profit_Margin" \
@@ -127,6 +128,7 @@ def get_airtable_data(filter):
                 'Date': record['fields']['Date'],
                 'Users': record['fields']['Users'],
                 'Unit': record['fields']['Unit'],
+                'Source': record['fields']['Source'],
                 'Symbol': record['fields']['Symbol'],
                 'Revenue': record['fields']['Quarterly_Revenue_Mio$'],
                 'Profit Margin': record['fields']['Net_Profit_Margin'],

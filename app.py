@@ -3,7 +3,7 @@
 # visit http://127.0.0.1:8050/ in your web browser.
 import dash
 import dash_mantine_components as dmc
-from dash import dcc
+from dash import Dash, html, dcc, register_page
 from dash import callback
 from dash.dependencies import Input, Output, State
 import pandas as pd
@@ -12,7 +12,6 @@ import plotly.graph_objects as go
 import dataAPI
 import main
 import dash_bootstrap_components as dbc
-from dash import html
 #import datetime
 from datetime import datetime, timedelta, date
 import math
@@ -25,27 +24,15 @@ from dash.exceptions import PreventUpdate
 pd.set_option('display.max_columns', None)
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 # app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.LUX])
-app.title = 'GROOWT'
+app = dash.Dash(__name__,
+                external_stylesheets=[dbc.themes.LUX],
+                title='GROOWT',
+                use_pages=True,
+                )
 server = app.server
 # ---------------------------------------------------------------------------
-# Data Definition & Initialization
-r_squared_selected = 0.0
-carrying_capacity_container = 0
-time_plateau_container = 0.0
-current_valuation_container = 0.0
-arpu_needed_container = 0.0
-user_value_container = 0.0
-valuation_Snapchat = 119.85 * pow(10, 9)
-valuation_Spotify = 47.2 * pow(10, 9)
-valuation_Twitter = 51.74 * pow(10, 9)
-valuation_Linkedin = 29.5 * pow(10, 9)
-valuation_Netflix = 282.36 * pow(10, 9)
-valuation_Tesla = 1000 * pow(10, 9)
-valuation_Teladoc = 23.1 * pow(10, 9)
 
 # Values for the dropdown (all different companies in the DB)
-# labels = dataAPI.get_airtable_labels() # OLD METHOD
 labels = dataAPI.get_airtable_labels_new()
 
 
@@ -331,16 +318,37 @@ navbar3 = dbc.Navbar(dbc.Nav(
     color="primary",
     dark=True)
 
+app_button = dmc.Button(
+    id="app-button",
+    children="APP",
+    leftIcon=DashIconify(icon="fluent:app-title-24-regular"),
+    size="xs",
+    variant="gradient",
+    gradient={"from": "cyan", "to": "blue"},
+    #color="white",
+    #color.title(white).
+        ),
+
 navbar6 = dbc.Navbar(
     dbc.Container(
         [
             dbc.Row([
                     dbc.Col(html.Img(src="/assets/Vector_white.svg", height="25px")),
-                    dbc.Col(dbc.NavbarBrand("GROOWT", className="ms-2"))
+                    dbc.Col(dbc.NavbarBrand("GROOWT", className="ms-2", href='/'))
                     ],
                     align="bottom",
                     className="g-0"),
-
+            dbc.Row([
+                    dbc.Col([
+                    dbc.Nav([
+                        dbc.NavItem(app_button),
+                    ],
+                        navbar=True
+                    )
+                ],
+                    width={"size": "auto"})
+            ],
+                align="right"),
             dbc.Row([
                 dbc.Col([
                     dbc.Nav([
@@ -360,6 +368,39 @@ navbar6 = dbc.Navbar(
     dark=True,
 )
 
+navbar7 = dbc.NavbarSimple(
+        children=[
+            dbc.NavItem(
+                dbc.NavLink(
+                    [
+                        "App"  # Text beside icon
+                    ],
+                    href="/app",
+                    #target="_blank"
+                )
+
+            ),
+            offcanvas,
+            #dbc.DropdownMenu(
+            #    nav=True,
+            #    in_navbar=True,
+            #    label="Menu",
+            #    align_end=True,
+            #    children=[  # Add as many menu items as you need
+            #        dbc.DropdownMenuItem("Home", href='/'),
+            #        dbc.DropdownMenuItem(divider=True),
+            #        dbc.DropdownMenuItem("Page 2", href='/page2'),
+            #       dbc.DropdownMenuItem("Page 3", href='/page3'),
+           #     ],
+            #),
+        ],
+        brand=[html.Img(src="/assets/Vector_white.svg", height="25px"), '   GROOWT'],
+        brand_href="/",
+        sticky="top",  # Uncomment if you want the navbar to always appear at the top on scroll.
+        color="primary",  # Change this to change color of the navbar e.g. "primary", "secondary" etc.
+        dark=True,  # Change this to change color of text within the navbar (False for dark text)
+    )
+
 
 
 # Sliders
@@ -369,18 +410,6 @@ slider = html.Div(children=[dcc.RangeSlider(id="range-slider-data-ignored1", min
                             tooltip={"placement": "bottom", "always_visible": True},
                                             vertical=True),
                             html.Div(id="max-label")])
-
-# slider_profitability = html.Div(children=[dcc.RangeSlider(id="range-slider-profitability", min=20, max=50, step=5,
-                                                               # marks={20: '20% Profitability', 50: '50% Profitability'},
-                                                               # value=[20])])
-# Table summarising insights
-#row1 = html.Tr([html.Td(["Users ", html.Span("plateau: ", id="tooltip-plateau-target", style={"textDecoration": "underline", "cursor": "pointer"},)], style={"width": "380px"}),
-                       # html.Td(id='carrying-capacity', children=carrying_capacity_container, style={"color": '#54c4f4'})], style={"margin-bottom": "0px"})
-# row3 = html.Tr([html.Td("Current valuation: "), html.Td(id='current-valuation', children=current_valuation_container)])
-# row4 = html.Tr([html.Td("Yearly profit per user to justify the current valuation: "),
-# html.Td(id='arpu-needed', children=arpu_needed_container, style={"color": '#54c4f4'})])
-# row5 = html.Tr([html.Td("R Squared: "), html.Td(id='rsquared-container', children=r_squared_selected, style={"color": '#54c4f4'})])
-# row6 = html.Tr([html.Td("Current user value: "), html.Td(id='uservalue-container', children=user_value_container)])
 
 
 # Card that contains the regression
@@ -468,7 +497,7 @@ slider_arpu_growth = dmc.Slider(
             max=10,
             value=2,
             step=0.1,
-            color="red",
+            color='green',
             marks=[
                 {"value": 0, "label": "0%"},
                 {"value": 5, "label": "5%"},
@@ -488,7 +517,7 @@ datepicker = html.Div(
                         id="date-picker",
                         #minDate=date(2020, 8, 5),
                         #inputFormat="MMMM,YY",
-                        dropdownType="modal",
+                        dropdownType="popover",
                         clearable=False,
                     ),
                 ]
@@ -653,7 +682,7 @@ selector_card = dmc.Card(
     children=[
         dmc.Group(
             [
-                dmc.Title("Dataset", order=5),
+                dmc.Title("Browse", order=5),
             ],
             position="apart",
             mt="md",
@@ -1001,6 +1030,12 @@ tabs_graph = dmc.Tabs(
     #style={'display': 'none'}
 )
 
+source = dmc.Text(
+        id= "data-source",
+        children="Source",
+        size="xs",
+        color="dimmed",)
+
 graph_card = dmc.Card(
     children=[
         # Card Title
@@ -1024,6 +1059,8 @@ graph_card = dmc.Card(
         #html.Div(graph_message),
         dmc.Space(h=10),
         html.Div(tabs_graph),
+        dmc.Space(h=10),
+        html.Div(source),
         #html.Div(graph_message),
         # Card Content
         #html.Div(main_graph),
@@ -1223,19 +1260,23 @@ main_plot.update(
 # ----------------------------------------------------------------------------------
 # App Layout
 app.layout = html.Div(style={'backgroundColor': '#F9F9F9'}, children=
-    [navbar6,
+    [
+    #navbar6,
+     navbar7,
      dmc.Space(mb=20),  # Margin/space between the navbar and the content
      # Mantine Grid
 
 dmc.Container(fluid=True, children=[
      dmc.Grid([
         #dmc.Col(span=0.5, lg=0), # Empty left column
-        dmc.Col(selector_card, span="auto", order=1),
+        #dmc.Col(selector_card, span="auto", order=1),
         dmc.Col([
-            dmc.LoadingOverlay(graph_card),
+            dmc.LoadingOverlay(
+                #graph_card
+            ),
             #valuation_over_time_card  # Comment this line to remove the analysis graphs
         ], span=12, lg=6, orderXs=3, orderSm=3, orderLg=2),
-        dmc.Col([hype_meter_card, dmc.Space(h=20), functionalities_card], span=12, lg=3, orderXs=2, orderSm=2, orderLg=3),
+        #dmc.Col([hype_meter_card, dmc.Space(h=20), functionalities_card], span=12, lg=3, orderXs=2, orderSm=2, orderLg=3),
         # dmc.Col(span="auto", lg=0), # Empty right column
          ],
         gutter="xl",
@@ -1266,28 +1307,32 @@ dmc.Container(fluid=True, children=[
 
         # Bottom graph of the regression
         #hype_meter,
-        dbc.Row(dbc.Col(bottom_card, width={"size": 7}), style={"margin-top": "20px"}, justify="center"),
+        #dbc.Row(dbc.Col(bottom_card, width={"size": 7}), style={"margin-top": "20px"}, justify="center"),
         # Bottom graph of the evolution of r^2
-        dbc.Row(dbc.Col(bottom_bottom_card, width={"size": 7}), style={"margin-top": "20px"}, justify="center"),
+        #dbc.Row(dbc.Col(bottom_bottom_card, width={"size": 7}), style={"margin-top": "20px"}, justify="center"),
         # Storing the key dataframe with all parameters
-        dcc.Store(id='users-data'),
-        dcc.Store(id='users-dates-raw'),  # DF containing the initial users/dates from the API
-        dcc.Store(id='users-dates-formatted'),  # DF containing the users & dates in float for computation
-        dcc.Store(id='scenarios-sorted'),  # DF containing all the possible growth scenarios
-        dcc.Store(id='current-market-cap'),  # Market cap of the company selected, 0 if N/A at the relative current time (depending on the date picked)
-        dcc.Store(id='latest-market-cap'),  # Market cap of the company at the absolute current time (now)
-        dcc.Store(id='graph-unit'),  # Graph unit (MAU, Population, etc.)
-        dcc.Store(id='launch-counter', data={'flag': False}),  # Counter that shows 0 if no dataset has been selected, or 1 otherwise
-        dcc.Store(id='revenue-dates'),  # DF Containing the quarterly revenue and the dates
-        dcc.Store(id='current-arpu-stored'),  # DF Containing the current ARPU
-        dcc.Store(id='total-assets'),  # DF Containing the current total assets of the company
-        dcc.Store(id='users-revenue-correlation'),  # R^2 indicating the strength of the correlation between the KPI
+        #dcc.Store(id='users-data'),
+        #dcc.Store(id='users-dates-raw'),  # DF containing the initial users/dates from the API
+        #dcc.Store(id='users-dates-formatted'),  # DF containing the users & dates in float for computation
+        #dcc.Store(id='scenarios-sorted'),  # DF containing all the possible growth scenarios
+        #dcc.Store(id='current-market-cap'),  # Market cap of the company selected, 0 if N/A at the relative current time (depending on the date picked)
+        #dcc.Store(id='latest-market-cap'),  # Market cap of the company at the absolute current time (now)
+        #dcc.Store(id='graph-unit'),  # Graph unit (MAU, Population, etc.)
+        #dcc.Store(id='launch-counter', data={'flag': False}),  # Counter that shows 0 if no dataset has been selected, or 1 otherwise
+        #dcc.Store(id='revenue-dates'),  # DF Containing the quarterly revenue and the dates
+        #dcc.Store(id='current-arpu-stored'),  # DF Containing the current ARPU
+        #dcc.Store(id='total-assets'),  # DF Containing the current total assets of the company
+        #dcc.Store(id='users-revenue-correlation'),  # R^2 indicating the strength of the correlation between the KPI
                                                     # used and the revenue
-        dcc.Store(id='data-selection-counter', data={'flag': False}), # Counter that shows if a new dataset has been selected
-        dcc.Store(id='initial-sliders-values'),
+        #dcc.Store(id='data-source'),  # sources of the data
+        #dcc.Store(id='data-selection-counter', data={'flag': False}), # Counter that shows if a new dataset has been selected
+        #dcc.Store(id='initial-sliders-values'),
+        #dcc.Store(id='current-valuation-calculated'), # Current valuation calculated with the current parameters and date
          # Counter that shows if a new dataset has been selected
 
-     ], fluid=True)])
+     ], fluid=True),
+     dash.page_container
+     ])
 
 
 # ----------------------------------------------------------------------------------
@@ -1348,6 +1393,7 @@ def select_value(value):
     Output(component_id='users-revenue-correlation', component_property='data'),  # Stores the correlation between
     Output(component_id='range-discount-rate', component_property='value'),
     Output(component_id='initial-sliders-values', component_property='data'),
+    Output(component_id='data-source', component_property='children'),
 
     # the chosen KPI and the revenue
 
@@ -1361,6 +1407,7 @@ def set_history_size(dropdown_value):
         # Fetch dataset from API
         df = dataAPI.get_airtable_data(dropdown_value)
         key_unit = df.loc[0, 'Unit']
+        data_source = df.loc[0, 'Source']
         print("DF", df)
 
         # Creating the title & subtitle for the graph
@@ -1369,6 +1416,12 @@ def set_history_size(dropdown_value):
                                                                                     "Projections. Customize " \
                                              "Predictions with the Slider in the 'Functionalities' Section and Adjust " \
                                              "the Forecast Start Date Using the Datepicker."
+
+        # Creating the source string for the graph
+        if data_source == "Financial Report":
+            source_string = "Source: " + dropdown_value + " Quarterly " + str(data_source)
+        else:
+            source_string = "Source: " + str(data_source)
 
         # Transforming it to a dictionary to be stored
         users_dates_dict = df.to_dict(orient='records')
@@ -1541,7 +1594,7 @@ def set_history_size(dropdown_value):
             show_company_functionalities, show_company_functionalities, show_company_functionalities, \
             show_company_functionalities, text_profit_margin, marks_profit_margin_slider, \
             value_profit_margin_slider, total_assets, users_revenue_regression, value_discount_rate_slider, \
-            initial_sliders_values
+            initial_sliders_values, source_string
     except Exception as e:
         print(f"Error fetching or processing dataset: {str(e)}")
         return "", "", "", "", "", "", "", "", "",
@@ -1856,6 +1909,7 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
         users_revenue_regression = 0
         printed_current_arpu = 0
         text_profit_margin = ""
+        latest_market_cap = 0
 
     # Plateau Accordion
     arpu_needed = main.arpu_for_valuation(k_scenarios[highest_r2_index], r_scenarios[highest_r2_index],
@@ -2086,9 +2140,9 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     print("USERSRAW")
     print(users_raw)
     if k_scenarios[-1] > users_raw[-1]:
-        range_y = [0, k_scenarios[-1] * 1.1]
+        range_y = [0, k_scenarios[-1] * 1.5]
     else:
-        range_y = [0, users_raw[-1] * 1.1]
+        range_y = [0, users_raw[-1] * 1.5]
     fig_main.update_layout(
         hovermode="x unified",
         # Styling of the "FORECAST" text
@@ -2146,9 +2200,6 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     x_dates = [datetime.fromtimestamp(timestamp) for timestamp in x_dates]
     x_dates_scenarios = [datetime.fromtimestamp(timestamp) for timestamp in x_dates_scenarios]
 
-    print("DTdates")
-    print(x_dates)
-    print(x)
     #print(len(x_dates), x_dates)
     #print(len(x), x)
     formatted_y_values = [f"{y / 1e6:.1f} M" if y < 1e9 else f"{y / 1e9:.2f} B" for y in y_predicted]
@@ -2203,12 +2254,9 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
 
     years = 6
     current_date = datetime.now()
-    print(current_date, type(current_date))
     future_arpu = [current_arpu * (1 + arpu_growth) ** year for year in range(years)]
     future_arpu_dates = [datetime.strptime(date_picked_formatted_original, '%Y-%m-%d') + timedelta(days=365 * year) for year in range(years)]
-    print("ARPU future")
-    print(future_arpu_dates)
-    print(future_arpu)
+
 
     # Filter rows based on valid indices
     dates_revenue = dates_raw[valid_indices]
@@ -2242,7 +2290,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
             x=x_revenue,
             y=y_revenue,
             mode='lines',
-            line=dict(color='Red', width=1),
+            line=dict(color='#51CF66', width=1),
             showlegend=True,
             text=formatted_y_values,
             hovertemplate=hovertemplate_maingraph),
@@ -2255,7 +2303,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
             y=future_arpu,
             mode='lines',
             line_dash="dot",
-            marker=dict(color='#ff6666', size=4),
+            marker=dict(color='#51CF66', size=4),
             showlegend=True,
             text=formatted_y_values,
             hovertemplate=hovertemplate_maingraph),
@@ -2263,7 +2311,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
         )
         # Revenue past the selected date that are known [data_len:]
         fig_main.add_trace(go.Scatter(
-            name="Annual Revenue per User (arpu)",
+            name="Annual Revenue per User/Unit (arpu)",
             x=x_revenue[len(dates_revenue_actual):],
             y=y_revenue[len(dates_revenue_actual):],
             mode='lines',
@@ -2274,8 +2322,8 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
             secondary_y=True,
         )
         fig_main.update_yaxes(range=[min(annual_revenue_per_user) * 0.9, max(annual_revenue_per_user) * 1.5],
-                              title_text="Annual Revenue per User [$]",
-                              color="#ff6666",
+                              title_text="Annual Revenue per User/Unit [$]",
+                              color="#51CF66",
                               secondary_y=True)
 
     else:
@@ -2395,6 +2443,7 @@ def show_cards(data, launch_counter):
         launch_counter['flag'] = True
         show_graph_card = {'display': 'block'}
         hide_graph_card = {'display': 'none'}
+        print("Displaying the graph hihi")
         return show_graph_card, show_graph_card, hide_graph_card, launch_counter
 
     else:
@@ -2443,6 +2492,7 @@ def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, current_m
     Output(component_id="hype-tooltip-hype", component_property="children"),
     Output(component_id="hype-meter-indicator", component_property="color"),
     Output(component_id="hype-meter-indicator", component_property="children"),
+    Output(component_id="current-valuation-calculated", component_property="data"),
     [
     Input(component_id='scenarios-sorted', component_property='data'),
     Input("range-profit-margin", "value"),
@@ -2476,8 +2526,9 @@ def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, arpu_grow
     future_customer_equity = main.net_present_value_arpu_growth(k_selected, r_selected, p0_selected, current_arpu,
                                                                 arpu_growth, profit_margin, discount_rate, YEARS_DCF)
     total_customer_equity = current_customer_equity + future_customer_equity
-
     non_operating_assets = total_assets
+
+    current_valuation = total_customer_equity + non_operating_assets
     hype_total = current_market_cap - total_customer_equity - non_operating_assets
 
     # Calculating the values of the hype meter
@@ -2496,7 +2547,7 @@ def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, arpu_grow
     hype_indicator_color, hype_indicator_text = main.hype_meter_indicator_values(hype_ratio/100)
 
     return non_operating_assets_ratio, noa_tooltip, customer_equity_ratio, customer_equity_tooltip, hype_ratio, \
-        hype_tooltip, hype_indicator_color, hype_indicator_text
+        hype_tooltip, hype_indicator_color, hype_indicator_text, current_valuation
 
 # Callback displaying the functionalities & graph cards, and hiding the text
 @app.callback(
@@ -2505,6 +2556,7 @@ def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, arpu_grow
     Output(component_id='valuation-graph-message', component_property='children'),
     Output(component_id='valuation-graph-message', component_property='color'),
     Output(component_id='valuation-graph-message', component_property='title'),
+    Input(component_id='date-picker', component_property='value'),  # Take date-picker date
     Input(component_id='users-dates-formatted', component_property='data'),
     Input(component_id='total-assets', component_property='data'),
     Input(component_id='dataset-selection', component_property='value'),
@@ -2513,7 +2565,10 @@ def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, arpu_grow
     [State('dataset-selection', 'data')]
     , prevent_initial_call=True
 )
-def historical_valuation_calculation(df_formatted, total_assets, data, df_raw, latest_market_cap, df_rawdataset_counter):
+def historical_valuation_calculation(date_picked, df_formatted, total_assets, data, df_raw, latest_market_cap, df_rawdataset_counter):
+    # The entire callback is skipped if the current market cap = 0, i.e. if it is not a public company
+    if latest_market_cap == 0:
+        raise PreventUpdate
     t1 = time.perf_counter(), time.process_time()
     dates_raw = np.array([entry['Date'] for entry in df_raw])
     dates_new = np.array([entry['Date'] for entry in df_formatted])
@@ -2678,10 +2733,32 @@ def historical_valuation_calculation(df_formatted, total_assets, data, df_raw, l
     formatted_y_values = [f"{y / 1e6:.1f} M" if y < 1e9 else f"{y / 1e9:.2f} B" for y in market_cap_array]
     fig_valuation.add_trace(go.Scatter(name="Market Cap", x=dates_raw_market_cap[MIN_DATE_INDEX:], y=market_cap_array,
                                        mode="lines", line=dict(color="#51CF66", width=2), text=formatted_y_values, hovertemplate=hovertemplate_maingraph))
+
+    # Current Date - Vertical line
+
+    # Defining the max y value
+    if max(market_cap_array) > max(high_scenario_valuation):
+        y_max = max(market_cap_array) * 1.1
+    else:
+        y_max = max(high_scenario_valuation) * 1.1
+
+    fig_valuation.add_shape(
+        go.layout.Shape(
+            type="line",
+            x0=date_picked,
+            x1=date_picked,
+            y0=0,
+            y1=y_max,
+            line=dict(color="gray", width=1, dash="dot"),
+            opacity=0.6
+        )
+    )
+
+    # Update Layout
     fig_valuation.update_layout(
         hovermode="x unified",
         yaxis=dict(
-            #range=[0, k_scenarios[-1] * 1.1],
+            # range=[0, k_scenarios[-1] * 1.1],
             fixedrange=True,
             title="Valuation & Market Cap [$B]",
             minallowed=0,
@@ -2694,6 +2771,21 @@ def historical_valuation_calculation(df_formatted, total_assets, data, df_raw, l
 
         ),
         dragmode="pan",
+        # Adding "Selected date"
+        annotations=[
+            dict(
+                x=date_picked,
+                y=y_max*1.02,  # Adjust the y-position as needed
+                text="Picked Date",
+                showarrow=False,
+                font=dict(
+                    size=8,  # Adjust the size as needed
+                    color="black",  # Text color
+                    # letter=5,
+                ),
+                opacity=0.3  # Set the opacity
+            )
+        ],
     )
     # Valuation message
 
@@ -2749,7 +2841,6 @@ def activate_reset_button(initial_sliders_values, slider_k, slider_profit_margin
         float(slider_discount_rate) != float(initial_sliders_values['slider_discount_rate']),
         float(slider_arpu_growth) != float(initial_sliders_values['slider_arpu'])
     ])
-    print("Slider moved", sliders_moved)
     if sliders_moved == False:
         disabled_button = True
 
