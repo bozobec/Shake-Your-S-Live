@@ -106,7 +106,7 @@ hype_meter_bootstrap = dbc.Progress(
             dbc.Progress(value=10, color="#228BE6", bar=True, label="N-O Assets", id="hype-meter-noa"),
             dbc.Progress(value=10, color="#74C0FC", bar=True, label="Customer Equity", id="hype-meter-users"),
             #dbc.Progress(value=20, color="#D1D1D1", bar=True, animated=True, striped=True, id="hype-meter-delta"),
-            dbc.Progress(value=10, color="#D1D1D1", bar=True, animated=True, striped=True, label="Hype", id="hype-meter-hype"),
+            dbc.Progress(value=10, color="#C92A2A", bar=True, animated=True, striped=True, label="Hype", id="hype-meter-hype"),
             dbc.Tooltip("Non-Operating Assets: $3.0B", target="hype-meter-noa", id='hype-tooltip-noa', placement="top"),
             dbc.Tooltip("Customer Equity: $3.0B", target="hype-meter-users", id='hype-tooltip-users', placement="top"),
             #dbc.Tooltip("Delta depending on the chosen scenario", target="hype-meter-delta", id="tooltip-equity-text", placement="top"),
@@ -150,7 +150,7 @@ offcanvas_card_growth_analysis = dmc.Card(
                                   "Dive into your selected dataset's past performance, unveiling growth trends "
                                   "over time."]),
                     dmc.ListItem([dmc.Text("Predictive Analysis", weight=500),
-                                  "Harness Groowt's advanced predictive capabilities to forecast future dataset "
+                                  "Harness RAST's advanced predictive capabilities to forecast future dataset "
                                   "growth."]),
                 ], size="sm", listStyleType="decimal")]
                       ,
@@ -236,7 +236,7 @@ offcanvas = html.Div(
             dmc.Container(children=[
                 dmc.Text(
                     "Are you a Tech investor, journalist or simply curious about tech valuation? We got you."
-                    " Meet GROOWT, your go-to tool for determining the intrinsic"
+                    " Meet RAST, your go-to tool for determining the intrinsic"
                     "value of publicly traded Tech companies.", size="sm"),
                 dmc.Space(h=15),
                 offcanvas_card_growth_analysis,
@@ -244,13 +244,13 @@ offcanvas = html.Div(
                 offcanvas_card_valuation_analysis,
                 dmc.Space(h=15),
                 dmc.Text("We're continually adding new datasets & functionalities. Interested in specific datasets or have "
-                         "a feature request? Drop us a line! 🚀 groowt@proton.me.", size="sm"),
+                         "a feature request? Drop us a line! 🚀 rastapp@proton.me.", size="sm"),
                 #dmc.Group(hype_meter_indicator_progress),
             ]
             ),
         ],
             id="offcanvas",
-            title="Welcome to GROOWT",
+            title="Welcome to RAST",
             is_open=False,
         ),
     ]
@@ -263,7 +263,7 @@ navbar2 = dbc.Navbar(
                     html.A(
                         dbc.Row(
                             [dbc.Col([html.Img(src="/assets/Vector_white.svg", style={'height': '20px'}),
-                                dbc.NavbarBrand("GROOWT", style={'margin-left': '10px'})
+                                dbc.NavbarBrand("RAST", style={'margin-left': '10px'})
                                      ], className="align-items-center d-flex"),
                             ]
                         ), href="https://fathomless-scrubland-44017-2a7f83d10555.herokuapp.com/"
@@ -281,7 +281,7 @@ navbar = dbc.Navbar(
                             dbc.Col(
                                 [
                                     html.Img(src="/assets/Vector_white.svg", style={'height': '25px'}),
-                                    dbc.NavbarBrand("GROOWT", style={'margin-left': '20px'}),
+                                    dbc.NavbarBrand("RAST", style={'margin-left': '20px'}),
                                     #dropdown5,
                                 ], className="align-items-center d-flex"
                             ),
@@ -305,7 +305,7 @@ navbar3 = dbc.Navbar(dbc.Nav(
     [
         dbc.NavItem(),
         dbc.NavItem(html.Img(src="/assets/Vector_white.svg", style={'height': '20px'})),
-        dbc.NavItem(dbc.NavbarBrand("GROOWT", style={'margin-left': '20px'})),
+        dbc.NavItem(dbc.NavbarBrand("RAST", style={'margin-left': '20px'})),
         #dropdown4,
         #dbc.NavItem(dropdown5),
         dbc.NavItem(offcanvas, style={'height':'20px'}),
@@ -331,7 +331,7 @@ navbar6 = dbc.Navbar(
         [
             dbc.Row([
                     dbc.Col(html.Img(src="/assets/Vector_white.svg", height="25px")),
-                    dbc.Col(dbc.NavbarBrand("GROOWT", className="ms-2", href='/'))
+                    dbc.Col(dbc.NavbarBrand("RAST", className="ms-2", href='/'))
                     ],
                     align="bottom",
                     className="g-0"),
@@ -391,7 +391,7 @@ navbar7 = dbc.NavbarSimple(
            #     ],
             #),
         ],
-        brand=[html.Img(src="/assets/Vector_white.svg", height="25px"), '   GROOWT'],
+        brand=[html.Img(src="/assets/Vector_white.svg", height="25px"), '   RAST'],
         brand_href="/",
         # sticky="top",  # Uncomment if you want the navbar to always appear at the top on scroll.
         color="primary",  # Change this to change color of the navbar e.g. "primary", "secondary" etc.
@@ -413,7 +413,9 @@ slider = html.Div(children=[dcc.RangeSlider(id="range-slider-data-ignored1", min
 bottom_card = dbc.Card(id="bottom-card", children=[
                         html.Div(id='graph-container2', children=[dcc.Graph(id='main-graph2',
                                                                             config={'displayModeBar': False})])
-                      ], style={'display': 'none'})
+                      ],
+                       #style={'display': 'none'}
+                       )
 # Card that contains the evolution of R square and RMSD
 bottom_bottom_card = dbc.Card(id="bottom-bottom-card", children=[
                         html.Div(id='graph-container3', children=[dcc.Graph(id='main-graph3',
@@ -564,7 +566,7 @@ accordion = dmc.AccordionMultiple(
                     "Growth",
                     id="accordion-growth",
                     disabled=True,
-                    icon=DashIconify(icon="uit:chart-growth", width=20)
+                    icon=DashIconify(icon="uit:chart-growth", width=20),
                 ),
                 dmc.AccordionPanel(
                     growth_message
@@ -631,6 +633,15 @@ valuation_graph_message = dmc.Alert(
     dmc.Text("About the Current Market Cap"),
     id="valuation-graph-message",
     title="About the Current Market Cap",
+    color="blue",
+    #hide="False",
+    withCloseButton="True")
+
+# Graph message growth rate
+growth_rate_graph_message = dmc.Alert(
+    dmc.Text("About the Discrete Growth Rate"),
+    id="growth-rate-graph-message",
+    title="About the Discrete Growth Rate",
     color="blue",
     #hide="False",
     withCloseButton="True")
@@ -720,13 +731,13 @@ functionalities_card = dmc.Card(
             mt="md",
             mb="xs",
         ),
-        dmc.Text(
-            "See where data is heading and move the predicted growth (blue) easily. "
-            "For companies, figure out if their worth makes sense right now.",
-            size="xs",
-            color="dimmed",
-        ),
-        dmc.Space(h=10),
+        #dmc.Text(
+        #    "See where data is heading and move the predicted growth (blue) easily. "
+        #    "For companies, figure out if their worth makes sense right now.",
+        #    size="xs",
+        #    color="dimmed",
+        #),
+        #dmc.Space(h=10),
         dmc.Space(h=10),
         # Plateau slider
         html.Div(
@@ -740,7 +751,7 @@ functionalities_card = dmc.Card(
                     dmc.Tooltip(
                         DashIconify(icon="feather:info", width=15),
                         label="Select 'Custom' to move the blue curve and see how well it fits the dataset. "
-                              "The star indicates GROOWT's best prediction",
+                              "The star indicates RAST's best prediction",
                         transition="slide-down",
                         transitionDuration=300,
                         multiline=True,
@@ -794,6 +805,12 @@ functionalities_card = dmc.Card(
                 dmc.Text(
                     "Latest annual profit margin: 45%",
                     id="profit-margin-container",
+                    size="sm",
+                    color="dimmed",
+                    ),
+                dmc.Text(
+                    "Best annual profit margin ever: 45%",
+                    id="best-profit-margin-container",
                     size="sm",
                     color="dimmed",
                     ),
@@ -923,7 +940,7 @@ functionalities_card = dmc.Card(
     #style={"height": 500},
 )
 
-# Welcome timeline introducing the user to Groowt
+# Welcome timeline introducing the user to RAST
 
 welcome_timeline = html.Div([
     dmc.Timeline(
@@ -980,7 +997,7 @@ welcome_timeline = html.Div([
                         "Have new datasets or feature requests? Contact us",
                         dmc.Anchor(
                             " here!",
-                            href="mailto:groowt@proton.me",
+                            href="mailto:rastapp@proton.me",
                             size="sm",
                         ),
                     ],
@@ -993,6 +1010,7 @@ welcome_timeline = html.Div([
 )])
 
 main_graph = dcc.Graph(id='main-graph1', config={'displayModeBar': False, 'scrollZoom': True})
+growth_graph = dcc.Graph(id='main-graph2', config={'displayModeBar': False, 'scrollZoom': True})
 
 
 # Graph that contains the valuation calculation over time
@@ -1002,14 +1020,20 @@ valuation_over_time = html.Div(children=[dcc.Graph(id='valuation-graph', config=
 # Tabs
 tabs_graph = dmc.Tabs(
     [
+        dmc.Loader(color="red", size="md", variant="oval", style={'display': 'none'}, id='loader-general'),
         dmc.TabsList(
             #grow=True,
             children=
                 [
-                    dmc.Tab("Future Outlook", icon=DashIconify(icon="simple-icons:futurelearn"), value="1"),
-                    dmc.Tab("Past Performance",
+                    dmc.Tab("User & ARPU Evolution", icon=DashIconify(icon="simple-icons:futurelearn"), value="1"),
+                    dmc.LoadingOverlay(dmc.Tab("Market Cap over Time",
                             icon=DashIconify(icon="material-symbols:history"),
                             value="2",
+                            #disabled=True
+                            )),
+                    dmc.Tab("Growth Rate",
+                            icon=DashIconify(icon="radix-icons:bar-chart"),
+                            value="3",
                             #disabled=True
                             ),
                 ],
@@ -1017,6 +1041,7 @@ tabs_graph = dmc.Tabs(
         dmc.TabsPanel(html.Div(children=[graph_message, main_graph]),
             id="tab-one", value="1"),
         dmc.TabsPanel(html.Div(children=[valuation_graph_message, valuation_over_time]), id="tab-two", value="2"),
+        dmc.TabsPanel(html.Div(children=[growth_rate_graph_message, growth_graph]), id="tab-three", value="3"),
     ],
     value="1",
     variant="outline",
@@ -1035,7 +1060,7 @@ graph_card = dmc.Card(
         # Card Title
         dmc.Group(
                     [
-                        dmc.Title("Welcome to GROOWT", id="graph-title", order=5),
+                        dmc.Title("Welcome to RAST", id="graph-title", order=5),
                     ],
                     position="apart",
                     mt="md",
@@ -1104,6 +1129,7 @@ hype_meter_card = dmc.Card(
             position="apart",
             mt="md",
             mb="xs",
+            noWrap=True,
         ),
         #hype_meter,
         dmc.Stack([
@@ -1115,8 +1141,7 @@ hype_meter_card = dmc.Card(
         dmc.Space(h=20),
         dmc.Text(
             id="hype-meter-text",
-            children=["Adjust profit margin, discount rate, and ARPU to evaluate the company's current hype through its "
-                     "three components: Non-Operating Assets, Customer Equity, and Hype.",
+            children=["Adjust profit margin, discount rate, and ARPU to change the company's current Hype.",
                         #dmc.Text("Non-Operating Assets represent additional valuable company assets.", color="#228BE6"),
                         #dmc.Text("Customer Equity signifies current and future customer-generated profit,"
                         #         " calculated with the selected parameters with a discounted cashflow "
@@ -1267,6 +1292,7 @@ def layout():
                 # align="center",
             ),
             dmc.Space(h=1000),
+            #bottom_card,
         ],
                       ),
 
@@ -1275,6 +1301,7 @@ def layout():
             dcc.Store(id='users-data'),
             dcc.Store(id='users-dates-raw'),  # DF containing the initial users/dates from the API
             dcc.Store(id='users-dates-formatted'),  # DF containing the users & dates in float for computation
+            dcc.Store(id='valuation-over-time'),  # DF containing the valuation over time for a given dataset
             dcc.Store(id='scenarios-sorted'),  # DF containing all the possible growth scenarios
             dcc.Store(id='current-market-cap'),
             # Market cap of the company selected, 0 if N/A at the relative current time (depending on the date picked)

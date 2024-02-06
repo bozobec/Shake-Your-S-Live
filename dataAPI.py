@@ -188,7 +188,6 @@ def get_previous_quarter_revenue(symbol_input):
                                              #'to': to_date,
                                              'token': auth_token})
         data = response.json()
-        print(response)
         try:
             total_assets = next(
                 item['value'] for item in data['data'][0]['report']['bs'] if item['label'] == 'Total current assets')
@@ -200,6 +199,9 @@ def get_previous_quarter_revenue(symbol_input):
                            or item['label'] == 'Revenues' or item['label'] == 'Revenue:')
         except:
             revenue = next(item['value'] for item in data['data'][0]['report']['ic'] if item['label'] == 'Revenues')
+        print("Total Assets: ", str(symbol))
+        print(total_assets)
+        print(data)
 
         return revenue / year_percentage, total_assets
     except Exception as e:

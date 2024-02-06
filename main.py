@@ -202,58 +202,69 @@ def rsquare_calculation (observed_values, approximated_values):
 
 # Calculation of the parameters and RSquare, mapped to the amount of data ignored
 def parameters_dataframe(dates, users):
-    maximum_data_ignored = 0.9  # Up to 80% of the data can be ignored
-    n_data_ignored = int(round(len(dates)*maximum_data_ignored))
-    dataframe = np.zeros((n_data_ignored, 8))
+    number_moving_average = 5  # Number of moving averages allowed
+    n_data_ignored = len(dates)-3  # Number of data until which to be ignored
+    dataframe = np.zeros((n_data_ignored*number_moving_average, 9))
     # Calculation of K, r & p0 and its related RSquare for each data ignored
-    for i in range(n_data_ignored):
-        try:
-            dates_rsquare = dates[i:len(dates)]
-            users_rsquare = users[i:len(dates)]
-            rd = discrete_growth_rate(users_rsquare, dates_rsquare)
-            userinterval = discrete_user_interval(users_rsquare)
+    for i in range(number_moving_average):
+        dates, users = moving_average_smoothing(dates, users, i)
+        for j in range(n_data_ignored):
             try:
-                k, r, p0 = logistic_function_approximation(dates_rsquare, users_rsquare)
-            except:
-                k, r, p0 = 0
-                print("Parameters could not be calculated for: ", i, " data ignored")
-            if k == 0:
-                print("Issue when ignoring", i, "data")
-                raise RuntimeError("Skipping ignoring", i, " data")
-            observed_values_df = rd
-            approximated_values_df = -r/k*userinterval+r
-            r_squared = rsquare_calculation(observed_values_df, approximated_values_df)
-            try:
-                rootmeansquare = rmsd(users_rsquare, logisticfunction(k, r, p0, dates_rsquare))
-            except:
-                rootmeansquare = 0
-                print("rmsd could not be calculated when ignoring:", n_data_ignored, " number of data points")
-            logfit = log_approximation(dates_rsquare, users_rsquare)
+                dates_rsquare = dates[j:len(dates)]
+                users_rsquare = users[j:len(dates)]
+                rd = discrete_growth_rate(users_rsquare, dates_rsquare)
+                userinterval = discrete_user_interval(users_rsquare)
+                try:
+                    k, r, p0 = logistic_function_approximation(dates_rsquare, users_rsquare)
+                except:
+                    k, r, p0 = 0
+                    print("Parameters could not be calculated for: ", j, " data ignored")
+                if k == 0:
+                    print("Issue when ignoring", j, "data")
+                    raise RuntimeError("Skipping ignoring", j, " data")
+                observed_values_df = rd
+                approximated_values_df = -r/k*userinterval+r
+                r_squared = rsquare_calculation(observed_values_df, approximated_values_df)
+                try:
+                    rootmeansquare = rmsd(users_rsquare, logisticfunction(k, r, p0, dates_rsquare))
+                except:
+                    rootmeansquare = 0
+                    print("rmsd could not be calculated when ignoring:", n_data_ignored, " number of data points")
+                logfit = log_approximation(dates_rsquare, users_rsquare)
 
-            approximated_values_log = rsquare_calculation(observed_values_df, np.polyval(logfit, np.log(userinterval)))
-            diff_lin_log = approximated_values_log-r_squared
+                approximated_values_log = rsquare_calculation(observed_values_df, np.polyval(logfit, np.log(userinterval)))
+                diff_lin_log = approximated_values_log-r_squared
 
 
-            dataframe[i, 0] = i  # Data ignored column
-            dataframe[i, 1] = k  # K (carrying capacity) column
-            dataframe[i, 2] = r  # r (growth rate) column
-            dataframe[i, 3] = p0  # p0 (initial population) column
-            dataframe[i, 4] = r_squared  # r squared column
-            dataframe[i, 5] = rootmeansquare / ((users[0]+users[-1])/2)  # Root Mean Square Deviation column
-            dataframe[i, 6] = approximated_values_log  # Root Mean Square Deviation of the log approximation column
-            dataframe[i, 7] = diff_lin_log  # Difference between the linear R^2 and the log R^2
-        except RuntimeError as e:
-            dataframe[i, 0] = 0  # Data ignored column
-            dataframe[i, 1] = 0  # K (carrying capacity) column
-            dataframe[i, 2] = 0  # r (growth rate) column
-            dataframe[i, 3] = 0  # p0 (initial population) column
-            dataframe[i, 4] = 0  # r squared column
-            dataframe[i, 5] = 0  # Root Mean Square Deviation column
-            dataframe[i, 6] = 0  # Root Mean Square Deviation of the log approximation column
-            dataframe[i, 7] = 0  # Difference between the linear R^2 and the log R^2
-    df = pd.DataFrame(dataframe, columns=['Data Ignored', 'K', 'r', 'p0', 'R Squared', 'RMSD', 'R Squared LOG', 'Lin/Log Diff'])
+                dataframe[j+i*n_data_ignored, 0] = j  # Data ignored column
+                dataframe[j+i*n_data_ignored, 1] = k  # K (carrying capacity) column
+                dataframe[j+i*n_data_ignored, 2] = r  # r (growth rate) column
+                dataframe[j+i*n_data_ignored, 3] = p0  # p0 (initial population) column
+                dataframe[j+i*n_data_ignored, 4] = r_squared  # r squared column
+                dataframe[j+i*n_data_ignored, 5] = rootmeansquare / ((users[0]+users[-1])/2)  # Root Mean Square Deviation column
+                dataframe[j+i*n_data_ignored, 6] = approximated_values_log  # Root Mean Square Deviation of the log approximation column
+                dataframe[j+i*n_data_ignored, 7] = diff_lin_log  # Difference between the linear R^2 and the log R^2
+                dataframe[j+i*n_data_ignored, 8] = i  # Difference between the linear R^2 and the log R^2
+            except RuntimeError as e:
+                dataframe[j+i*n_data_ignored, 0] = 0  # Data ignored column
+                dataframe[j+i*n_data_ignored, 1] = 0  # K (carrying capacity) column
+                dataframe[j+i*n_data_ignored, 2] = 0  # r (growth rate) column
+                dataframe[j+i*n_data_ignored, 3] = 0  # p0 (initial population) column
+                dataframe[j+i*n_data_ignored, 4] = 0  # r squared column
+                dataframe[j+i*n_data_ignored, 5] = 0  # Root Mean Square Deviation column
+                dataframe[j+i*n_data_ignored, 6] = 0  # Root Mean Square Deviation of the log approximation column
+                dataframe[j+i*n_data_ignored, 7] = 0  # Difference between the linear R^2 and the log R^2
+                dataframe[j+i*n_data_ignored, 8] = 0  # Difference between the linear R^2 and the log R^2
+    pd.set_option('display.max_rows', None)
+    df = pd.DataFrame(dataframe, columns=['Data Ignored', 'K', 'r', 'p0', 'R Squared', 'RMSD', 'R Squared LOG', 'Lin/Log Diff', 'Moving Average'])
     df['Method'] = 'Linear regression'
     return df
+
+# Function calculating function parameters for different moving averages (1-4)
+def parameters_dataframe_moving_average(dates, users):
+    for i in range(4):
+        print("9")
+    return 1
 
 
 # Function to clean the parameters dataframe (the dataframe containing parameters in function of the data ignored)
