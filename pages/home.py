@@ -448,7 +448,7 @@ def layout():
                             dmc.Text("Whether you are a Tech investor, journalist or simply curious about tech "
                                      "valuation, estimate the Hype by unveiling user-based companies' True Value.", size="xl",
                                      color="dimmed", align="left"),
-                            html.A(dmc.Button("Try RAST Beta Version", leftIcon=html.Img(src="/assets/Vector_white.svg",
+                            html.A(dmc.Button("Try RAST - It's Free", leftIcon=html.Img(src="/assets/Vector_white.svg",
                                                                                     height="15px")), href="/app"),
                         ], align="flex-start"), span=12, sm=4),
                         dmc.Col(span=1),
