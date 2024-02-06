@@ -444,7 +444,7 @@ def layout():
                     children=[
                         dmc.Col(span=2),
                         dmc.Col(dmc.Stack([
-                            dmc.Title("GET TO THE TRUE VALUE OF USER-BASED COMPANIES.", order=1, color="black", align="left"),
+                            dmc.Title("GAIN CLARITY IN USER-BASED COMPANIES VALUATION.", order=1, color="black", align="left"),
                             dmc.Text("Whether you are a Tech investor, journalist or simply curious about tech "
                                      "valuation, predict Market Hype by unveiling user-based companies' True Value.", size="xl",
                                      color="dimmed", align="left"),
