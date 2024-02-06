@@ -446,7 +446,7 @@ def layout():
                         dmc.Col(dmc.Stack([
                             dmc.Title("GAIN CLARITY IN USER-BASED COMPANIES VALUATION.", order=1, color="black", align="left"),
                             dmc.Text("Whether you are a Tech investor, journalist or simply curious about tech "
-                                     "valuation, predict Market Hype by unveiling user-based companies' True Value.", size="xl",
+                                     "valuation, estimate the Hype by unveiling user-based companies' True Value.", size="xl",
                                      color="dimmed", align="left"),
                             html.A(dmc.Button("Try RAST Beta Version", leftIcon=html.Img(src="/assets/Vector_white.svg",
                                                                                     height="15px")), href="/app"),
