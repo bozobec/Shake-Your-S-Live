@@ -44,7 +44,9 @@ app.index_string = """<!DOCTYPE html>
         </script>
         <meta name="RAST | Customer-based companies valuation" content="RAST is a tool for valuating customer-based or
         user-based publicly traded companies">
-        <title>RAST</title>
+        <title>Free tech company valuation tool - RAST</title>
+        <meta content="Make confident investment decisions on user-based companies such as Netflix with our unique fundamental analysis and in-depth visual 
+        tool. Understand the users' growth and valuation." name="description">
         <link rel="icon" href="/assets/favicon.ico">
         <meta name="RAST is a Company valuation tool">
         <meta name="With RAST, perform User-based valuation, calculate customer equity, Customer lifetime value (CLV) 
@@ -432,7 +434,7 @@ navbar7 = dbc.NavbarSimple(
         # ),
     ],
     #brand=['R A ', html.Img(src="/assets/favicon.ico", height="21px"), ' T'],
-    brand=[html.Img(src="/assets/Vector_White_Full.svg", height="21px")],
+    brand=[html.Img(src="/assets/Vector_White_Full.svg", alt="RAST Logo, user-based company valuation & prediction tool", height="21px")],
     brand_href="/",
     sticky="top",  # Uncomment if you want the navbar to always appear at the top on scroll.
     color="primary",  # Change this to change color of the navbar e.g. "primary", "secondary" etc.

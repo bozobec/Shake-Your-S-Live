@@ -262,7 +262,9 @@ graph_example_card = dmc.Card(
     children=[
         dmc.Group(
             [
-                dmc.Image(src="/assets/Netflix_2014_logo.svg", width=100),
+                dmc.Image(src="/assets/Netflix_2014_logo.svg",
+                          alt="Netflix Logo for RAST, the user-based company valuation & prediction tool",
+                          width=100),
             ],
             position="apart",
             mt="md",
@@ -303,6 +305,7 @@ fourth_card = dmc.Card(
         dmc.CardSection(
             dmc.Image(
                 src="/assets/past_performance.png",
+                alt="Use RAST to visualize past publicly traded tech companies valuation",
                 height=240,
             ), style={'marginBottom': 10, 'marginLeft': 10, 'marginRight': 10}
         ),
@@ -344,7 +347,9 @@ hype_meter_card_home = dmc.Card(
     children=[
         dmc.Group(
             [
-                dmc.Image(src="/assets/Netflix_2014_logo.svg", width=100),
+                dmc.Image(src="/assets/Netflix_2014_logo.svg",
+                          alt="Use RAST to calculate Netflix's or Dropbox's valuation and compare it to the market cap.",
+                          width=100),
                 hype_meter_indicator_home,
             ],
             position="apart",
@@ -411,7 +416,9 @@ third_card = dmc.Card(
         dmc.CardSection([
             dmc.Group(
             [
-                dmc.Image(src="/assets/dropbox-logo.png", width=100),
+                dmc.Image(src="/assets/dropbox-logo.png",
+                          alt="Use RAST to calculate user-based company valuation such as Dropbox",
+                          width=100),
                 hype_meter_indicator_home,
             ],
             position="apart",
@@ -449,6 +456,7 @@ def layout():
                                      "valuation, estimate the Hype by unveiling user-based companies' True Value.", size="xl",
                                      color="dimmed", align="left"),
                             html.A(dmc.Button("Try RAST - It's Free", leftIcon=html.Img(src="/assets/Vector_white.svg",
+                                                                                        alt="RAST Logo, user-based company valuation & prediction tool",
                                                                                     height="15px")), href="/app"),
                         ], align="flex-start"), span=12, sm=4),
                         dmc.Col(span=1),
@@ -492,7 +500,7 @@ def layout():
                                  "we're just here with the cold, hard facts.",
                                  size="xl",
                                  color="dimmed", align="left"),
-                        html.A(dmc.Button("Try RAST for free", leftIcon=html.Img(src="/assets/Vector_white.svg",
+                        html.A(dmc.Button("Try RAST for free", leftIcon=html.Img(src="/assets/Vector_white.svg", alt="RAST Logo, user-based company valuation & prediction tool",
                                                                                      height="15px")), href="/app"),
                     ], align="flex-start"), span=12, sm=4),
                     dmc.Col(span="auto"),
