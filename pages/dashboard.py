@@ -24,7 +24,7 @@ from dash.exceptions import PreventUpdate
 
 register_page(
     __name__,
-    name='Dashboard',
+    name='RAST | APP Dashboard for user-based companies valuation',
     top_nav=True,
     path='/app'
 )

@@ -49,6 +49,7 @@ app.index_string = """<!DOCTYPE html>
         <meta name="RAST is a Company valuation tool">
         <meta name="With RAST, perform User-based valuation, calculate customer equity, Customer lifetime value (CLV) 
         calculation and valuation">
+        <meta name="viewport" content="width=device-width">
         {%css%}
     </head>
     <body>
