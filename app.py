@@ -46,8 +46,9 @@ app.index_string = """<!DOCTYPE html>
         user-based publicly traded companies">
         <title>RAST</title>
         <link rel="icon" href="/assets/favicon.ico">
-        <meta name="Company valuation tool">
-        <meta name="User-based valuation, customer equity, Customer lifetime value (CLV) calculation and valuation">
+        <meta name="RAST is a Company valuation tool">
+        <meta name="With RAST, perform User-based valuation, calculate customer equity, Customer lifetime value (CLV) 
+        calculation and valuation">
         {%css%}
     </head>
     <body>
