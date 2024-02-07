@@ -2404,7 +2404,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
             mode='lines',
             line=dict(color='Gray', width=1),
             showlegend=False,
-            #text=formatted_y_values,
+            #text=formatted_y_values, #
             hovertemplate=hovertemplate_maingraph),
             secondary_y=True,
         )
