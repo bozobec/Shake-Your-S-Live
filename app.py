@@ -1484,8 +1484,10 @@ def set_history_size(dropdown_value):
         min_history_datepicker = str(dates_unformatted[MIN_DATE_INDEX])  # Minimum date that can be picked
         max_dataset_date = datetime.strptime(dates_unformatted[-1], "%Y-%m-%d")  # Fetching the last date of the dataset
         max_history_datepicker_date = max_dataset_date + timedelta(
-            days=1)  # Adding one day to the max, to include all dates
-        max_history_datepicker = max_history_datepicker_date.strftime("%Y-%m-%d")
+            days=6)  # Adding one day to the max, to include all dates
+        #max_history_datepicker = max_history_datepicker_date.strftime("%Y-%m-%d")
+        current_date = datetime.now()
+        max_history_datepicker = current_date.date()
         date_value_datepicker = max_history_datepicker  # Sets the value of the datepicker as the max date
         # current_date = dates_formatted[-1]
         print("Other data", min_history_datepicker, max_dataset_date, max_history_datepicker_date,
@@ -1929,7 +1931,8 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
         quarterly_revenue = filtered_revenue * 1_000_000  # Getting in database
         yearly_revenue_quarters = sum(quarterly_revenue[-4:])
         average_users_past_year = (current_users + current_users_array[closest_index - 4]) / 2
-        current_arpu = yearly_revenue_quarters / average_users_past_year
+        #current_arpu = yearly_revenue_quarters / average_users_past_year
+        current_arpu = sum(quarterly_revenue[-4:] / current_users_array[-4:])
         printed_current_arpu = f"{current_arpu:.0f} $ (current arpu)"  # formatting
         marks_profit_margin_slider = []
         if current_annual_profit_margin > 1:
@@ -2352,8 +2355,9 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
             line=dict(color='White', width=2),
             opacity=0.8,
             showlegend=False,
-            text=formatted_y_values,
-            hovertemplate=hovertemplate_maingraph),
+            #text=formatted_y_values,
+            #hovertemplate=hovertemplate_maingraph
+            ),
             secondary_y=True,
         )
         # Past revenue line
@@ -2389,7 +2393,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
             mode='lines',
             line=dict(color='Gray', width=1),
             showlegend=False,
-            text=formatted_y_values,
+            #text=formatted_y_values,
             hovertemplate=hovertemplate_maingraph),
             secondary_y=True,
         )
@@ -2413,13 +2417,13 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     # Build second chart containing the discrete growth rates & Regressions
     # -------------------------------------------------------
 
-    fig_second = go.Figure(layout=layout_second_graph)
+    fig_second = go.Figure(layout=layout_main_graph)
     fig_second.update_xaxes(range=[0, users[-1] * 1.1])  # Fixing the size of the X axis with users max + 10%
     # max_rd_value = df_sorted['r'].max()
 
     # fig_second.update_yaxes(range=[0, max_rd_value]) # Fixing the size of the Y axis
     fig_second.add_trace(
-        go.Scatter(name="Discrete Growth Rate", x=main.discrete_user_interval(users),
+        go.Scatter(name="Discrete Growth Rate Considered", x=main.discrete_user_interval(users),
                    y=main.discrete_growth_rate(users, dates + 1970), mode="markers", line=dict(color='#54c4f4')
                    ))
     print("Rdrdrd")
@@ -2427,7 +2431,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     print(main.discrete_growth_rate(users, dates + 1970))
     # Add trace of the regression
     fig_second.add_trace(
-        go.Scatter(name="Discrete Growth Rate", x=main.discrete_user_interval(users),
+        go.Scatter(name="Regression", x=main.discrete_user_interval(users),
                    y=-r / k * main.discrete_user_interval(users) + r, mode="lines", line=dict(color='#54c4f4')))
     # Add trace of the regression obtained by fixing k
     # fig_second.add_trace(
@@ -2437,7 +2441,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     # print(main.discrete_user_interval(users[0:number_ignored_data]))
     if number_ignored_data > 0:
         fig_second.add_trace(
-            go.Scatter(name="Discrete Growth Rate", x=main.discrete_user_interval(users[0:number_ignored_data]),
+            go.Scatter(name="Ignored Data Points", x=main.discrete_user_interval(users[0:number_ignored_data]),
                        y=main.discrete_growth_rate(users[0:number_ignored_data], dates[0:number_ignored_data] + 1970),
                        mode="markers", line=dict(color='#808080')))
 
@@ -2675,13 +2679,10 @@ def historical_valuation_calculation(df_formatted, total_assets, data, df_raw, l
     # df_valuation_over_time = pd.DataFrame(columns=columns)
     valuation_data = []
     print("Iteration range", iteration_range)
-    print("Final date", dates_original[:iteration_range[1]])
     if df_rawdataset_counter:  # calculates the historic of valuation only if the dataset has been updated
         for i in range(iteration_range[0], iteration_range[1]):
             dates_valuation = dates_original[:i]
             users_valuation = users_original[:i]
-            print("Dates", i)
-            print(dates_valuation)
             quarterly_revenue = revenue_df * 1_000_000  # Getting in database
             revenue_valuation = quarterly_revenue[:i]
             market_cap_valuation = market_cap_original[i]
@@ -2696,14 +2697,11 @@ def historical_valuation_calculation(df_formatted, total_assets, data, df_raw, l
             # All parameters are calculated by ignoring data 1 by 1, taking the history reference as the end point
             df_full = main.parameters_dataframe(dates,
                                                 users)  # Dataframe containing all parameters with all data ignored
-            print("df_full", df_full)
             df_sorted = main.parameters_dataframe_cleaning(df_full,
                                                            users)  # Dataframe where inadequate scenarios are eliminated
-            print("df_sorted11", df_sorted)
 
             if df_sorted.empty: # Smoothening data for cases where it doesn't work
                 # Smoothing the data
-                print("Smoothening data")
                 #dates1, users1 = main.moving_average_smoothing(dates_valuation, users_valuation, 4)
                 dates = dates_valuation
                 users = users_valuation
@@ -2711,10 +2709,8 @@ def historical_valuation_calculation(df_formatted, total_assets, data, df_raw, l
                 # All parameters are calculated by ignoring data 1 by 1, taking the history reference as the end point
                 df_full1 = main.parameters_dataframe(dates,
                                                     users)  # Dataframe containing all parameters with all data ignored
-                print("df_full_smoothen", df_full)
                 df_sorted = main.parameters_dataframe_cleaning(df_full1,
                                                                users)  # Dataframe where inadequate scenarios are eliminated
-                print("df_sorted_smoothen", df_sorted)
                 if df_sorted.empty:
                     print("Cleaning it minimally")
                     df_sorted = main.parameters_dataframe_cleaning_minimal(df_full, users)
@@ -2726,7 +2722,6 @@ def historical_valuation_calculation(df_formatted, total_assets, data, df_raw, l
                 print("Successful scenarios exist")
             # Number of scenarios to store
             i -= MIN_DATE_INDEX
-            print("Date added", dates_new[i + MIN_DATE_INDEX])
 
             # Profit margin assessment
             profit_margin = np.empty(2)
@@ -2769,9 +2764,7 @@ def historical_valuation_calculation(df_formatted, total_assets, data, df_raw, l
                         0, 0, 0, 0, 0, 0, 0
                     ])
                 else:
-                    print("Iteration index", i+j)
                     k_selected = df_sorted.at[j * (len(df_sorted) - 1), 'K']
-                    print("k_selected", k_selected)
                     r_selected = df_sorted.at[j * (len(df_sorted) - 1), 'r']
                     p0_selected = df_sorted.at[j * (len(df_sorted) - 1), 'p0']
                     future_customer_equity = main.net_present_value_arpu_growth(k_selected, r_selected, p0_selected,
@@ -2942,7 +2935,7 @@ def graph_valuation_over_time(valuation_over_time_dict, date_picked, df_formatte
                                        hovertemplate=hovertemplate_maingraph))
 
     # Current valuation
-    print("Datata", date_picked, type(date_picked))
+    #print("Datata", date_picked, type(date_picked))
     # date_obj = datetime.strptime(date_picked, '%Y-%m-%d')
     if current_valuation > high_scenario_valuation[-1]:
         color_dot = "#C92A2A"
