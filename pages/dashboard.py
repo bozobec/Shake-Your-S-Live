@@ -188,7 +188,7 @@ offcanvas_card_valuation_analysis = dmc.Card(
                          "market cap reveals investor sentiments, showing how much 'hope' or 'hype' surrounds "
                          "the company. In the example below, we observe that the hype accounts for 30% of the company's "
                          "current valuation. This suggests that unless there's a notable enhancement in its business "
-                         "model, there's a high likelihood that the value may decrease."
+                         "model, there's a high likelihood that the value decreases eventually."
                 , size="sm"),
         dmc.Space(h=10),
         hype_meter_example,
@@ -792,8 +792,8 @@ functionalities_card = dmc.Card(
                         dmc.Tooltip(
                             DashIconify(icon="feather:info", width=15),
                             label="Adjust the profit margin using the slider to observe the impact on the company's "
-                                  "annual average revenue per user. Decreasing the profit margin will increase "
-                                  "the amount of revenue required to justify the current market cap.",
+                                  "annual average revenue per user. Increasing the profit margin increases the company's"
+                                  "profit and therefore the company's value.",
                             transition="slide-down",
                             transitionDuration=300,
                             multiline=True,
@@ -1028,8 +1028,10 @@ tabs_graph = dmc.Tabs(
                     dmc.Tab("User & ARPU Evolution", icon=DashIconify(icon="simple-icons:futurelearn"), value="1"),
                     dmc.LoadingOverlay(dmc.Tab("Market Cap over Time",
                             icon=DashIconify(icon="material-symbols:history"),
+                            id="market-cap-tab",
                             value="2",
                             #disabled=True
+                            style={'display': ''},
                             )),
                     dmc.Tab("Growth Rate",
                             icon=DashIconify(icon="radix-icons:bar-chart"),

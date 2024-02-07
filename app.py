@@ -1382,6 +1382,8 @@ def select_value(value):
     Output(component_id='initial-sliders-values', component_property='data'),  # Stores the default slider values
     Output(component_id='data-source', component_property='children'),  # Stores the source of the data shown
     Output(component_id='data-selection-counter', component_property='data'),  # Flags that the data has changed
+    Output("loader-general", "style", allow_duplicate=True),
+    Output(component_id='market-cap-tab', component_property='style'),  # Hides Market cap tab if other data is selected
 
     # the chosen KPI and the revenue
 
@@ -1429,7 +1431,8 @@ def set_history_size(dropdown_value):
         # discount rate and arpu for Companies
         symbol_company = df.loc[0, 'Symbol']
         if symbol_company != "N/A":
-            show_company_functionalities = {'display': 'block'}  # Style component showing the fin. function.
+            hide_loader = {'display': ''} # keep on showing the loader
+            show_company_functionalities = {'display': ''}  # Style component showing the fin. function.
             try:
                 yearly_revenue, total_assets = dataAPI.get_previous_quarter_revenue(symbol_company)  # Getting with API
                 print("Latest yearly revenue & total assets fetched")
@@ -1469,6 +1472,7 @@ def set_history_size(dropdown_value):
                 text_profit_margin = "Latest annual profit margin: " + str(current_annual_profit_margin) + "% 😰",
 
         else:
+            hide_loader = {'display': 'none'}
             total_assets = 0
             show_company_functionalities = {'display': 'none'}
             users_revenue_regression = 0
@@ -1480,6 +1484,7 @@ def set_history_size(dropdown_value):
                 {"value": 20, "label": "20%"},
                 {"value": 50, "label": "50%"},
             ]
+            text_best_profit_margin = ""
 
         df_formatted = df
         df_formatted["Date"] = dates_formatted
@@ -1583,7 +1588,7 @@ def set_history_size(dropdown_value):
             show_company_functionalities, show_company_functionalities, show_company_functionalities, \
             show_company_functionalities, text_profit_margin, text_best_profit_margin, marks_profit_margin_slider, \
             value_profit_margin_slider, total_assets, users_revenue_regression, value_discount_rate_slider, \
-            initial_sliders_values, source_string, True
+            initial_sliders_values, source_string, True, hide_loader, show_company_functionalities
     except Exception as e:
         print(f"Error fetching or processing dataset: {str(e)}")
         return "", "", "", "", "", "", "", "", "",
@@ -2085,21 +2090,21 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     value_section = r_squared_showed * 100
     if r_squared_showed > 0.9:
         sections = [
-            {"value": value_section, "color": "Green", "tooltip": "Very Good"},
+            {"value": value_section, "color": "Green", "tooltip": "Very Good Trend Fit"},
         ]
     elif 0.6 < r_squared_showed <= 0.9:
         sections = [
-            {"value": value_section, "color": "LightGreen", "tooltip": "Good"},
+            {"value": value_section, "color": "LightGreen", "tooltip": "Good Trend Fit"},
         ]
 
     elif 0.4 < r_squared_showed <= 0.6:
         sections = [
-            {"value": value_section, "color": "Yellow", "tooltip": "Medium"},
+            {"value": value_section, "color": "Yellow", "tooltip": "Medium Trend Fit"},
         ]
 
     elif r_squared_showed <= 0.4:
         sections = [
-            {"value": value_section, "color": "Red", "tooltip": "Meeeeh"},
+            {"value": value_section, "color": "Red", "tooltip": "Inaccurate Trend Fit"},
         ]
 
     else:
@@ -2393,7 +2398,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
         )
         # Revenue past the selected date that are known [data_len:]
         fig_main.add_trace(go.Scatter(
-            name="Annual Revenue per User/Unit (arpu)",
+            name="Annual Revenue per User or Unit (ARPU)",
             x=x_revenue[len(dates_revenue_actual):],
             y=y_revenue[len(dates_revenue_actual):],
             mode='lines',
