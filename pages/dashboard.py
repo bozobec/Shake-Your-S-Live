@@ -683,7 +683,6 @@ functionalities_card = dmc.Card(
     style={'display': 'none'},
     #style={"height": 500},
 )
-
 # Welcome timeline introducing the user to RAST
 
 welcome_timeline = html.Div([
@@ -1019,6 +1018,18 @@ main_plot.update(
             layout=layout_main_graph
         )
 
+aside_column = dmc.Aside(
+    p="md",
+    width={"base": 400},
+    #height=500,
+    fixed=True,
+    #position={"right": 0, "top": 400},
+    children=[
+        hype_meter_card,
+        functionalities_card,
+    ],
+)
+
 def layout():
     layout = html.Div([
         dmc.Container(fluid=True, children=[
@@ -1031,6 +1042,8 @@ def layout():
                 ], span=12, lg=6, orderXs=3, orderSm=3, orderLg=2),
                 dmc.Col([hype_meter_card, dmc.Space(h=20), functionalities_card], span=12, lg=3, orderXs=2, orderSm=2,
                         orderLg=3),
+                #dmc.Col([aside_column], span=12, lg=3, orderXs=2, orderSm=2,
+                #               orderLg=3),
                 # dmc.Col(span="auto", lg=0), # Empty right column
             ],
                 gutter="xl",

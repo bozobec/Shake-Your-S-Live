@@ -1013,7 +1013,6 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
 
     # Growth Rate
     rd = main.discrete_growth_rate(users[0:data_len], dates[0:data_len] + 1970)
-    print(rd, "rdrd")
     print(users[0:data_len], dates[0:data_len] + 1970)
     average_rd = sum(rd[-3:])/3
 
@@ -1033,7 +1032,7 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
 
     # Growth Accordion
     # Promising Growth
-    if diff_r2lin_log > 0.1 or any(k < 0 for k in k_full[-5:]) or any(r < 0 for r in r_full[-5:] if r > 0.1):
+    if diff_r2lin_log > 0.1 or any(k < 0 for k in k_full[-7:-4]) or any(r < 0 for r in r_full[-7:-4] if r > 0.1):
         growth_message_title = "Promising Exponential Growth Ahead!"
         growth_message_body = "Rast's model predicts a strong likelihood of exponential growth in the foreseeable " \
                               "future, surpassing the best-case scenario displayed."
