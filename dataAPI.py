@@ -19,8 +19,10 @@ def get_airtable_labels():
             "Authorization": f"Bearer {auth_token}"
         }
         response = requests.get(url, headers=headers)  # Call the Airtable data with the specified filter
+        print("API LABELS ANSWER")
+        print(response)
         data = response.json()  # Transforms it into a dictionary
-        # Format the data into a dataframe including only the Date and the Usres
+        # Format the data into a dataframe including only the Date and the Users
         records = data['records']
         formatted_data = []
         unique_values = set()

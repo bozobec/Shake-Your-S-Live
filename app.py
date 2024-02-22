@@ -69,6 +69,7 @@ app.index_string = """<!DOCTYPE html>
 
 # Values for the dropdown (all different companies in the DB)
 labels = dataAPI.get_airtable_labels_new()
+#labels =["test1", "test2", "test3"]
 
 # Constants for the calculation
 YEAR_OFFSET = 1970  # The year "zero" for all the calculations
@@ -205,6 +206,18 @@ offcanvas_card_growth_analysis = dmc.Card(
     radius="md",
 )
 
+app_button = dmc.Button(
+    id="app-button",
+    children="APP",
+    leftIcon=DashIconify(icon="fluent:app-title-24-regular"),
+    size="xs",
+    variant="gradient",
+    gradient={"from": "cyan", "to": "blue"},
+    # color="white",
+    # color.title(white).
+),
+
+
 offcanvas_card_valuation_analysis = dmc.Card(
     children=[
         dmc.Group(
@@ -269,10 +282,56 @@ offcanvas_card_valuation_analysis = dmc.Card(
     radius="md",
 )
 
+footer_section1 = dmc.Group([
+    dmc.Group(
+        [
+            dmc.Title("ABOUT", order=6),
+        ],
+        position="apart",
+        mt="md",
+        # mb="xs",
+    ),
+    dmc.Text(["RAST is a bootstrapped company developed in Switzerland. RAST's objective is to offer more clarity "
+              "regarding company valuation. If you want to support us, collaborate or contact us for any other reasons,"
+              "please leave us a message at rastapp@proton.me"
+              ]),
+    dmc.Text("Copyright © 2024 All Rights Reserved by RAST Switzerland")
+    ])
+
+footer_section2 = dmc.Stack([
+    dmc.Group(
+        [
+            dmc.Title("QUICK LINKS", order=6),
+        ],
+        position="apart",
+        mt="md",
+        # mb="xs",
+    ),
+    html.A(dmc.Button("Try RAST",
+                      color="gray",
+                      variant="subtle",
+                      compact=True), href="/app"),
+])
+
+footer = dmc.Footer(
+    height="flex",
+    withBorder=True,
+    fixed=False,
+    children=[
+        #dmc.Container(html.Img(src="/assets/Vector_White_Full.svg", style={'height': '20px'}), ml=60),
+        dmc.Grid(children=[
+            dmc.Col(footer_section1, span=12, lg=6),
+            dmc.Col(footer_section2, span=12, lg=6),
+        ], gutter="xl", mx=60, my=30),
+        dmc.Space(h=42)
+    ],
+    style={"backgroundColor": "#1c1c1c"},
+)
+
 # OffCanvas (side panel that opens to give more information)
 offcanvas = html.Div(
     [
-        dbc.Button("How it works?", id="open-offcanvas", n_clicks=0),
+        dbc.Button("How it works", id="open-offcanvas", n_clicks=0),
         dbc.Offcanvas([
             dmc.Container(children=[
                 dmc.Text(
@@ -343,17 +402,6 @@ navbar = dbc.Navbar(
     dark=True
 )
 
-app_button = dmc.Button(
-    id="app-button",
-    children="APP",
-    leftIcon=DashIconify(icon="fluent:app-title-24-regular"),
-    size="xs",
-    variant="gradient",
-    gradient={"from": "cyan", "to": "blue"},
-    # color="white",
-    # color.title(white).
-),
-
 navbar6 = dbc.Navbar(
     dbc.Container(
         [
@@ -405,7 +453,7 @@ navbar7 = dbc.NavbarSimple(
             )
 
         ),
-        offcanvas,
+        dbc.NavItem(offcanvas),
         # dbc.DropdownMenu(
         #    nav=True,
         #    in_navbar=True,
@@ -602,7 +650,8 @@ app.layout = html.Div(style={'backgroundColor': '#F9F9F9'}, children=
             # align="center",
         ),
     ]),
-    dash.page_container
+    dash.page_container,
+    footer
 ])
 
 server = app.server
@@ -739,8 +788,16 @@ def set_history_size(dropdown_value):
             filtered_revenue_df = df[df["Revenue"] != 0]  # Getting rid of the revenue != 0
             quarterly_revenue = np.array(filtered_revenue_df["Revenue"]) * 1_000_000  # Getting in database
             # Regression between Users and revenue
-            users_revenue_regression = main.linear_regression(users_formatted[-len(quarterly_revenue):],
-                                                              quarterly_revenue)
+            # Sorting the users in ascending order and reflecting it to the revenue
+            users_correlation = users_formatted[-len(quarterly_revenue):]
+            revenue_correlation = quarterly_revenue
+            sorted_indices = np.argsort(users_correlation)
+            users_correlation_sorted = users_correlation[sorted_indices]
+            revenue_correlation_sorted = revenue_correlation[sorted_indices]
+            users_revenue_regression = main.linear_regression(users_correlation_sorted,
+                                                              revenue_correlation_sorted)
+            print("CorrelationU", users_correlation, users_correlation_sorted)
+            print("Correlationrevenue", revenue_correlation, revenue_correlation_sorted)
 
             # Profit margin text and marks
             profit_margin_array = np.array(df["Profit Margin"])
@@ -945,11 +1002,6 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
     dates_new = np.array([entry['Date'] for entry in df_dataset_dict])
     dates = dates_new - 1970
     data_len = len(main.get_earlier_dates(dates, date_picked_formatted - 1970))
-    print(data_len)
-    print("Data_len")
-    print(len(dates_new), dates_new)
-    print(dates_new[0:data_len+1])
-    print(dates_new[0:data_len])
     # Users are taken from the database and multiply by a million
     users_new = np.array([entry['Users'] for entry in df_dataset_dict])
     users_original = users_new.astype(float) * 1000000
@@ -971,6 +1023,8 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
     print("df_full", df_full)
     df_sorted = main.parameters_dataframe_cleaning(df_full, users[
                                                             0:data_len])  # Dataframe where inadequate scenarios are eliminated
+    print("df_sorted", df_sorted)
+
     if df_sorted.empty:
         print("No good scenario could be calculated")
         df_sorted = main.parameters_dataframe_cleaning_minimal(df_full, users[0:data_len])
@@ -1239,8 +1293,11 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
         yearly_revenue_quarters = sum(quarterly_revenue[-4:])
         average_users_past_year = (current_users + current_users_array[closest_index - 4]) / 2
         #current_arpu = yearly_revenue_quarters / average_users_past_year
-        current_arpu = sum(quarterly_revenue[-4:] / current_users_array[-4:])
+        current_arpu = sum(quarterly_revenue[-4:] / current_users_array[closest_index-4:closest_index])
         printed_current_arpu = f"{current_arpu:.0f} $ (current arpu)"  # formatting
+        first_arpu = quarterly_revenue[0] / current_users_array[0]
+        print("FirstARPU", first_arpu)
+        #arpu_growth_calculated = current_arpu/(first_arpu * (dates[data_len] - dates[3]))
         marks_profit_margin_slider = []
         if current_annual_profit_margin > 1:
             value_profit_margin_slider = float(current_annual_profit_margin)
@@ -1289,7 +1346,7 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
                                            width=20)
 
     # Initial ARPU Growth definition
-    arpu_growth = 2
+    arpu_growth = 5
     print("Couleurs")
     print(growth_icon_color, plateau_icon_color, valuation_icon_color, correlation_icon_color)
 
@@ -1371,6 +1428,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     r_scenarios = np.array([entry['r'] for entry in df_scenarios_dict])
     p0_scenarios = np.array([entry['p0'] for entry in df_scenarios_dict])
     rsquared_scenarios = np.array([entry['R Squared'] for entry in df_scenarios_dict])
+    moving_average_scenarios = np.array([entry['Moving Average'] for entry in df_scenarios_dict])
     number_ignored_data_scenarios = np.array([entry['Data Ignored'] for entry in df_scenarios_dict])
 
     # Based on the slider's value, the related row of parameters is selected
@@ -1379,6 +1437,8 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     k = k_scenarios[row_selected]
     r = r_scenarios[row_selected]
     p0 = p0_scenarios[row_selected]
+    moving_average = moving_average_scenarios[row_selected]
+    print("movingaverage", moving_average)
     r_squared_showed = np.round(rsquared_scenarios[row_selected], 3)
     number_ignored_data = int(number_ignored_data_scenarios[row_selected])
 
@@ -1487,8 +1547,6 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     # Update layout to customize the annotation
     fig_main.update_layout(layout_main_graph)
     # fig_main.update_yaxes(range=[0, k_scenarios[-1]*1.1])  # Fixing the size of the Y axis
-    print("USERSRAW")
-    print(users_raw)
     if k_scenarios[-1] > users_raw[-1]:
         range_y = [0, k_scenarios[-1] * 1.5]
     else:
@@ -1729,9 +1787,23 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     # max_rd_value = df_sorted['r'].max()
 
     # fig_second.update_yaxes(range=[0, max_rd_value]) # Fixing the size of the Y axis
+    #fig_second.add_trace(
+    #    go.Scatter(name="Discrete Growth Rate Considered", x=main.discrete_user_interval(users),
+    #               y=main.discrete_growth_rate(users, dates + 1970), mode="markers", line=dict(color='#54c4f4')
+    #               ))
+    # Printing all smoothened data
+    #for i in range(2,5):
+    #    dates_moved, users_moved = main.moving_average_smoothing(dates, users, i)
+    #    fig_second.add_trace(
+    #        go.Scatter(name="Discrete Growth Rate Smoothened by moving average: "+str(i), x=main.discrete_user_interval(users_moved),
+    #                   y=main.discrete_growth_rate(users_moved, dates_moved + 1970), mode="markers", line=dict()
+    #                   ))
+    # Printing specific smoothened data (only the one selected)
+    dates_moved, users_moved = main.moving_average_smoothing(dates, users, moving_average)
     fig_second.add_trace(
-        go.Scatter(name="Discrete Growth Rate Considered", x=main.discrete_user_interval(users),
-                   y=main.discrete_growth_rate(users, dates + 1970), mode="markers", line=dict(color='#54c4f4')
+        go.Scatter(name="Discrete Growth Rate Smoothened by moving average: " + str(moving_average),
+                   x=main.discrete_user_interval(users_moved),
+                   y=main.discrete_growth_rate(users_moved, dates_moved + 1970), mode="markers", line=dict()
                    ))
     print("Rdrdrd")
     print(users, dates + 1970)
@@ -1748,8 +1820,8 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     # print(main.discrete_user_interval(users[0:number_ignored_data]))
     if number_ignored_data > 0:
         fig_second.add_trace(
-            go.Scatter(name="Ignored Data Points", x=main.discrete_user_interval(users[0:number_ignored_data]),
-                       y=main.discrete_growth_rate(users[0:number_ignored_data], dates[0:number_ignored_data] + 1970),
+            go.Scatter(name="Ignored Data Points", x=main.discrete_user_interval(users_moved[0:number_ignored_data]),
+                       y=main.discrete_growth_rate(users_moved[0:number_ignored_data], dates_moved[0:number_ignored_data] + 1970),
                        mode="markers", line=dict(color='#808080')))
 
     # Changes the color of the scatters after the date considered
@@ -2137,33 +2209,23 @@ def graph_valuation_over_time(valuation_over_time_dict, date_picked, df_formatte
 
     # Valuation calculation
     non_operating_assets = total_assets
-    print("valuationoovertime")
     df_valuation_over_time = pd.DataFrame(valuation_over_time_dict)
-    print(df_valuation_over_time)
-    print(valuation_over_time_dict)
     # Graph creation
 
     # Creating the plot of the market cap - valuations
     dates_valuation_graph = df_valuation_over_time['Date Raw'].values
     valuation_values = df_valuation_over_time['Valuation'].values
-    print("Vdates1")
-    print(dates_valuation_graph)
 
     # Separate scenarios (odd and even rows)
     low_scenario_valuation = valuation_values[::2]  # Start from index 0, step by 2
     high_scenario_valuation = valuation_values[1::2]  # Start from index 1, step by 2
     dates_valuation_graph = dates_valuation_graph[::2]
-    print("Vdates")
-    print(dates_valuation_graph)
 
     # Create market cap array
     market_cap_array = np.array([entry['Market Cap'] for entry in df_formatted]) * 1e9
     market_cap_array = market_cap_array[MIN_DATE_INDEX:]
     market_cap_array2 = df_valuation_over_time['Market Cap'].values
     market_cap_array2 = market_cap_array2[::2]
-    print("Mmmarket cap")
-    print(market_cap_array)
-    print(market_cap_array2)
 
     # Append today's date and latest market cap
     today_date = date.today()
@@ -2171,10 +2233,6 @@ def graph_valuation_over_time(valuation_over_time_dict, date_picked, df_formatte
     zeros_array = [0] * 4 # Adding the 4 data ignored originally
     market_cap_array2 = np.append(zeros_array, market_cap_array2)
     dates_raw_market_cap = np.append(dates_raw, today_date)
-    print("Vvvaluation")
-    print(market_cap_array)
-    print(dates_raw_market_cap)
-    print(high_scenario_valuation)
     # today_date_formatted = main.date_formatting_from_string(today_date)
 
     fig_valuation = go.Figure(layout=layout_main_graph)
@@ -2201,10 +2259,7 @@ def graph_valuation_over_time(valuation_over_time_dict, date_picked, df_formatte
                                        name='Hype',
                                        )
                             )
-    print("AreaArrays")
-    print(y_area_low)
-    print(y_area_high)
-    print(dates_area)
+
 
     # Confidence Interval
     # Filling the area of possible scenarios
@@ -2319,7 +2374,7 @@ def graph_valuation_over_time(valuation_over_time_dict, date_picked, df_formatte
         valuation_graph_message = "The Current Market Cap is higher than the most optimistic valuation (" + \
                                   f"{high_scenario_valuation[-1] / 1e9:.2f} B$). It could be a good time to sell!"
         valuation_graph_color = "yellow"
-
+    print("Valuation graph printed")
     return fig_valuation, valuation_graph_message, valuation_graph_color, valuation_graph_title,
 
 
@@ -2381,6 +2436,25 @@ def activate_reset_button(n_clicks, initial_sliders_values):
     slider_arpu_growth = initial_sliders_values['slider_arpu']
 
     return slider_k, slider_profit_margin, slider_discount_rate, slider_arpu_growth
+
+# Callback changing the example hypemeter on the homepage
+@app.callback(
+    Output(component_id='hype-meter-users-home', component_property='value'),
+    Output(component_id='hype-meter-hype-home', component_property='value'),
+    Output(component_id='hype-indicator-home-example', component_property='children'),
+    Output(component_id='hype-indicator-home-example', component_property='color'),
+    Input(component_id='slider-example', component_property='value'),
+    Input(component_id='hype-meter-noa-home', component_property='value'),
+    prevent_initial_call=True,)
+
+def home_page_example(slider_value, non_op_assets):
+    market_cap_example = 210
+    equity = 110/66 * slider_value
+    hype = market_cap_example - equity - non_op_assets
+    hype_ratio = hype*0.3/market_cap_example
+    print("hyperatio", hype_ratio)
+    hype_indicator_color, hype_indicator_text = main.hype_meter_indicator_values(hype_ratio)
+    return equity, hype, hype_indicator_text, hype_indicator_color
 
 
 if __name__ == '__main__':

@@ -46,7 +46,8 @@ first_card = dmc.Card(
             #)
             dmc.Select(
                 #label="Select framework",
-                placeholder="Netflix",
+                placeholder="Dropbox",
+                disabled=True,
                 #id="framework-select",
                 #value="ng",
                 data=[
@@ -92,16 +93,20 @@ second_card = dmc.Card(
             #    src="/assets/growth_example.svg",
             #    height=180,
             #)
+            dmc.Container([
             dmc.Slider(
-                value=26,
+                id="slider-example",
+                min=20,
+                max=86,
+                value=30,
                 marks=[
                     {"value": 20, "label": "20M"},
                     {"value": 50, "label": "50M"},
                     {"value": 86, "label": "80M"},
                 ],
                 mb=35,
-                radius=0,
-            ),
+                radius=180,
+            )]),
         ),
     ],
     withBorder=True,
@@ -134,7 +139,7 @@ layout_example_graph = go.Layout(
 )
 
 graph_example_figure = go.Figure(layout=layout_example_graph)
-graph_example_container = dcc.Graph(id='graph-example', config={'displayModeBar': False, 'scrollZoom': False},
+graph_example_container = dcc.Graph(id='graph-example', config={'displayModeBar': False, 'scrollZoom': False, 'staticPlot': True},
                                     figure=graph_example_figure)
 dates_raw = np.array([
     '2011-09-30', '2011-12-31', '2012-03-31', '2012-06-30', '2012-09-30',
@@ -257,7 +262,8 @@ graph_example_figure.add_trace(go.Scatter(x=x_area,
                                   showlegend=False,
                                   )
                        )
-graph_example_figure.add_trace(go.Bar(name="Dataset", x=dates_raw, y=users, marker_color="Black", showlegend=False,))
+graph_example_figure.add_trace(go.Bar(name="Dataset", x=dates_raw, y=users, marker_color="Black", showlegend=False,
+                                      ))
 graph_example_card = dmc.Card(
     children=[
         dmc.Group(
@@ -325,15 +331,15 @@ reset_parameters_button_home = dmc.Button(
     disabled="True",
         ),
 
-hype_meter_indicator_home = dmc.Badge("Super hyped", variant="outline", color="red")
+hype_meter_indicator_home = dmc.Badge("Super hyped", variant="outline", color="red", id="hype-indicator-home-example")
 
 hype_meter_bootstrap_home = dbc.Progress(
     children=
         [
             dbc.Progress(value=10.78, color="#228BE6", bar=True, label="N-O Assets", id="hype-meter-noa-home"),
-            dbc.Progress(value=110.35, color="#74C0FC", bar=True, label="Customer Equity", id="hype-meter-users-home"),
+            dbc.Progress(value=50, color="#74C0FC", bar=True, label="Customer Equity", id="hype-meter-users-home"),
             #dbc.Progress(value=20, color="#D1D1D1", bar=True, animated=True, striped=True, id="hype-meter-delta"),
-            dbc.Progress(value=88.87, color="#D1D1D1", bar=True, animated=True, striped=True, label="Hype", id="hype-meter-hype-home"),
+            dbc.Progress(value=149.22, color="#D1D1D1", bar=True, animated=True, striped=True, label="Hype", id="hype-meter-hype-home"),
             dbc.Tooltip("Non-Operating Assets: $10.78B", target="hype-meter-noa-home", placement="top"),
             dbc.Tooltip("Customer Equity: $110.35B", target="hype-meter-users-home", placement="top"),
             #dbc.Tooltip("Delta depending on the chosen scenario", target="hype-meter-delta", id="tooltip-equity-text", placement="top"),
@@ -418,12 +424,13 @@ third_card = dmc.Card(
             [
                 dmc.Image(src="/assets/dropbox-logo.png",
                           alt="Use RAST to calculate user-based company valuation such as Dropbox",
-                          width=100),
+                          width=80),
                 hype_meter_indicator_home,
             ],
             position="apart",
             mt="md",
             mb="xs",
+            noWrap=True,
         ),
             #hype_meter,
             dmc.Stack([

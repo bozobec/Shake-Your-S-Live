@@ -202,16 +202,25 @@ def rsquare_calculation (observed_values, approximated_values):
 
 # Calculation of the parameters and RSquare, mapped to the amount of data ignored
 def parameters_dataframe(dates, users):
-    number_moving_average = 5  # Number of moving averages allowed
+    number_moving_average = 4  # Number of moving averages allowed
     n_data_ignored = len(dates)-3  # Number of data until which to be ignored
     dataframe = np.zeros((n_data_ignored*number_moving_average, 9))
     # Calculation of K, r & p0 and its related RSquare for each data ignored
-    for i in range(number_moving_average):
-        dates, users = moving_average_smoothing(dates, users, i)
+    #print("Initial dates users")
+    #print(dates, users)
+    for i in range(0,number_moving_average):
+        #print("_Moving average", i)
+        moving_average = i+1
+        if moving_average==1:
+            pass
+        else:
+            dates, users = moving_average_smoothing(dates, users, moving_average)
+        print(dates, users)
         for j in range(n_data_ignored):
             try:
                 dates_rsquare = dates[j:len(dates)]
                 users_rsquare = users[j:len(dates)]
+                #print("usersDF", moving_average, users_rsquare)
                 rd = discrete_growth_rate(users_rsquare, dates_rsquare)
                 userinterval = discrete_user_interval(users_rsquare)
                 try:
@@ -235,7 +244,6 @@ def parameters_dataframe(dates, users):
                 approximated_values_log = rsquare_calculation(observed_values_df, np.polyval(logfit, np.log(userinterval)))
                 diff_lin_log = approximated_values_log-r_squared
 
-
                 dataframe[j+i*n_data_ignored, 0] = j  # Data ignored column
                 dataframe[j+i*n_data_ignored, 1] = k  # K (carrying capacity) column
                 dataframe[j+i*n_data_ignored, 2] = r  # r (growth rate) column
@@ -244,7 +252,7 @@ def parameters_dataframe(dates, users):
                 dataframe[j+i*n_data_ignored, 5] = rootmeansquare / ((users[0]+users[-1])/2)  # Root Mean Square Deviation column
                 dataframe[j+i*n_data_ignored, 6] = approximated_values_log  # Root Mean Square Deviation of the log approximation column
                 dataframe[j+i*n_data_ignored, 7] = diff_lin_log  # Difference between the linear R^2 and the log R^2
-                dataframe[j+i*n_data_ignored, 8] = i  # Difference between the linear R^2 and the log R^2
+                dataframe[j+i*n_data_ignored, 8] = moving_average  # Difference between the linear R^2 and the log R^2
             except RuntimeError as e:
                 dataframe[j+i*n_data_ignored, 0] = 0  # Data ignored column
                 dataframe[j+i*n_data_ignored, 1] = 0  # K (carrying capacity) column
@@ -413,8 +421,8 @@ def log_approximation(dates, users):
 def moving_average_smoothing(dates, users, window_size):
     dates_series = pd.Series(dates)
     users_series = pd.Series(users)
-    smoothed_dates = dates_series.rolling(2, min_periods=1).mean()
-    smoothed_users = users_series.rolling(2, min_periods=1).mean()
+    smoothed_dates = dates_series.rolling(window_size, min_periods=1).mean()
+    smoothed_users = users_series.rolling(window_size, min_periods=1).mean()
     smoothed_dates_array = smoothed_dates.values
     smoothed_users_array = smoothed_users.values
     return smoothed_dates_array, smoothed_users_array

@@ -237,7 +237,7 @@ slider_discount_rate = dmc.Slider(
 slider_arpu_growth = dmc.Slider(
             id="range-arpu-growth",
             min=0,
-            max=10,
+            max=15,
             value=2,
             step=0.1,
             color='green',
@@ -245,6 +245,7 @@ slider_arpu_growth = dmc.Slider(
                 {"value": 0, "label": "0%"},
                 {"value": 5, "label": "5%"},
                 {"value": 10, "label": "10%"},
+                {"value": 15, "label": "15%"},
             ],
             size="sm",
             disabled=False,
@@ -765,7 +766,7 @@ tabs_graph = dmc.Tabs(
     [
         dmc.Loader(color="red", size="md", variant="oval", style={'display': 'none'}, id='loader-general'),
         dmc.TabsList(
-            #grow=True,
+            grow=True,
             children=
                 [
                     dmc.Tab("User & ARPU Evolution", icon=DashIconify(icon="simple-icons:futurelearn"), value="1"),
@@ -1050,7 +1051,7 @@ def layout():
                 justify="space-around",
                 # align="center",
             ),
-            dmc.Space(h=1000),
+            dmc.Space(h=120),
             #bottom_card,
         ],
                       ),
