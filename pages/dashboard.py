@@ -766,17 +766,17 @@ tabs_graph = dmc.Tabs(
     [
         dmc.Loader(color="red", size="md", variant="oval", style={'display': 'none'}, id='loader-general'),
         dmc.TabsList(
-            grow=True,
+            #grow=True,
             children=
                 [
-                    dmc.Tab("User & ARPU Evolution", icon=DashIconify(icon="simple-icons:futurelearn"), value="1"),
                     dmc.LoadingOverlay(dmc.Tab("Market Cap over Time",
-                            icon=DashIconify(icon="material-symbols:history"),
-                            id="market-cap-tab",
-                            value="2",
-                            #disabled=True
-                            style={'display': ''},
-                            )),
+                                        icon=DashIconify(icon="material-symbols:history"),
+                                        id="market-cap-tab",
+                                        value="1",
+                                        #disabled=True
+                                        style={'display': ''},
+                                        )),
+                    dmc.Tab("User & ARPU Evolution", icon=DashIconify(icon="simple-icons:futurelearn"), value="2"),
                     dmc.Tab("Growth Rate",
                             icon=DashIconify(icon="radix-icons:bar-chart"),
                             value="3",
@@ -785,8 +785,8 @@ tabs_graph = dmc.Tabs(
                 ],
         ),
         dmc.TabsPanel(html.Div(children=[graph_message, main_graph]),
-            id="tab-one", value="1"),
-        dmc.TabsPanel(html.Div(children=[valuation_graph_message, valuation_over_time]), id="tab-two", value="2"),
+            id="tab-one", value="2"),
+        dmc.TabsPanel(html.Div(children=[valuation_graph_message, valuation_over_time]), id="tab-two", value="1"),
         dmc.TabsPanel(html.Div(children=[growth_rate_graph_message, growth_graph]), id="tab-three", value="3"),
     ],
     value="1",

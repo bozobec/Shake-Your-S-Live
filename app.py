@@ -20,7 +20,8 @@ from dash_iconify import DashIconify
 import time
 from dash.exceptions import PreventUpdate
 
-pd.set_option('display.max_columns', None)
+#pd.set_option('display.max_columns', None)
+pd.set_option('display.max_rows', 200)
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 APP_TITLE = "RAST"
 
@@ -2367,12 +2368,16 @@ def graph_valuation_over_time(valuation_over_time_dict, date_picked, df_formatte
     if market_cap_array[-1] < high_scenario_valuation[-1]:
         valuation_graph_title = "Promising investment!"
         valuation_graph_message = "The Current Market Cap is lower than the most optimistic valuation (" + \
-                                  f"{high_scenario_valuation[-1] / 1e9:.2f} B$). It could be a good time to invest!"
+                                  f"{high_scenario_valuation[-1] / 1e9:.2f} B$). It could be a good time to invest!\n" + \
+                                  "Note that the most optimistic valuation is calculated by considering the best " \
+                                  "growth scenario and the best profit margin ever recorded, to which 5% were added."
         valuation_graph_color = "green"
     else:
         valuation_graph_title = "Risky investment!"
         valuation_graph_message = "The Current Market Cap is higher than the most optimistic valuation (" + \
-                                  f"{high_scenario_valuation[-1] / 1e9:.2f} B$). It could be a good time to sell!"
+                                  f"{high_scenario_valuation[-1] / 1e9:.2f} B$). It could be a good time to sell!\n"+ \
+                                  "Note that the most optimistic valuation is calculated by considering the best " \
+                                "growth scenario and the best profit margin ever recorded, to which 5% were added."
         valuation_graph_color = "yellow"
     print("Valuation graph printed")
     return fig_valuation, valuation_graph_message, valuation_graph_color, valuation_graph_title,
