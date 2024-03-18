@@ -582,6 +582,8 @@ def parse_contents(contents, filename, date):
             # Assume that the user uploaded an excel file
             df = pd.read_excel(io.BytesIO(decoded))
             print("XLS successfully read")
+        # Remove empty rows
+        df.dropna(axis=0, how='all', inplace=True)
     except Exception as e:
         print(e)
         return html.Div([
@@ -622,6 +624,8 @@ def parse_contents_df(contents, filename, date):
         return html.Div([
             'There was an error processing this file.'
         ])
+        # Remove empty rows
+        df.dropna(axis=0, how='all', inplace=True)
 
     return df
 
@@ -642,6 +646,10 @@ def parse_file_contents(contents, filename):
             print("XLS successfully read")
         else:
             raise ValueError("Unsupported file format")
+
+        # Remove empty rows
+        df.dropna(axis=0, how='all', inplace=True)
+
     except Exception as e:
         print(e)
         return None
