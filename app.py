@@ -173,8 +173,8 @@ offcanvas_card_growth_analysis = dmc.Card(
     children=[
         dmc.Group(
             [
-                dmc.Title("GROWTH", order=6),
-                dmc.Text("For all datasets", size="xs", color="dimmed")
+                dmc.Title("Valuation in 3 steps", order=6),
+                #dmc.Text("For all datasets", size="xs", color="dimmed")
             ],
             position="apart",
             mt="md",
@@ -184,15 +184,16 @@ offcanvas_card_growth_analysis = dmc.Card(
         dmc.Text(
             # id="hype-meter-text",
             children=[dmc.List([
-                dmc.ListItem([dmc.Text("Dataset Selection", weight=500),
-                              "Quickly choose your dataset from the dropdown menu. We are continuously adding new "
-                              "datasets."]),
-                dmc.ListItem([dmc.Text("Historical Data Visualization", weight=500),
-                              "Dive into your selected dataset's past performance, unveiling growth trends "
-                              "over time."]),
-                dmc.ListItem([dmc.Text("Predictive Analysis", weight=500),
-                              "Harness RAST's advanced predictive capabilities to forecast future dataset "
-                              "growth."]),
+                dmc.ListItem([dmc.Text("Select your dataset", weight=500),
+                              "Pick one of the available publicly-traded companies. Only companies with a relevant "
+                              "metric are shown here (such as Netflix's subscribers). "]),
+                dmc.ListItem([dmc.Text("Understand the company's hype", weight=500),
+                              "With the Hypemeter, you immediately see how 'hyped' the company is. In other words, how "
+                              "much its current market cap differs from its actual value."]),
+                dmc.ListItem([dmc.Text("Use your own parameters", weight=500),
+                              "You don't trust us? Good, we also don't trust financial indicators. Play "
+                              "with the parameters and see by yourself what conditions should be met so that the "
+                              "hype decreases and that the valuation is justified."]),
             ], size="sm", listStyleType="decimal")]
             ,
             size="xs",
@@ -223,21 +224,29 @@ offcanvas_card_valuation_analysis = dmc.Card(
     children=[
         dmc.Group(
             [
-                dmc.Title("COMPANY VALUATION", order=6),
+                dmc.Title("Methodology & Parameters", order=6),
             ],
             position="apart",
             mt="md",
             # mb="xs",
         ),
         dmc.Space(h=20),
-        dmc.Text("Methodology", size="sm", weight=700),
+        dmc.Text("Hypemeter", size="sm", weight=700),
         dmc.Space(h=5),
-        dmc.Text("In user-dependent companies, their value is tied to the number of users and the revenue each "
+        dmc.Text("Get a quick read on a company's hype level. A company is considered Super Hyped when "
+                              "the hype exceeds 20% of the total value.", size="sm"),
+        dmc.Space(h=5),
+        dmc.Group(children =[
+                           dmc.Badge("", variant="outline", color="green"),  dmc.Badge("", variant="outline", color="yellow"), dmc.Badge("", variant="outline", color="orange"),
+                           dmc.Badge("Super Hyped!", variant="filled", color="red")]),
+        dmc.Space(h=10),
+        dmc.Text("The value of user-dependant companies is tied to the number of users and the revenue each "
                  "user generates. The total worth, known as 'Customer Equity', combines current and future "
-                 "value. To calculate the overall company value, add non-operating assets and subtract debt: "
-                 , size="sm"),
+                 "value. To calculate the overall company value, add non-operating assets and subtract debt: ", size="sm"),
+        dmc.Space(h=5),
         dmc.Text("Company Value = Non-Operating Assets + Customer Equity - Debt", align="center", size="sm",
                  weight=500),
+        dmc.Space(h=5),
         dmc.Text("Comparing this value to the "
                  "market cap reveals investor sentiments, showing how much 'hope' or 'hype' surrounds "
                  "the company. In the example below, we observe that the hype accounts for 30% of the company's "
@@ -247,7 +256,7 @@ offcanvas_card_valuation_analysis = dmc.Card(
         dmc.Space(h=10),
         hype_meter_example,
         dmc.Space(h=15),
-        dmc.Text("Functionalities", size="sm", weight=700),
+        dmc.Text("Parameters", size="sm", weight=700),
         dmc.Space(h=5),
         dmc.Text(children=[
             dmc.List([
@@ -265,11 +274,9 @@ offcanvas_card_valuation_analysis = dmc.Card(
                 dmc.ListItem([dmc.Text("Discount Rate", weight=500),
                               "Factor in future uncertainties with the discount rate. The higher the rate, "
                               "the more uncertainty about the future, leading to a lower current valuation."]),
-                dmc.ListItem([dmc.Text("Revenue (ARPU) per year", weight=500),
-                              "Assess customer equity by changing the annual average revenue generated per user "
-                              "(ARPU). "
-                              "For example, Netflix users contribute around $130 per year based on their annual "
-                              "subscription value."]),
+                dmc.ListItem([dmc.Text("Revenue (ARPU) Yearly Growth", weight=500),
+                              "Influence the customer equity by changing the growth of the annual average revenue generated per user "
+                              "(ARPU)."]),
             ], size="sm", listStyleType="decimal")],
             size="xs",
             color="Black",
@@ -731,21 +738,33 @@ def select_value(value):
     Output(component_id='data-selection-counter', component_property='data'),  # Flags that the data has changed
     Output("loader-general", "style", allow_duplicate=True),
     Output(component_id='market-cap-tab', component_property='style'),  # Hides Market cap tab if other data is selected
+    Output(component_id='symbol-dataset', component_property='data'),  # Hides Market cap tab if other data is selected
 
     # the chosen KPI and the revenue
 
-    Input(component_id='dataset-selection', component_property='value')],  # Take dropdown value
+    Input(component_id='dataset-selection', component_property='value'),  # Take dropdown value
+    Input(component_id='last-imported-data', component_property='data')],  # Take dropdown value
     # [State('main-plot-container', 'figure')],
     prevent_initial_call=True,
 )
-def set_history_size(dropdown_value):
+def set_history_size(dropdown_value, imported_df):
     t1 = time.perf_counter(), time.process_time()
     try:
         # Fetch dataset from API
+
         df = dataAPI.get_airtable_data(dropdown_value)
-        key_unit = df.loc[0, 'Unit']
-        data_source = df.loc[0, 'Source']
-        print("DF", df)
+        if df.empty:
+            dropdown_value = "Imported Data"
+            df = pd.DataFrame(imported_df)
+            key_unit = df.columns[1]
+            data_source = "Import"
+            df.columns = ['Date', 'Users'] # Renaming the columns the same way as Airtable
+            symbol_company = "N/A" # By default, imported data are not "Financial" data
+            df['Revenue'] = 0
+        else:
+            key_unit = df.loc[0, 'Unit']
+            data_source = df.loc[0, 'Source']
+            symbol_company = df.loc[0, 'Symbol']
 
         # Creating the title & subtitle for the graph
         title = dropdown_value + " - " + key_unit
@@ -762,13 +781,15 @@ def set_history_size(dropdown_value):
 
         # Transforming it to a dictionary to be stored
         users_dates_dict = df.to_dict(orient='records')
-        print("USERDATESDICT", users_dates_dict)
 
         # Process & format df. The dates in a panda serie of format YYYY-MM-DD are transformed to a decimal yearly array
         dates = np.array(main.date_formatting(df["Date"]))
         dates_formatted = dates + YEAR_OFFSET
         dates_unformatted = np.array(df["Date"])
         users_formatted = np.array(df["Users"]).astype(float) * 1000000
+        print("fetcheddata")
+        print(dates)
+        print(users_formatted)
 
         # Logic to be used when implementing changing the ARPU depending on the date picked
         # date_last_quarter = main.previous_quarter_calculation().strftime("%Y-%m-%d")
@@ -776,7 +797,6 @@ def set_history_size(dropdown_value):
 
         # Check whether it is a public company: Market cap fetching & displaying profit margin,
         # discount rate and arpu for Companies
-        symbol_company = df.loc[0, 'Symbol']
         if symbol_company != "N/A":
             hide_loader = {'display': ''} # keep on showing the loader
             show_company_functionalities = {'display': ''}  # Style component showing the fin. function.
@@ -943,7 +963,7 @@ def set_history_size(dropdown_value):
             show_company_functionalities, show_company_functionalities, show_company_functionalities, \
             show_company_functionalities, text_profit_margin, text_best_profit_margin, marks_profit_margin_slider, \
             value_profit_margin_slider, total_assets, users_revenue_regression, value_discount_rate_slider, \
-            initial_sliders_values, source_string, True, hide_loader, show_company_functionalities
+            initial_sliders_values, source_string, True, hide_loader, show_company_functionalities, symbol_company
     except Exception as e:
         print(f"Error fetching or processing dataset: {str(e)}")
         return "", "", "", "", "", "", "", "", "",
@@ -989,13 +1009,15 @@ def set_history_size(dropdown_value):
     Input(component_id='graph-unit', component_property='data'),  # Getting the Unit used
     Input(component_id='users-dates-raw', component_property='data'),
     Input(component_id='initial-sliders-values', component_property='data'),
+    State(component_id='symbol-dataset', component_property='data'),
     prevent_initial_call=True)
 # Analysis to load the different scenarios (low & high) when a dropdown value is selected
 def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
-              users_revenue_correlation, key_unit, df_raw, initial_slider_values):
+              users_revenue_correlation, key_unit, df_raw, initial_slider_values, symbol_dataset):
     print("Starting scenarios calculation")
     t1 = time.perf_counter(), time.process_time()
     date_picked_formatted = main.date_formatting_from_string(date_picked)
+    print("datedate")
     df_dataset = pd.DataFrame(df_dataset_dict)
     print("DF_dataset_first", df_dataset)
     # Dates array definition from dictionary
@@ -1067,6 +1089,7 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
     r_full = np.array(df_full['r'])
 
     # Growth Rate
+    print("ccheck")
     rd = main.discrete_growth_rate(users[0:data_len], dates[0:data_len] + 1970)
     print(users[0:data_len], dates[0:data_len] + 1970)
     average_rd = sum(rd[-3:])/3
@@ -1270,11 +1293,13 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
 
     # Check whether it is a public company: Market cap fetching & displaying profit margin,
     # discount rate and arpu for Companies
-    symbol_company = df_dataset.loc[0, 'Symbol']
+    symbol_company = symbol_dataset
+    print("ssymbol", symbol_company)
     if symbol_company != "N/A":
         # If the date picked is the latest, then API call
         try:
             latest_market_cap = dataAPI.get_marketcap(symbol_company)
+            print("Latest_market_cap", latest_market_cap)
         except Exception as e:
             print("Couldn't fetch latest market cap, assigning DB value")
             latest_market_cap = df_dataset.loc[closest_index, 'Market Cap'] * 1e3
@@ -1687,7 +1712,6 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
                        )
 
     # REVENUE Lines
-
     revenue = np.array([entry['Revenue'] for entry in df_dataset_dict]) * 1_000_000
     # Find the indices where cells in the second array are not equal to "N/A"
     valid_indices = np.where(revenue != 0)
@@ -2132,10 +2156,12 @@ def historical_valuation_calculation(df_formatted, total_assets, data, df_raw, l
             yearly_revenue_quarters = sum(revenue_valuation[-4:])
             average_users_past_year = (users_valuation[-1] + users_valuation[-5]) / 2
             current_arpu = yearly_revenue_quarters / average_users_past_year
-
             num_iterations = 2
+            print("averageprofit")
+            print(df_sorted)
             # Storing the data of two scenarios for a given date
             for j in range(num_iterations):
+                print("j", j)
                 # If no scenario is found, 0 is appended. Later the 0 is transformed in the last known valuation
                 if df_sorted.empty:
                     valuation_data.append([
@@ -2147,10 +2173,12 @@ def historical_valuation_calculation(df_formatted, total_assets, data, df_raw, l
                     k_selected = df_sorted.at[j * (len(df_sorted) - 1), 'K']
                     r_selected = df_sorted.at[j * (len(df_sorted) - 1), 'r']
                     p0_selected = df_sorted.at[j * (len(df_sorted) - 1), 'p0']
+                    print("aaa")
                     future_customer_equity = main.net_present_value_arpu_growth(k_selected, r_selected, p0_selected,
                                                                                 current_arpu, arpu_growth[j],
                                                                                 profit_margin[j], discount_rate[j],
                                                                                 YEARS_DCF)
+                    print("bbb")
                     current_customer_equity = users_valuation[-1] * current_arpu * profit_margin[j]
                     valuation_data.append([
                         dates_new[i + MIN_DATE_INDEX],
@@ -2227,13 +2255,15 @@ def graph_valuation_over_time(valuation_over_time_dict, date_picked, df_formatte
     market_cap_array = market_cap_array[MIN_DATE_INDEX:]
     market_cap_array2 = df_valuation_over_time['Market Cap'].values
     market_cap_array2 = market_cap_array2[::2]
-
     # Append today's date and latest market cap
     today_date = date.today()
+    print(latest_market_cap)
     market_cap_array = np.append(market_cap_array, latest_market_cap * 1e6)
     zeros_array = [0] * 4 # Adding the 4 data ignored originally
     market_cap_array2 = np.append(zeros_array, market_cap_array2)
     dates_raw_market_cap = np.append(dates_raw, today_date)
+    print("ccc")
+
     # today_date_formatted = main.date_formatting_from_string(today_date)
 
     fig_valuation = go.Figure(layout=layout_main_graph)
@@ -2460,6 +2490,60 @@ def home_page_example(slider_value, non_op_assets):
     print("hyperatio", hype_ratio)
     hype_indicator_color, hype_indicator_text = main.hype_meter_indicator_values(hype_ratio)
     return equity, hype, hype_indicator_text, hype_indicator_color
+
+# Callback opening the modal when new data is uploaded and closing it when another button is clicked
+@callback(
+    Output("upload-modal", "opened"),
+    Input("upload-button", "n_clicks"),
+    Input("modal-close-button", "n_clicks"),
+    Input("modal-submit-button", "n_clicks"),
+    State("upload-modal", "opened"),
+    prevent_initial_call=True,
+)
+def modal_demo(upload_clicks, close_clicks, submit_clicks, is_open):
+    ctx = dash.callback_context
+    if not ctx.triggered:
+        return False
+    else:
+        prop_id = ctx.triggered[0]["prop_id"]
+        if prop_id == "upload-button.n_clicks":
+            return True
+        elif prop_id == "modal-close-button.n_clicks" or prop_id == "modal-submit-button.n_clicks":
+            return False
+        else:
+            return is_open
+
+# Callback parsing the CSV/XLS and displaying it on the modal
+@callback(Output('output-data-upload', 'children'),
+          Output('last-imported-data', 'data'),
+              Input('upload-data', 'contents'),
+              State('upload-data', 'filename'),
+              State('upload-data', 'last_modified'),
+          prevent_initial_call=True,)
+def update_output(list_of_contents, list_of_names, list_of_dates):
+    if list_of_contents is not None:
+        table = main.parse_contents(list_of_contents, list_of_names, list_of_dates)
+        df = main.parse_contents_df(list_of_contents, list_of_names, list_of_dates)
+        children = [table]
+        #table = main.parse_file_contents(list_of_contents, list_of_names)
+        #children = [table]
+        df_dict = df.to_dict(orient='records')
+        return children, df_dict
+
+# Callback setting the loaded data as the current selection
+@callback(
+    Output("dataset-selection", "value"),
+    Output("upload-modal", "is_open"),
+    Input("modal-submit-button", "n_clicks"),
+    State('last-imported-data', 'data'),
+    prevent_initial_call=True,
+)
+def save_imported_data(submit_clicks, df):
+    if df is not None:
+        return "Uploaded Data", False
+    else:
+        raise PreventUpdate
+
 
 
 if __name__ == '__main__':

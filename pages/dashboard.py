@@ -74,6 +74,37 @@ dropdown6 = html.Div(
         )
     ]
 )
+# Upload field
+upload_field = html.Div([dcc.Upload(
+        id='upload-data',
+        children=dmc.Button("Upload your own Dataset (CSV or XLS)", variant="outline", id='upload-button'),
+        # Allow multiple files to be uploaded
+        multiple=False
+    ),
+    ])
+
+upload_modal = dmc.Modal(
+            title="Uploaded data",
+            id="upload-modal",
+            zIndex=10000,
+            children=[
+                dmc.Text("Verify that your data has been correctly uploaded"),
+                dmc.Space(h=20),
+                html.Div(id='output-data-upload'),
+                dmc.Group(
+                    [
+                        dmc.Button("Submit", id="modal-submit-button"),
+                        dmc.Button(
+                            "Close",
+                            color="red",
+                            variant="outline",
+                            id="modal-close-button",
+                        ),
+                    ],
+                    position="right",
+                ),
+            ],
+        )
 
 # Hype meter indicator
 hype_meter_indicator_progress = dbc.Progress(
@@ -449,6 +480,8 @@ selector_card = dmc.Card(
         ),
         dmc.Space(h=10),
         dropdown6,
+        upload_field,
+        upload_modal,
         dmc.Group(
                             [
                                 dmc.Title("Analysis", order=5),
@@ -1067,6 +1100,7 @@ def layout():
             # Market cap of the company selected, 0 if N/A at the relative current time (depending on the date picked)
             dcc.Store(id='latest-market-cap'),  # Market cap of the company at the absolute current time (now)
             dcc.Store(id='graph-unit'),  # Graph unit (MAU, Population, etc.)
+            dcc.Store(id='symbol-dataset'),  # Symbol of the Public company (N/A if not)
             dcc.Store(id='launch-counter', data={'flag': False}),
             # Counter that shows 0 if no dataset has been selected, or 1 otherwise
             dcc.Store(id='revenue-dates'),  # DF Containing the quarterly revenue and the dates
@@ -1081,6 +1115,7 @@ def layout():
             dcc.Store(id='current-valuation-calculated'),
             # Current valuation calculated with the current parameters and date
             # Counter that shows if a new dataset has been selected
+            dcc.Store(id='last-imported-data'),
 
 
         ], fluid=True),

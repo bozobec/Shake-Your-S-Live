@@ -13,9 +13,11 @@ from sympy.solvers import solve
 from sympy import Symbol
 import sqlite3
 import pandas as pd
-import plotly.express as px
-# import matplotlib.pyplot as plt
-# import matplotlib.pyplot as plt
+import base64
+#import datetime
+import io
+from dash import Dash, dcc, html, dash_table, Input, Output, State, callback
+
 
 # ---------------------------- Importing Data for testing purpose
 
@@ -563,4 +565,91 @@ def hype_meter_indicator_values(hype_ratio):
         indicator_color = "red"
         indicator_text = "Super hyped!"
     return indicator_color, indicator_text
+
+def parse_contents(contents, filename, date):
+    content_type, content_string = contents.split(',')
+
+    decoded = base64.b64decode(content_string)
+    try:
+        if 'csv' in filename:
+            print("CSV uploaded")
+            # Assume that the user uploaded a CSV file
+            df = pd.read_csv(
+                io.StringIO(decoded.decode('utf-8')))
+            print("CSV successfully read")
+        elif 'xls' in filename:
+            print("XLS uploaded")
+            # Assume that the user uploaded an excel file
+            df = pd.read_excel(io.BytesIO(decoded))
+            print("XLS successfully read")
+    except Exception as e:
+        print(e)
+        return html.Div([
+            'There was an error processing this file.'
+        ])
+
+    return html.Div([
+        html.H5(filename),
+        html.H6(datetime.fromtimestamp(date)),
+
+        dash_table.DataTable(
+            df.to_dict('records'),
+            [{'name': i, 'id': i} for i in df.columns]
+        ),
+
+        html.Hr(),  # horizontal line
+
+    ])
+
+def parse_contents_df(contents, filename, date):
+    content_type, content_string = contents.split(',')
+
+    decoded = base64.b64decode(content_string)
+    try:
+        if 'csv' in filename:
+            print("CSV uploaded")
+            # Assume that the user uploaded a CSV file
+            df = pd.read_csv(
+                io.StringIO(decoded.decode('utf-8')))
+            print("CSV successfully read")
+        elif 'xls' in filename:
+            print("XLS uploaded")
+            # Assume that the user uploaded an excel file
+            df = pd.read_excel(io.BytesIO(decoded))
+            print("XLS successfully read")
+    except Exception as e:
+        print(e)
+        return html.Div([
+            'There was an error processing this file.'
+        ])
+
+    return df
+
+
+# Improved function for parsing file contents
+def parse_file_contents(contents, filename):
+    content_type, content_string = contents.split(',')
+    decoded = base64.b64decode(content_string)
+
+    try:
+        if 'csv' in filename:
+            print("CSV uploaded")
+            df = pd.read_csv(io.StringIO(decoded.decode('utf-8')))
+            print("CSV successfully read")
+        elif 'xls' in filename:
+            print("XLS uploaded")
+            df = pd.read_excel(io.BytesIO(decoded))
+            print("XLS successfully read")
+        else:
+            raise ValueError("Unsupported file format")
+    except Exception as e:
+        print(e)
+        return None
+
+    return df
+
+# Improved function to generate DataFrame from contents
+def parse_file_contents_df(contents, filename, date):
+    df = parse_file_contents(contents, filename)
+    return df
 
