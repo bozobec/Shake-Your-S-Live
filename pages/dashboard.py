@@ -86,6 +86,7 @@ upload_field = html.Div([dcc.Upload(
 upload_modal = dmc.Modal(
             title="Uploaded data",
             id="upload-modal",
+            overflow="inside",
             zIndex=10000,
             children=[
                 dmc.Text("Verify that your data has been correctly uploaded"),
