@@ -1502,7 +1502,9 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     # Graph message
 
     # Selected Growth
-    if k_scenarios[data_slider] < 1e9:
+    if k_scenarios[data_slider] < 1e6:
+        plateau_selected_growth = f"{k_scenarios[data_slider]:.0f}"
+    elif k_scenarios[data_slider] < 1e9:
         plateau_selected_growth = f"{k_scenarios[data_slider] / 1e6:.1f} M"
     else:
         plateau_selected_growth = f"{k_scenarios[data_slider] / 1e9:.1f} B"
@@ -1543,7 +1545,10 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
                               y=users[number_ignored_data:data_len],
                               marker_color="Black", showlegend=False, hoverinfo='none'))
     y_predicted = users
-    formatted_y_values = [f"{y / 1e6:.1f} M" if y < 1e9 else f"{y / 1e9:.2f} B" for y in y_predicted]
+    formatted_y_values = [
+        f"{y:.0f}" if y < 1e6 else f"{y / 1e6:.1f} M" if y < 1e9 else f"{y / 1e9:.2f} B"
+        for y in y_predicted
+    ]
     # Line linking the historical data for smoothing the legend hover
     fig_main.add_trace(go.Scatter(name="Historical data", x=dates_raw,
                                   y=y_predicted, mode='lines', opacity=1,
@@ -1635,7 +1640,10 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
 
     # print(len(x_dates), x_dates)
     # print(len(x), x)
-    formatted_y_values = [f"{y / 1e6:.1f} M" if y < 1e9 else f"{y / 1e9:.2f} B" for y in y_predicted]
+    formatted_y_values = [
+        f"{y:.0f}" if y < 1e6 else f"{y / 1e6:.1f} M" if y < 1e9 else f"{y / 1e9:.2f} B"
+        for y in y_predicted
+    ]
     fig_main.add_trace(go.Scatter(name="Growth Forecast", x=x_dates, y=y_predicted,
                                   mode="lines", line=dict(color='#4dabf7', width=2), opacity=0.8,
                                   text=formatted_y_values, hovertemplate=hovertemplate_maingraph))
@@ -1652,7 +1660,10 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     print(main.logisticfunction(k_scenarios[-1], r_scenarios[-1], p0_scenarios[-1], x_scenarios))
     # x = np.linspace(dates[-1], dates[-1] * 2 - dates[0], num=50)
     y_trace = main.logisticfunction(k_scenarios[0], r_scenarios[0], p0_scenarios[0], x_scenarios)
-    formatted_y_values = [f"{y / 1e6:.1f} M" if y < 1e9 else f"{y / 1e9:.2f} B" for y in y_trace]
+    formatted_y_values = [
+        f"{y:.0f}" if y < 1e6 else f"{y / 1e6:.1f} M" if y < 1e9 else f"{y / 1e9:.2f} B"
+        for y in y_trace
+    ]
     fig_main.add_trace(go.Scatter(name="Low growth", x=x_dates_scenarios,
                                   y=main.logisticfunction(k_scenarios[0], r_scenarios[0], p0_scenarios[0], x_scenarios),
                                   mode='lines',
@@ -1661,7 +1672,10 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     # fig.add_trace(go.Line(name="Predicted S Curve", x=x + 1970,
     # y=main.logisticfunction(k_scenarios[1], r_scenarios[1], p0_scenarios[1], x), mode="lines"))
     y_trace = main.logisticfunction(k_scenarios[-1], r_scenarios[-1], p0_scenarios[-1], x_scenarios)
-    formatted_y_values = [f"{y / 1e6:.1f} M" if y < 1e9 else f"{y / 1e9:.2f} B" for y in y_trace]
+    formatted_y_values = [
+        f"{y:.0f}" if y < 1e6 else f"{y / 1e6:.1f} M" if y < 1e9 else f"{y / 1e9:.2f} B"
+        for y in y_trace
+    ]
     # High growth scenario, if existent
     if len(k_scenarios) > 1:
         fig_main.add_trace(go.Scatter(name="High Growth", x=x_dates_scenarios,
@@ -2312,12 +2326,18 @@ def graph_valuation_over_time(valuation_over_time_dict, date_picked, df_formatte
 
     hovertemplate_maingraph = "%{text}"
     # Low Valuation
-    formatted_y_values = [f"{y / 1e6:.1f} M" if y < 1e9 else f"{y / 1e9:.2f} B" for y in low_scenario_valuation]
+    formatted_y_values = [
+        f"{y:.0f}" if y < 1e6 else f"{y / 1e6:.1f} M" if y < 1e9 else f"{y / 1e9:.2f} B"
+        for y in low_scenario_valuation
+    ]
     fig_valuation.add_trace(go.Scatter(name="Low Valuation", x=np.append(dates_valuation_graph, today_date), y=np.append(low_scenario_valuation, low_scenario_valuation[-1]),
                                        mode="lines", line=dict(color='#74C0FC', width=1, dash="dash"),
                                        text=formatted_y_values, hovertemplate=hovertemplate_maingraph))
     # High Valuation
-    formatted_y_values = [f"{y / 1e6:.1f} M" if y < 1e9 else f"{y / 1e9:.2f} B" for y in high_scenario_valuation]
+    formatted_y_values = [
+        f"{y:.0f}" if y < 1e6 else f"{y / 1e6:.1f} M" if y < 1e9 else f"{y / 1e9:.2f} B"
+        for y in high_scenario_valuation
+        ]
     fig_valuation.add_trace(go.Scatter(name="High Valuation", x=np.append(dates_valuation_graph, today_date), y=np.append(high_scenario_valuation, high_scenario_valuation[-1]),
                                        mode="lines", line=dict(color="#228BE6", width=1, dash="dash"),
                                        text=formatted_y_values, hovertemplate=hovertemplate_maingraph))
