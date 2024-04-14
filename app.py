@@ -1515,7 +1515,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
 
     graph_message = "Anticipated Plateau Date (blue line): " + main.string_formatting_to_date(
         time_selected_growth) + ", Projected at " + \
-                    str(plateau_selected_growth) + " users"
+                    str(plateau_selected_growth) + " " + str(graph_unit)
 
     # Polynomial approximation
     # logfit = main.log_approximation(dates[number_ignored_data:data_len], users[number_ignored_data:data_len])

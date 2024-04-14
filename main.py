@@ -358,7 +358,11 @@ def growth_scenarios_summary(df):
 # Function for calculating at what time a certain population is reached
 # (logistic function solved for t if p(t) is known)
 def time_to_population(k, r, p0, pt):
-    t = 1/r*math.log(pt*(k-p0)/(p0*(k-pt)))
+    try:
+        t = 1/r*math.log(pt*(k-p0)/(p0*(k-pt)))
+    except ValueError:
+        print("Invalid input values. Ensure (pt * (k - p0)) / (p0 * (k - pt)) is greater than 0.")
+        return 50.0
     return t
 
 
