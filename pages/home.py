@@ -448,6 +448,7 @@ third_card = dmc.Card(
     radius="md",
     # style={"width": 350},
 )
+
 def layout():
     layout = html.Div(
         children=[
@@ -515,7 +516,7 @@ def layout():
                 ],
             ),
             dmc.Space(h=60),
-            dmc.Space(h=300),
+            #dmc.Space(h=300),
         ],
     )
     return layout

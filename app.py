@@ -22,12 +22,13 @@ from dash.exceptions import PreventUpdate
 
 #pd.set_option('display.max_columns', None)
 pd.set_option('display.max_rows', 200)
-external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+#external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 APP_TITLE = "RAST"
 
 # app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 app = dash.Dash(__name__,
                 external_stylesheets=[dbc.themes.LUX],
+                #external_stylesheets=[dbc.themes.MORPH], Nice stylesheet
                 title=APP_TITLE,
                 use_pages=True,
                 )
@@ -633,6 +634,7 @@ main_plot.update(
 
 # ----------------------------------------------------------------------------------
 # App Layout
+"""
 app.layout = html.Div(style={'backgroundColor': '#F9F9F9'}, children=
 [
     # navbar6,
@@ -661,6 +663,30 @@ app.layout = html.Div(style={'backgroundColor': '#F9F9F9'}, children=
     dash.page_container,
     footer
 ])
+"""
+
+app.layout = dmc.AppShell(
+    zIndex=100,
+    header=navbar7,
+    #footer=footer,
+    children=[
+            dmc.Container(fluid=True, children=[
+                dmc.Grid([
+                    dmc.Col([
+                        dmc.LoadingOverlay(
+                            # graph_card
+                        ),
+                        # valuation_over_time_card  # Comment this line to remove the analysis graphs
+                    ], span=12, lg=6, orderXs=3, orderSm=3, orderLg=2),
+                ],
+                    gutter="xl",
+                    justify="space-around",
+                ),
+            ]),
+            dash.page_container
+    ],
+    #footer=footer
+)
 
 server = app.server
 
@@ -817,8 +843,6 @@ def set_history_size(dropdown_value, imported_df):
             revenue_correlation_sorted = revenue_correlation[sorted_indices]
             users_revenue_regression = main.linear_regression(users_correlation_sorted,
                                                               revenue_correlation_sorted)
-            print("CorrelationU", users_correlation, users_correlation_sorted)
-            print("Correlationrevenue", revenue_correlation, revenue_correlation_sorted)
 
             # Profit margin text and marks
             profit_margin_array = np.array(df["Profit Margin"])
@@ -1294,6 +1318,7 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
     # Check whether it is a public company: Market cap fetching & displaying profit margin,
     # discount rate and arpu for Companies
     symbol_company = symbol_dataset
+    print("yoolo")
     print("ssymbol", symbol_company)
     if symbol_company != "N/A":
         # If the date picked is the latest, then API call
@@ -1373,8 +1398,6 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
 
     # Initial ARPU Growth definition
     arpu_growth = 5
-    print("Couleurs")
-    print(growth_icon_color, plateau_icon_color, valuation_icon_color, correlation_icon_color)
 
     # Initial slider k value
     initial_slider_values['slider_k'] = highest_r2_index
@@ -1429,13 +1452,10 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     users = users.astype(float) * 1000000
     arpu_growth = arpu_growth / 100
 
-    print("datepIckedinItial", date_picked_formatted_original)
     # Gets the date selected from the new date picker
     date_picked_formatted = main.date_formatting_from_string(date_picked_formatted_original)
     history_value = date_picked_formatted
     history_value_graph = datetime.strptime(date_picked_formatted_original, "%Y-%m-%d")
-    print(history_value_graph)
-    print(date_picked_formatted)
     # Extract the x-coordinate for the vertical line
     x_coordinate = history_value_graph
 
@@ -1652,12 +1672,6 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
                      num=10)  # Creates a future timeline the size of the data
 
     # Low growth scenario
-    print("lowlow")
-    print(dates_raw)
-    print(users)
-    print(x_dates_scenarios)
-    print(main.logisticfunction(k_scenarios[0], r_scenarios[0], p0_scenarios[0], x_scenarios))
-    print(main.logisticfunction(k_scenarios[-1], r_scenarios[-1], p0_scenarios[-1], x_scenarios))
     # x = np.linspace(dates[-1], dates[-1] * 2 - dates[0], num=50)
     y_trace = main.logisticfunction(k_scenarios[0], r_scenarios[0], p0_scenarios[0], x_scenarios)
     formatted_y_values = [
@@ -1684,10 +1698,6 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
                                       textposition="top left", textfont_size=6, showlegend=False,
                                       text=formatted_y_values, hovertemplate=hovertemplate_maingraph))
     years_future_users = list(range(2023 - 1970, 2039 - 1970))
-    print("High Growth")
-    print(main.logisticfunction(k_scenarios[-1], r_scenarios[-1], p0_scenarios[-1], years_future_users))
-    print("Low Growth")
-    print(main.logisticfunction(k_scenarios[0], r_scenarios[0], p0_scenarios[0], years_future_users))
 
     # Filling the area of possible scenarios
     x_area = np.append(x, np.flip(x))  # Creating one array made of two Xs
@@ -1729,7 +1739,6 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     revenue = np.array([entry['Revenue'] for entry in df_dataset_dict]) * 1_000_000
     # Find the indices where cells in the second array are not equal to "N/A"
     valid_indices = np.where(revenue != 0)
-    print(date_picked_formatted_original, type(date_picked_formatted_original))
 
     years = 6
     current_date = datetime.now()
@@ -2175,7 +2184,6 @@ def historical_valuation_calculation(df_formatted, total_assets, data, df_raw, l
             print(df_sorted)
             # Storing the data of two scenarios for a given date
             for j in range(num_iterations):
-                print("j", j)
                 # If no scenario is found, 0 is appended. Later the 0 is transformed in the last known valuation
                 if df_sorted.empty:
                     valuation_data.append([
@@ -2187,12 +2195,10 @@ def historical_valuation_calculation(df_formatted, total_assets, data, df_raw, l
                     k_selected = df_sorted.at[j * (len(df_sorted) - 1), 'K']
                     r_selected = df_sorted.at[j * (len(df_sorted) - 1), 'r']
                     p0_selected = df_sorted.at[j * (len(df_sorted) - 1), 'p0']
-                    print("aaa")
                     future_customer_equity = main.net_present_value_arpu_growth(k_selected, r_selected, p0_selected,
                                                                                 current_arpu, arpu_growth[j],
                                                                                 profit_margin[j], discount_rate[j],
                                                                                 YEARS_DCF)
-                    print("bbb")
                     current_customer_equity = users_valuation[-1] * current_arpu * profit_margin[j]
                     valuation_data.append([
                         dates_new[i + MIN_DATE_INDEX],
@@ -2253,6 +2259,9 @@ def graph_valuation_over_time(valuation_over_time_dict, date_picked, df_formatte
     # Valuation calculation
     non_operating_assets = total_assets
     df_valuation_over_time = pd.DataFrame(valuation_over_time_dict)
+    print("Df valuation")
+    print(latest_market_cap)
+    print(df_valuation_over_time)
     # Graph creation
 
     # Creating the plot of the market cap - valuations
@@ -2266,6 +2275,8 @@ def graph_valuation_over_time(valuation_over_time_dict, date_picked, df_formatte
 
     # Create market cap array
     market_cap_array = np.array([entry['Market Cap'] for entry in df_formatted]) * 1e9
+    print("Market cap array")
+    print(market_cap_array)
     market_cap_array = market_cap_array[MIN_DATE_INDEX:]
     market_cap_array2 = df_valuation_over_time['Market Cap'].values
     market_cap_array2 = market_cap_array2[::2]

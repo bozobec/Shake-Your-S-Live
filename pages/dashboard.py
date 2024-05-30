@@ -1065,6 +1065,8 @@ aside_column = dmc.Aside(
     ],
 )
 
+
+
 def layout():
     layout = html.Div([
         dmc.Container(fluid=True, children=[

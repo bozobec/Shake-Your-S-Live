@@ -208,21 +208,16 @@ def parameters_dataframe(dates, users):
     n_data_ignored = len(dates)-3  # Number of data until which to be ignored
     dataframe = np.zeros((n_data_ignored*number_moving_average, 9))
     # Calculation of K, r & p0 and its related RSquare for each data ignored
-    #print("Initial dates users")
-    #print(dates, users)
     for i in range(0,number_moving_average):
-        #print("_Moving average", i)
         moving_average = i+1
         if moving_average==1:
             pass
         else:
             dates, users = moving_average_smoothing(dates, users, moving_average)
-        print(dates, users)
         for j in range(n_data_ignored):
             try:
                 dates_rsquare = dates[j:len(dates)]
                 users_rsquare = users[j:len(dates)]
-                #print("usersDF", moving_average, users_rsquare)
                 rd = discrete_growth_rate(users_rsquare, dates_rsquare)
                 userinterval = discrete_user_interval(users_rsquare)
                 try:
