@@ -70,7 +70,7 @@ app.index_string = """<!DOCTYPE html>
 # ---------------------------------------------------------------------------
 
 # Values for the dropdown (all different companies in the DB)
-labels = dataAPI.get_airtable_labels_new()
+labels = dataAPI.get_airtable_labels()
 #labels =["test1", "test2", "test3"]
 
 # Constants for the calculation
@@ -620,6 +620,55 @@ layout_growth_rate_graph = go.Layout(
     ),
 )
 
+# Layout of the product maturity graph
+layout_product_maturity_graph = go.Layout(
+    # title="User Evolution",
+    #plot_bgcolor="White",
+    margin=go.layout.Margin(
+        l=0,  # left margin
+        r=0,  # right margin
+        b=0,  # bottom margin
+        t=20,  # top margin
+    ),
+    legend=dict(
+        # Adjust click behavior
+        itemclick="toggleothers",
+        itemdoubleclick="toggle",
+        # orientation="h",
+        # x=0.5,
+        # y=-0.1,
+        yanchor="top",
+        y=0.96,
+        xanchor="left",
+        x=0.01,
+        font=dict(
+            # family="Courier",
+            size=10,
+            # color="black"
+        ),
+    ),
+    xaxis=dict(
+        title="Timeline",
+        linecolor="Grey",
+        showgrid=False,
+        # hoverformat=".0f",
+    ),
+    yaxis=dict(
+        title="R&D Share of Revenue [%]",
+        linecolor="Grey",
+        showgrid=False,
+        #gridwidth=1,
+        #gridcolor='#e3e1e1',
+        # hoverformat='{y/1e6:.0f} M'
+    ),
+    showlegend=True,
+    font=dict(
+        # family="Open Sans",
+        # size=16,
+        # color="Black"
+    ),
+)
+
 # Build second graph
 layout_second_graph = go.Layout(
     # title="User Evolution",
@@ -762,6 +811,7 @@ def enable_slider(scenario_value, data_selection):
     Output("accordion-plateau", "disabled"),
     Output("accordion-valuation", "disabled"),
     Output("accordion-correlation", "disabled"),
+    Output("accordion-product-maturity", "disabled"),
     Output("loader-general", "style"),
 
     Input("dataset-selection", "value")
@@ -774,7 +824,7 @@ def select_value(value):
                  "the Forecast Start Date Using the Datepicker. Use the 'Past performance' section " \
                  "to see RAST's calculated hype over time."
     show_loader = {'display': 'block'}
-    return False, False, False, False, show_loader
+    return False, False, False, False, False, show_loader
 
 
 # Callback defining the minimum and the maximum date of the datepicker and loading the dataset
@@ -958,69 +1008,6 @@ def set_history_size(dropdown_value, imported_df):
         hovertemplate_maingraph = "%{text}"
         y_legend_title = key_unit
 
-        # Trial to create the basis of a graph here to only update the lines in another callback, but couldn't manage it
-        '''
-        # Calculate the desired X-axis range based on the first and last date in the dataset
-        x_axis_start = dates_formatted[0]
-        x_axis_end = dates_formatted[-1]+((dates_formatted[-1] - dates_formatted[0]) * 0.2)  # We see "20%" in the future
-
-        # Update X-axis range to fix the size
-        x_axis_range = [x_axis_start, x_axis_end + (x_axis_end - x_axis_start)]
-        # x_axis = [dates[0] + 1970, dates[-1] * 2 - dates[0] + 1970]
-        fig_main.update_xaxes(range=x_axis_range)
-
-        # Set y legend
-        fig_main.update_layout(
-            yaxis=dict(
-                title=str(y_legend_title),
-            )
-        )
-
-        # Definition of the different traces
-        # Main bars
-        main_plot_bars = go.Bar(name="dataset-bars", x=dates_formatted, y=users_formatted,
-                                marker_color='Black', hoverinfo='none')
-        existing_main_plot['data'].append(main_plot_bars)
-
-        fig_main.add_trace(go.Bar(name="dataset-bars", x=dates_formatted, y=users_formatted,
-                                  marker_color='Black', hoverinfo='none'))
-        # Continuous legend for the historical data set
-        formatted_y_values = [f"{y / 1e6:.1f} M" if y < 1e9 else f"{y / 1e9:.2f} B" for y in users_formatted]
-        fig_main.add_trace(go.Scatter(name="dataset-line", x=dates_formatted,
-                                      y=users_formatted, mode='lines', opacity=1,
-                                      marker_color="Black", showlegend=False, text=formatted_y_values,
-                                      hovertemplate=hovertemplate_maingraph))
-        main_plot_dataset = (go.Scatter(name="dataset-line", x=dates_formatted,
-                                      y=users_formatted, mode='lines', opacity=1,
-                                      marker_color="Black", showlegend=False, text=formatted_y_values,
-                                      hovertemplate=hovertemplate_maingraph))
-        existing_main_plot['data'].append(main_plot_dataset)
-
-        # Vertical line indicating the date picked
-        main_plot_date_picked = go.Scatter(
-            x=[current_date, current_date],
-            y=[0, users_formatted[-1] * 1.1],  # Adjust the y-values based on your plot range
-            mode='lines',
-            name='Vertical Line',
-            line=dict(color='green', width=1, dash="dot"),
-            opacity=0.5,
-        )
-        existing_main_plot['data'].append(main_plot_date_picked)
-
-        # Ignored bars (ignored data for scenario)
-        fig_main.add_trace(go.Bar(name="ignored-bars", x=[], y=[],
-                                  marker_color='Grey', hoverinfo='none'))
-        # Future bars (if past the date picked by the user)
-        fig_main.add_trace(go.Bar(name="future-bars", x=[], y=[],
-                                  marker_color='Grey', hoverinfo='none'))
-        # Prediction line
-        fig_main.add_trace(go.Scatter(name="prediction-line", x=[], y=[],
-                                      mode="lines", line=dict(color='#4dabf7', width=2), opacity=0.8,
-                                      text=formatted_y_values, hovertemplate=hovertemplate_maingraph))
-        # Vertical line for current date
-        fig_main.add_vline(name="current-date", x=current_date, line_width=1, line_dash="dot",
-                            opacity=0.5, annotation_text="   Forecast")
-        '''
         # Initial_sliders_values
         initial_sliders_values = {'slider_profit_margin': value_profit_margin_slider,
                                   'slider_discount_rate': value_discount_rate_slider}
@@ -1061,6 +1048,10 @@ def set_history_size(dropdown_value, imported_df):
     Output(component_id="correlation-message", component_property="children"),
     Output(component_id="correlation-message", component_property="color"),
     Output(component_id="accordion-correlation", component_property="icon"),
+    Output(component_id="product-maturity-message", component_property="title"),
+    Output(component_id="product-maturity-message", component_property="children"),
+    Output(component_id="product-maturity-message", component_property="color"),
+    Output(component_id="accordion-product-maturity", component_property="icon"),
     Output(component_id='scenarios-sorted', component_property='data'),
     Output(component_id='range-slider-k', component_property='max'),
     Output(component_id='range-slider-k', component_property='marks'),
@@ -1071,6 +1062,8 @@ def set_history_size(dropdown_value, imported_df):
     Output(component_id='range-arpu-growth', component_property='value'),  # Stores the current (now) company market cap
     Output(component_id='growth-rate-graph-message', component_property='children'),
     Output(component_id='growth-rate-graph-message', component_property='color'),
+    Output(component_id='product-maturity-graph-message', component_property='children'),
+    Output(component_id='product-maturity-graph-message', component_property='color'),
 
     Input(component_id='dataset-selection', component_property='value'),  # Take dropdown value
     Input(component_id='date-picker', component_property='value'),  # Take date-picker date
@@ -1099,15 +1092,19 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
     # Users are taken from the database and multiply by a million
     users_new = np.array([entry['Users'] for entry in df_dataset_dict])
     users_original = users_new.astype(float) * 1000000
-    # print(df)
+    closest_index = data_len - 1  # Index of the last data matching the date selected
+    current_annual_profit_margin = df_dataset.loc[closest_index, 'Profit Margin']
+    current_revenue_array = np.array(df_dataset['Revenue'])
+    current_revenue_array = current_revenue_array[:closest_index + 1]
+    research_and_development = np.array(df_dataset['Research_And_Development'])
+    current_research_and_development = research_and_development[:closest_index + 1]
+    share_research_and_development = current_research_and_development/current_revenue_array * 100
 
-    # Test to be deleted, changing dates & users to use moving average
-    #dates, users = main.moving_average_smoothing(dates, users_original, 1)
+
     users = users_original
     # Resizing of the dataset taking into account the date picked
     history_value_formatted = date_picked_formatted - 1970  # New slider: Puts back the historical value to the format for computations
     dates_actual = main.get_earlier_dates(dates, history_value_formatted)
-    closest_index = data_len - 1  # Index of the last data matching the date selected
     current_users_array = users_new * 1e6
     current_users = current_users_array[closest_index]
 
@@ -1160,12 +1157,10 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
     r_full = np.array(df_full['r'])
 
     # Growth Rate
-    print("ccheck")
     rd = main.discrete_growth_rate(users[0:data_len], dates[0:data_len] + 1970)
-    print(users[0:data_len], dates[0:data_len] + 1970)
     average_rd = sum(rd[-3:])/3
 
-    # Growth Rate message
+    # Growth Rate Graph message
     if average_rd < 0.1:
         growth_rate_graph_message1 = "The annual average discrete growth rate is approaching 0 (" + f"{average_rd:.3f}"+ \
                                      "), indicating an approaching end of the growth."
@@ -1178,6 +1173,55 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
                                      ") indicating a substantial growth."
         growth_rate_graph_color = "green"
 
+    # Product Maturity Graph Message
+    if np.all(share_research_and_development == 0):
+        product_maturity_graph_message = "No R&D data available at the moment for " + str(dropdown_value) + " 🫣"
+        product_maturity_graph_message_color = "gray"
+        product_maturity_accordion_title = "No Data Available 🫣"
+        product_maturity_accordion_body = "At the moment no data is available for " + str(dropdown_value) + " 🫣"
+        product_maturity_accordion_color = "gray"
+        product_maturity_accordion_icon_color = DashIconify(icon="fluent-mdl2:product-release",
+                                                            color=dmc.theme.DEFAULT_COLORS["gray"][6],
+                                                            width=20)
+    elif share_research_and_development[-1] > 30:
+        product_maturity_graph_message = "At the moment, " + str(dropdown_value) + \
+                                         "is heavily investing in its product, indicating " \
+                                         "that the company is still betting on strong growth."
+        product_maturity_graph_message_color = "green"
+        product_maturity_accordion_title = "The Product is Growing!"
+        product_maturity_accordion_body = "At the moment, " + str(dropdown_value) + \
+                                         "is heavily investing in its product, indicating " \
+                                         "that the company is still betting on strong growth."
+        product_maturity_accordion_color = "green"
+        product_maturity_accordion_icon_color = DashIconify(icon="fluent-mdl2:product-release", color=dmc.theme.DEFAULT_COLORS["green"][6],
+                                             width=20)
+
+    elif share_research_and_development[-1] > 10:
+        product_maturity_graph_message = "At the moment, " + str(dropdown_value) + \
+                                         " is limiting its investment in its product, indicating that the product " \
+                                         "is on its way to being mature."
+        product_maturity_graph_message_color = "yellow"
+        product_maturity_accordion_title = "The Product is Maturing"
+        product_maturity_accordion_body = "At the moment, " + str(dropdown_value) + \
+                                         " is limiting its investment in its product, indicating that the product " \
+                                         "is on its way to being mature."
+        product_maturity_accordion_color = "yellow"
+        product_maturity_accordion_icon_color = DashIconify(icon="fluent-mdl2:product-release",
+                                                            color=dmc.theme.DEFAULT_COLORS["yellow"][6],
+                                                            width=20)
+    else:
+        product_maturity_graph_message = "At the moment, " + str(
+            dropdown_value) + "is heavily limiting its product investment, indicating" \
+                              " that the company is betting on cost optimization over growth."
+        product_maturity_graph_message_color = "red"
+        product_maturity_accordion_title = "The Product is Mature"
+        product_maturity_accordion_body = "At the moment, " + str(dropdown_value) + \
+                                          " is limiting its investment in its product, indicating that the product " \
+                                          "is on its way to being mature."
+        product_maturity_accordion_color = "red"
+        product_maturity_accordion_icon_color = DashIconify(icon="fluent-mdl2:product-release",
+                                                            color=dmc.theme.DEFAULT_COLORS["red"][6],
+                                                            width=20)
 
     # Growth Accordion
     # Promising Growth
@@ -1244,13 +1288,11 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
         plateau_message_color = "green"
         plateau_icon_color = DashIconify(icon="radix-icons:pin-top", color=dmc.theme.DEFAULT_COLORS["green"][6], width=20)
 
-    print("Time growth", time_best_growth, date_picked, date_picked_formatted)
-    print(plateau_message_color)
 
     # Formatting of the displayed correlation message
 
     formatted_correlation = f"{users_revenue_correlation * 100:.2f}"  # Formatting the displayed r^2:
-    if users_revenue_correlation >= 0.9:
+    if users_revenue_correlation >= 0.8:
         correlation_message_title = "Great metric selected!"
         correlation_message_body = "The " + str(key_unit) + " you are using seem to be the right metric to " \
                                                             "estimate the valuation, because " + str(key_unit) + \
@@ -1280,8 +1322,6 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
     data_ignored_array = df_scenarios.index.to_numpy()
     slider_max_value = data_ignored_array[-1]
 
-    print("SLIDERTEST")
-    print(highest_r2_index)
     # Defining the upper/lower limit after which the star is displayed right next to the label
     percentage_limit_label = 0.1
     max_limit_slider_label = data_ignored_array[int(len(data_ignored_array) * (1-percentage_limit_label))]
@@ -1380,13 +1420,8 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
         # Otherwise, the market cap of the last quarter is picked
         else:
             current_market_cap = df_dataset.loc[closest_index, 'Market Cap'] * 1e3
-        current_annual_profit_margin = df_dataset.loc[closest_index, 'Profit Margin']
-        current_revenue_array = np.array(df_dataset['Revenue'])
-        current_revenue_array = current_revenue_array[:closest_index + 1]
-        current_revenue_df = df_dataset.iloc[:-closest_index].copy()
         filtered_revenue = current_revenue_array[current_revenue_array != 0]
-        hype_market_cap = f"Market Cap: ${current_market_cap / 1000:.2f}B"  # Formatted text for hype meter
-        # yearly_revenue, total_assets = dataAPI.get_previous_quarter_revenue(symbol_company)  # Getting with API
+        hype_market_cap = f"Market Cap: ${latest_market_cap / 1000:.2f}B"  # Formatted text for hype meter
         quarterly_revenue = filtered_revenue * 1_000_000  # Getting in database
         yearly_revenue_quarters = sum(quarterly_revenue[-4:])
         average_users_past_year = (current_users + current_users_array[closest_index - 4]) / 2
@@ -1458,13 +1493,16 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
     return highest_r2_index, initial_slider_values, growth_message_title, growth_message_body, growth_message_color, growth_icon_color, \
         ["growth"], plateau_message_title, plateau_message_body, plateau_message_color, plateau_icon_color, valuation_message_title, \
         valuation_message_body, valuation_message_color, valuation_icon_color, correlation_message_title, correlation_message_body, \
-        correlation_message_color, correlation_icon_color, df_sorted_dict, slider_max_value, marks_slider, current_arpu, hype_market_cap, \
-        current_market_cap, latest_market_cap, arpu_growth, growth_rate_graph_message1, growth_rate_graph_color
+        correlation_message_color, correlation_icon_color, product_maturity_accordion_title, product_maturity_accordion_body,\
+        product_maturity_accordion_color, product_maturity_accordion_icon_color, df_sorted_dict, slider_max_value, marks_slider, current_arpu, hype_market_cap, \
+        current_market_cap, latest_market_cap, arpu_growth, growth_rate_graph_message1, growth_rate_graph_color, \
+        product_maturity_graph_message, product_maturity_graph_message_color
 
 
 @app.callback([
     Output(component_id='main-graph1', component_property='figure'),  # Update graph 1
     Output(component_id='main-graph2', component_property='figure'),  # Update graph 2 about regression
+    Output(component_id='product-maturity-graph', component_property='figure'),  # Update graph 2 about regression
     # Output(component_id='main-graph3', component_property='figure'),  # Update graph 3
     # Output(component_id='carrying-capacity', component_property='children'),  # Update the carrying capacity
     Output(component_id='r2-ring-progress', component_property='sections'),  # Update regression
@@ -1498,6 +1536,9 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     users = np.array([entry['Users'] for entry in df_dataset_dict])
     users = users.astype(float) * 1000000
     arpu_growth = arpu_growth / 100
+
+    # R&D
+    research_and_development = np.array([entry['Research_And_Development'] for entry in df_dataset_dict]) * 1_000_000
 
     # Gets the date selected from the new date picker
     date_picked_formatted = main.date_formatting_from_string(date_picked_formatted_original)
@@ -1584,20 +1625,6 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
         time_selected_growth) + ", Projected at " + \
                     str(plateau_selected_growth) + " " + str(graph_unit)
 
-    # Polynomial approximation
-    # logfit = main.log_approximation(dates[number_ignored_data:data_len], users[number_ignored_data:data_len])
-    # k_log = np.exp(-logfit[1]/logfit[0])
-    # df_log = main.parameters_dataframe_given_k(dates[0:data_len], users[0:data_len])
-    # print("LOG params")
-    # print(df_log)
-    # polynum3 = main.polynomial_approximation(dates[number_ignored_data:data_len], users[number_ignored_data:data_len], 3)
-    # polynum2 = main.polynomial_approximation(dates[number_ignored_data:data_len], users[number_ignored_data:data_len],
-    # 2)
-    # polynum1 = main.polynomial_approximation(dates[number_ignored_data:data_len], users[number_ignored_data:data_len], 1)
-
-    # Calculating the other parameters, given K provided by the log approximation
-    # r_log, p0_log, r_squared_log = main.logistic_parameters_given_K(dates[number_ignored_data:data_len],
-    # users[number_ignored_data:data_len], k_log)
     # Build Main Chart
     # ---------------------
     hovertemplate_maingraph = "%{text}"
@@ -1801,6 +1828,8 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     data_len_revenue_array = dates_raw[data_len:]
     data_len_revenue = len(data_len_revenue_array[data_len_revenue_array != 0])
     revenue = revenue[valid_indices]
+    research_and_development = research_and_development[valid_indices]
+    dates_research_and_development = dates_raw[valid_indices]
     if len(revenue) > 0:
         annual_revenue_per_user = revenue * 4 / users_revenue
         x_revenue = dates_revenue
@@ -1880,10 +1909,12 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     fig_second = go.Figure(layout=layout_growth_rate_graph)
     fig_second.update_xaxes(range=[0, users[-1] * 1.1])  # Fixing the size of the X axis with users max + 10%
     dates_moved, users_moved = main.moving_average_smoothing(dates, users, moving_average)
+    fig_second.update_yaxes(range=[min(main.discrete_growth_rate(users_moved, dates_moved + 1970)-0.05),
+                                   max(main.discrete_growth_rate(users_moved, dates_moved + 1970)+0.05)])
     fig_second.add_trace(
         go.Scatter(name="Discrete Growth Rate Smoothened by moving average: " + str(moving_average),
-                   x=main.discrete_user_interval(users_moved),
-                   y=main.discrete_growth_rate(users_moved, dates_moved + 1970), mode="markers", line=dict()
+                x = main.discrete_user_interval(users_moved),
+                y = main.discrete_growth_rate(users_moved, dates_moved + 1970), mode = "markers", line = dict()
                    ))
     print("Rdrdrd")
     print(users, dates + 1970)
@@ -1920,12 +1951,116 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
         t_plateau_displayed = 'Year {:.1f}'.format(t_plateau)
     else:
         date_plateau_displayed = "Plateau could not be calculated"
+
+    # Build chart containing the product maturity chart
+    # -------------------------------------------------------
+    dates_research_and_development = pd.to_datetime(dates_research_and_development)
+    share_research_and_development = research_and_development / revenue * 100
+    fig_product_maturity = go.Figure(layout=layout_product_maturity_graph)
+    fig_product_maturity.update_yaxes(range=[0, 100])  # Fixing the size of the X axis with users max + 10%
+    fig_product_maturity.add_trace(
+        go.Scatter(name="R&D Share of Revenue [%]",
+                   x=dates_research_and_development,
+                   y=share_research_and_development, mode="markers", line=dict()
+                   ))
+
+    # Add horizontal lines delimitating the different phases:
+    # 1) Early-stage product >20% 2) Growth-Stage [10-20%] 3) Mature-Stage [<10%]
+    # Mature company
+    fig_product_maturity.add_shape(
+        go.layout.Shape(
+            type="rect",
+            x0=(dates_research_and_development[0]-pd.DateOffset(months=6)).strftime('%Y-%m-%d'),
+            x1=(dates_research_and_development[-1]+pd.DateOffset(months=6)).strftime('%Y-%m-%d'),
+            y0=0,
+            y1=10,
+            #xref="paper", yref="y",
+            fillcolor="#A5D8FF",
+            opacity=0.8,
+            layer="below",
+            line_width=0,
+        )
+    )
+    # Add the annotation
+    fig_product_maturity.add_annotation(
+        x=(dates_research_and_development[0] - pd.DateOffset(months=6)).strftime('%Y-%m-%d'),
+        # Align left within the rectangle
+        y=(0 + 10) / 2,  # Center vertically within the rectangle
+        xref="x",
+        yref="y",
+        text="  Mature Product",
+        showarrow=False,
+        font=dict(color="#339AF0", size=10),
+        align="left",
+        xanchor="left",
+        # bgcolor="rgba(231, 245, 255, 0.8)"  # Matching background color for better visibility
+    )
+
+    # Growth company
+    fig_product_maturity.add_shape(
+        go.layout.Shape(
+            type="rect",
+            x0=(dates_research_and_development[0] - pd.DateOffset(months=6)).strftime('%Y-%m-%d'),
+            x1=(dates_research_and_development[-1] + pd.DateOffset(months=6)).strftime('%Y-%m-%d'),
+            y0=10,
+            y1=30,
+            # xref="paper", yref="y",
+            fillcolor="#D0EBFF",
+            opacity=0.8,
+            layer="below",
+            line_width=0,
+        )
+    )
+    # Add the annotation
+    fig_product_maturity.add_annotation(
+        x=(dates_research_and_development[0] - pd.DateOffset(months=6)).strftime('%Y-%m-%d'),
+        # Align left within the rectangle
+        y=(10 + 30) / 2,  # Center vertically within the rectangle
+        xref="x",
+        yref="y",
+        text="  Product Stabilization",
+        showarrow=False,
+        font=dict(color="#4DABF7", size=10),
+        align="left",
+        xanchor="left",
+        # bgcolor="rgba(231, 245, 255, 0.8)"  # Matching background color for better visibility
+    )
+
+    # High growth company
+    fig_product_maturity.add_shape(
+        go.layout.Shape(
+            type="rect",
+            x0=(dates_research_and_development[0] - pd.DateOffset(months=6)).strftime('%Y-%m-%d'),
+            x1=(dates_research_and_development[-1] + pd.DateOffset(months=6)).strftime('%Y-%m-%d'),
+            y0=30,
+            y1=100,
+            # xref="paper", yref="y",
+            fillcolor="#E7F5FF",
+            opacity=0.8,
+            layer="below",
+            line_width=0,
+        )
+    )
+    # Add the annotation
+    fig_product_maturity.add_annotation(
+        x=(dates_research_and_development[0] - pd.DateOffset(months=6)).strftime('%Y-%m-%d'),  # Align left within the rectangle
+        y=(30 + 100) / 2,  # Center vertically within the rectangle
+        xref="x",
+        yref="y",
+        text="  Heavy Product Investments",
+        showarrow=False,
+        font=dict(color="#74C0FC", size=10),
+        align="left",
+        xanchor="left",
+        #bgcolor="rgba(231, 245, 255, 0.8)"  # Matching background color for better visibility
+    )
+
     print("2. CALLBACK END")
     t2 = time.perf_counter(), time.process_time()
     print(f" Creating graph")
     print(f" Real time: {t2[0] - t1[0]:.2f} seconds")
     print(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
-    return fig_main, fig_second, sections, graph_message
+    return fig_main, fig_second, fig_product_maturity, sections, graph_message
 
 
 # Callback displaying the functionalities & graph cards, and hiding the text

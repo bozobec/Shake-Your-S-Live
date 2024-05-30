@@ -30,7 +30,7 @@ register_page(
 )
 
 # Values for the dropdown (all different companies in the DB)
-labels = dataAPI.get_airtable_labels_new()
+labels = dataAPI.get_airtable_labels()
 
 
 # Constants for the calculation
@@ -330,6 +330,13 @@ correlation_message = dmc.Alert(
     title="",
     color="gray"),
 
+# Product Maturity
+product_maturity_message = dmc.Alert(
+    children=dmc.Text(""),
+    id="product-maturity-message",
+    title="",
+    color="gray"),
+
 # Accordion
 accordion = dmc.AccordionMultiple(
     id="accordion-main",
@@ -393,6 +400,20 @@ accordion = dmc.AccordionMultiple(
             ],
             value="correlation",
         ),
+        dmc.AccordionItem(
+            [
+                dmc.AccordionControl(
+                    "Product Maturity",
+                    id="accordion-product-maturity",
+                    disabled=True,
+                    icon=DashIconify(icon="fluent-mdl2:product-release", width=20)
+                ),
+                dmc.AccordionPanel(
+                    product_maturity_message
+                ),
+            ],
+            value="product-maturity",
+        ),
     ],
 )
 
@@ -419,6 +440,15 @@ growth_rate_graph_message = dmc.Alert(
     dmc.Text("About the Discrete Growth Rate"),
     id="growth-rate-graph-message",
     title="About the Discrete Growth Rate",
+    color="blue",
+    #hide="False",
+    withCloseButton="True")
+
+# Graph message growth rate
+product_maturity_graph_message = dmc.Alert(
+    dmc.Text("About the Product Maturity"),
+    id="product-maturity-graph-message",
+    title="About the Product Maturity",
     color="blue",
     #hide="False",
     withCloseButton="True")
@@ -789,6 +819,7 @@ welcome_timeline = html.Div([
 
 main_graph = dcc.Graph(id='main-graph1', config={'displayModeBar': False, 'scrollZoom': True})
 growth_graph = dcc.Graph(id='main-graph2', config={'displayModeBar': False, 'scrollZoom': True})
+product_maturity_graph = dcc.Graph(id='product-maturity-graph', config={'displayModeBar': False, 'scrollZoom': True})
 
 
 # Graph that contains the valuation calculation over time
@@ -816,12 +847,14 @@ tabs_graph = dmc.Tabs(
                             value="3",
                             #disabled=True
                             ),
+                    dmc.Tab("Product Maturity", icon=DashIconify(icon="fluent-mdl2:product-release"), value="4"),
                 ],
         ),
         dmc.TabsPanel(html.Div(children=[graph_message, main_graph]),
             id="tab-one", value="2"),
         dmc.TabsPanel(html.Div(children=[valuation_graph_message, valuation_over_time]), id="tab-two", value="1"),
         dmc.TabsPanel(html.Div(children=[growth_rate_graph_message, growth_graph]), id="tab-three", value="3"),
+        dmc.TabsPanel(html.Div(children=[product_maturity_graph_message, product_maturity_graph]), id="tab-four", value="4"),
     ],
     value="1",
     variant="outline",

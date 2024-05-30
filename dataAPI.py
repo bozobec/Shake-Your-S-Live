@@ -13,34 +13,6 @@ from datetime import datetime
 def get_airtable_labels():
     print("Fetching the dataset labels")
     try:
-        url = "https://api.airtable.com/v0/appm3ffcu38jyqhi3/tbl7LiTDpXk9DeRUB?fields%5B%5D=Company"
-        auth_token = "patUQKc4meIVaiLIw.efa35a957210ca18edc4fc00ae1b599a6a49851b8b7c59994e4384c19c20fcd1"
-        headers = {
-            "Authorization": f"Bearer {auth_token}"
-        }
-        response = requests.get(url, headers=headers)  # Call the Airtable data with the specified filter
-        print("API LABELS ANSWER")
-        print(response)
-        data = response.json()  # Transforms it into a dictionary
-        # Format the data into a dataframe including only the Date and the Users
-        records = data['records']
-        formatted_data = []
-        unique_values = set()
-        for record in records:
-            company = record['fields']['Company']
-            unique_values.add(company)
-        unique_values_list = list(unique_values)
-        print("Done fetching dataset label")
-        return unique_values_list
-
-    except Exception as e:
-        print(f"Error fetching dataset labels: {str(e)}")
-        return None
-
-# This function fetches all the unique categories in the airtable database
-def get_airtable_labels_new():
-    print("Fetching the dataset labels")
-    try:
         url = "https://api.airtable.com/v0/appm3ffcu38jyqhi3/tbl7LiTDpXk9DeRUB?fields%5B%5D=Company&fields%5B%5D=Category"
         auth_token = "patUQKc4meIVaiLIw.efa35a957210ca18edc4fc00ae1b599a6a49851b8b7c59994e4384c19c20fcd1"
         headers = {
@@ -91,18 +63,6 @@ def get_airtable_labels_new():
 def get_airtable_data(filter):
     print("Fetching the dataset data")
     try:
-        url2 = "https://api.airtable.com/v0/appm3ffcu38jyqhi3/tbl7LiTDpXk9DeRUB?fields%5B%5D=Company" \
-               "&fields%5B%5D=Date" \
-               "&fields%5B%5D=Users" \
-               "&fields%5B%5D=Unit" \
-               "&fields%5B%5D=Symbol" \
-               "&fields%5B%5D=Quarterly_Revenue_Mio$" \
-               "&fields%5B%5D=Net_Profit_Margin" \
-               "&fields%5B%5D=Market_Cap" \
-               "&filterByFormula=Company%3D%22{}%22" \
-               "&sort%5B0%5D%5Bfield%5D=Date" \
-               "&sort%5B0%5D%5Bdirection%5D=asc".format(filter)  # Add the filter to the URL to get only
-                                                                            # the company needed
         url = "https://api.airtable.com/v0/appm3ffcu38jyqhi3/tbl7LiTDpXk9DeRUB?fields%5B%5D=Company" \
               "&fields%5B%5D=Date" \
               "&fields%5B%5D=Users" \
@@ -112,6 +72,7 @@ def get_airtable_data(filter):
               "&fields%5B%5D=Quarterly_Revenue_Mio$" \
               "&fields%5B%5D=Net_Profit_Margin" \
               "&fields%5B%5D=Market_Cap" \
+              "&fields%5B%5D=Research_And_Development" \
               "&filterByFormula=Company%3D%22{}%22" \
               "&sort%5B0%5D%5Bfield%5D=Date" \
               "&sort%5B0%5D%5Bdirection%5D=asc".format(filter)
@@ -135,6 +96,7 @@ def get_airtable_data(filter):
                 'Revenue': record['fields']['Quarterly_Revenue_Mio$'],
                 'Profit Margin': record['fields']['Net_Profit_Margin'],
                 'Market Cap': record['fields']['Market_Cap'],
+                'Research_And_Development': record['fields']['Research_And_Development'],
             })
         df = pd.DataFrame(formatted_data)  # Create a DataFrame from the sample data
         # sorted_df = df.sort_values(by='Date')  # Sort df to avoid bugs linked to wrong API call
