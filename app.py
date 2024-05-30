@@ -573,6 +573,53 @@ layout_main_graph = go.Layout(
     ),
 )
 
+# Layout of the growth rate graph
+layout_growth_rate_graph = go.Layout(
+    # title="User Evolution",
+    plot_bgcolor="White",
+    margin=go.layout.Margin(
+        l=0,  # left margin
+        r=0,  # right margin
+        b=0,  # bottom margin
+        t=20,  # top margin
+    ),
+    legend=dict(
+        # Adjust click behavior
+        itemclick="toggleothers",
+        itemdoubleclick="toggle",
+        # orientation="h",
+        # x=0.5,
+        # y=-0.1,
+        yanchor="top",
+        y=0.96,
+        xanchor="left",
+        x=0.01,
+        font=dict(
+            # family="Courier",
+            size=10,
+            # color="black"
+        ),
+    ),
+    xaxis=dict(
+        title="Users or Units",
+        linecolor="Grey",
+        # hoverformat=".0f",
+    ),
+    yaxis=dict(
+        title="Discrete Growth Rate",
+        linecolor="Grey",
+        gridwidth=1,
+        gridcolor='#e3e1e1',
+        # hoverformat='{y/1e6:.0f} M'
+    ),
+    showlegend=True,
+    font=dict(
+        # family="Open Sans",
+        # size=16,
+        # color="Black"
+    ),
+)
+
 # Build second graph
 layout_second_graph = go.Layout(
     # title="User Evolution",
@@ -1830,23 +1877,8 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     # Build second chart containing the discrete growth rates & Regressions
     # -------------------------------------------------------
 
-    fig_second = go.Figure(layout=layout_main_graph)
+    fig_second = go.Figure(layout=layout_growth_rate_graph)
     fig_second.update_xaxes(range=[0, users[-1] * 1.1])  # Fixing the size of the X axis with users max + 10%
-    # max_rd_value = df_sorted['r'].max()
-
-    # fig_second.update_yaxes(range=[0, max_rd_value]) # Fixing the size of the Y axis
-    #fig_second.add_trace(
-    #    go.Scatter(name="Discrete Growth Rate Considered", x=main.discrete_user_interval(users),
-    #               y=main.discrete_growth_rate(users, dates + 1970), mode="markers", line=dict(color='#54c4f4')
-    #               ))
-    # Printing all smoothened data
-    #for i in range(2,5):
-    #    dates_moved, users_moved = main.moving_average_smoothing(dates, users, i)
-    #    fig_second.add_trace(
-    #        go.Scatter(name="Discrete Growth Rate Smoothened by moving average: "+str(i), x=main.discrete_user_interval(users_moved),
-    #                   y=main.discrete_growth_rate(users_moved, dates_moved + 1970), mode="markers", line=dict()
-    #                   ))
-    # Printing specific smoothened data (only the one selected)
     dates_moved, users_moved = main.moving_average_smoothing(dates, users, moving_average)
     fig_second.add_trace(
         go.Scatter(name="Discrete Growth Rate Smoothened by moving average: " + str(moving_average),
@@ -1860,12 +1892,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     fig_second.add_trace(
         go.Scatter(name="Regression", x=main.discrete_user_interval(users),
                    y=-r / k * main.discrete_user_interval(users) + r, mode="lines", line=dict(color='#54c4f4')))
-    # Add trace of the regression obtained by fixing k
-    # fig_second.add_trace(
-    #    go.Scatter(name="Discrete Growth Rate", x=main.discrete_user_interval(users),
-    #               y=-r_log / k_log * main.discrete_user_interval(users) + r_log, mode="lines", line=dict(color='Purple')))
-    # Changes the color of the scatters ignored
-    # print(main.discrete_user_interval(users[0:number_ignored_data]))
+
     if number_ignored_data > 0:
         fig_second.add_trace(
             go.Scatter(name="Ignored Data Points", x=main.discrete_user_interval(users_moved[0:number_ignored_data]),
@@ -1878,39 +1905,6 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
             go.Scatter(name="Discrete Growth Rate", x=main.discrete_user_interval(users[data_len:]),
                        y=main.discrete_growth_rate(users[data_len:], dates[data_len:] + 1970),
                        mode="markers", line=dict(color='#e6ecf5')))
-
-    # Add trace of the polynomial approximation
-    # fig_second.add_trace(
-    # go.Scatter(name="Discrete Growth Rate", x=main.discrete_user_interval(users),
-    # y=np.polyval(polynum1, main.discrete_user_interval(users)), mode="lines", line=dict(color="Green")))
-    # fig_second.add_trace(
-    #    go.Scatter(name="Discrete Growth Rate", x=main.discrete_user_interval(users),
-    #               y=np.polyval(polynum2, main.discrete_user_interval(users)), mode="lines", line=dict(color="Blue")))
-    # fig_second.add_trace(
-    #    go.Scatter(name="Discrete Growth Rate", x=main.discrete_user_interval(users),
-    #               y=np.polyval(polynum3, main.discrete_user_interval(users)), mode="lines", line=dict(color="Red")))
-    # fig_second.add_trace(
-    #    go.Scatter(name="Discrete Growth Rate", x=main.discrete_user_interval(users),
-    #               y=np.polyval(logfit, np.log(main.discrete_user_interval(users))), mode="lines", line=dict(color="Orange")))
-
-    '''
-
-    # Build third chart containing the evolution of r^2 & rmsd linked to the # of data ignored
-    # -------------------------------------------
-    fig_third = make_subplots(specs=[[{"secondary_y": True}]])
-    df_sorted_n_ignored = df_sorted.sort_values(by='Data Ignored')
-    x_3_axis = df_sorted_n_ignored['Data Ignored']
-    y_3_axis = df_sorted_n_ignored['R Squared']
-    y_3_axis2 = df_sorted_n_ignored['RMSD']
-    fig_third.add_trace(
-        go.Scatter(name="R^2", x=x_3_axis,
-                   y=y_3_axis, mode="markers", line=dict(color='#54c4f4')))
-    fig_third.add_trace(
-        go.Scatter(name="RMSD", x=x_3_axis,
-                   y=y_3_axis2, mode="markers", line=dict(color='Green')), secondary_y=True)
-    # Vertical line indicating what is the value shown in the main graph.
-    fig_third.add_vline(x=number_ignored_data, line_width=3, line_dash="dot", opacity=0.25)
-    '''
 
     # Carrying capacity to be printed
     k_printed = int(np.rint(k) / pow(10, 6))
@@ -2275,20 +2269,13 @@ def graph_valuation_over_time(valuation_over_time_dict, date_picked, df_formatte
 
     # Create market cap array
     market_cap_array = np.array([entry['Market Cap'] for entry in df_formatted]) * 1e9
-    print("Market cap array")
-    print(market_cap_array)
     market_cap_array = market_cap_array[MIN_DATE_INDEX:]
-    market_cap_array2 = df_valuation_over_time['Market Cap'].values
-    market_cap_array2 = market_cap_array2[::2]
     # Append today's date and latest market cap
     today_date = date.today()
-    print(latest_market_cap)
     market_cap_array = np.append(market_cap_array, latest_market_cap * 1e6)
-    zeros_array = [0] * 4 # Adding the 4 data ignored originally
-    market_cap_array2 = np.append(zeros_array, market_cap_array2)
     dates_raw_market_cap = np.append(dates_raw, today_date)
-    print("ccc")
-
+    low_scenario_valuation = np.append(low_scenario_valuation, low_scenario_valuation[-1])
+    high_scenario_valuation = np.append(high_scenario_valuation, high_scenario_valuation[-1])
     # today_date_formatted = main.date_formatting_from_string(today_date)
 
     fig_valuation = go.Figure(layout=layout_main_graph)
@@ -2296,9 +2283,8 @@ def graph_valuation_over_time(valuation_over_time_dict, date_picked, df_formatte
     # Hype interval
     # Filling the area of hype, between the market cap and the highest valuation
     dates_until_today = np.append(dates_valuation_graph, today_date)
-    # length_market_cap_to_be_considered = len(market_cap_array) -
-    y_area_low = market_cap_array[len(market_cap_array) - len(high_scenario_valuation) - 1:]  # Low growth array
-    y_area_high = np.flip(np.append(high_scenario_valuation, current_valuation))  # High growth array
+    y_area_low = market_cap_array  # Low growth array
+    y_area_high = np.flip(high_scenario_valuation)  # High growth array
     y_area = np.append(y_area_low, y_area_high)
     dates_area = np.append(dates_until_today, np.flip(dates_until_today))
 
@@ -2319,8 +2305,8 @@ def graph_valuation_over_time(valuation_over_time_dict, date_picked, df_formatte
 
     # Confidence Interval
     # Filling the area of possible scenarios
-    y_area_low = np.append(low_scenario_valuation, low_scenario_valuation[-1])  # Low growth array
-    y_area_high = np.flip(np.append(high_scenario_valuation, high_scenario_valuation[-1]))  # High growth array
+    y_area_low = low_scenario_valuation # Low growth array
+    y_area_high = np.flip(high_scenario_valuation)  # High growth array
     y_area = np.append(y_area_low, y_area_high)
     dates_area = np.append(dates_until_today, np.flip(dates_until_today))
     fig_valuation.add_trace(go.Scatter(x=dates_area,
@@ -2338,22 +2324,22 @@ def graph_valuation_over_time(valuation_over_time_dict, date_picked, df_formatte
     hovertemplate_maingraph = "%{text}"
     # Low Valuation
     formatted_y_values = [
-        f"{y:.0f}" if y < 1e6 else f"{y / 1e6:.1f} M" if y < 1e9 else f"{y / 1e9:.2f} B"
+        f"${y:.0f}" if y < 1e6 else f"${y / 1e6:.1f} M" if y < 1e9 else f"${y / 1e9:.2f} B"
         for y in low_scenario_valuation
     ]
-    fig_valuation.add_trace(go.Scatter(name="Low Valuation", x=np.append(dates_valuation_graph, today_date), y=np.append(low_scenario_valuation, low_scenario_valuation[-1]),
+    fig_valuation.add_trace(go.Scatter(name="Low Valuation", x=dates_until_today, y=low_scenario_valuation,
                                        mode="lines", line=dict(color='#74C0FC', width=1, dash="dash"),
                                        text=formatted_y_values, hovertemplate=hovertemplate_maingraph))
     # High Valuation
     formatted_y_values = [
-        f"{y:.0f}" if y < 1e6 else f"{y / 1e6:.1f} M" if y < 1e9 else f"{y / 1e9:.2f} B"
+        f"${y:.0f}" if y < 1e6 else f"${y / 1e6:.1f} M" if y < 1e9 else f"${y / 1e9:.2f} B"
         for y in high_scenario_valuation
         ]
-    fig_valuation.add_trace(go.Scatter(name="High Valuation", x=np.append(dates_valuation_graph, today_date), y=np.append(high_scenario_valuation, high_scenario_valuation[-1]),
+    fig_valuation.add_trace(go.Scatter(name="High Valuation", x=dates_until_today, y=high_scenario_valuation,
                                        mode="lines", line=dict(color="#228BE6", width=1, dash="dash"),
                                        text=formatted_y_values, hovertemplate=hovertemplate_maingraph))
     # Market Cap
-    formatted_y_values = [f"{y / 1e6:.1f} M" if y < 1e9 else f"{y / 1e9:.2f} B" for y in market_cap_array]
+    formatted_y_values = [f"${y / 1e6:.1f} M" if y < 1e9 else f"${y / 1e9:.2f} B" for y in market_cap_array]
     fig_valuation.add_trace(go.Scatter(name="Market Cap", x=dates_raw_market_cap[MIN_DATE_INDEX:], y=market_cap_array,
                                        mode="lines", line=dict(color="#51CF66", width=2), text=formatted_y_values,
                                        hovertemplate=hovertemplate_maingraph))
