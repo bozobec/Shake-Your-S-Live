@@ -47,14 +47,19 @@ first_card = dmc.Card(
             dmc.Select(
                 #label="Select framework",
                 placeholder="Dropbox",
-                disabled=True,
+                #disabled=True,
                 #id="framework-select",
                 #value="ng",
+                #data=[
+                #    {"value": "react", "label": "Netflix"},
+                #    {"value": "ng", "label": "Spotify"},
+                #    {"value": "svelte", "label": "Meta"},
+                #    {"value": "vue", "label": "Dropbox"},
+                #],
                 data=[
-                    {"value": "react", "label": "Netflix"},
-                    {"value": "ng", "label": "Spotify"},
-                    {"value": "svelte", "label": "Meta"},
-                    {"value": "vue", "label": "Dropbox"},
+                    {"group": 'Frontend', "value": 'React', "label": 'React'},
+                    {"group": 'Frontend', "value": 'Angular', "label": 'Angular'},
+                    {"group": 'Backend', "value": ['Express', 'Django'], "label": ['Express', 'Django']},
                 ],
                 style={"marginBottom": 30, "marginLeft": 30, "marginRight": 30},
             ),
@@ -322,22 +327,26 @@ fourth_card = dmc.Card(
     # style={"width": 350},
 )
 
-reset_parameters_button_home = dmc.Button(
-    id="reset-parameters",
-    children="Reset Parameters to Default",
-    leftIcon=DashIconify(icon="fluent:arrow-reset-24-filled"),
-    size="xs",
-    variant="outline",
-    disabled="True",
-        ),
+reset_parameters_button_home = dcc.Link(
+    href="/app",
+    children=dmc.Button(
+        id="reset-parameters-home",
+        children="Show me the Netflix Data",
+        leftIcon=DashIconify(icon="fluent:arrow-reset-24-filled"),
+        size="xs",
+        variant="outline",
+        #disabled="False",
+        color="blue",
+        )
+),
 
 hype_meter_indicator_home = dmc.Badge("Super hyped", variant="outline", color="red", id="hype-indicator-home-example")
 
 hype_meter_bootstrap_home = dbc.Progress(
     children=
         [
-            dbc.Progress(value=10.78, color="#228BE6", bar=True, label="N-O Assets", id="hype-meter-noa-home"),
-            dbc.Progress(value=50, color="#74C0FC", bar=True, label="Customer Equity", id="hype-meter-users-home"),
+            dbc.Progress(value=10.78, color="#228BE6", bar=True, label="", id="hype-meter-noa-home"),
+            dbc.Progress(value=50, color="#74C0FC", bar=True, label="Cust. Equity", id="hype-meter-users-home"),
             #dbc.Progress(value=20, color="#D1D1D1", bar=True, animated=True, striped=True, id="hype-meter-delta"),
             dbc.Progress(value=149.22, color="#D1D1D1", bar=True, animated=True, striped=True, label="Hype", id="hype-meter-hype-home"),
             dbc.Tooltip("Non-Operating Assets: $10.78B", target="hype-meter-noa-home", placement="top"),
@@ -459,9 +468,9 @@ def layout():
                     children=[
                         dmc.Col(span=2),
                         dmc.Col(dmc.Stack([
-                            dmc.Title("GAIN CLARITY IN USER-BASED COMPANIES VALUATION.", order=1, color="black", align="left"),
-                            dmc.Text("Whether you are a Tech investor, journalist or simply curious about tech "
-                                     "valuation, estimate the Hype by unveiling user-based companies' True Value.", size="xl",
+                            dmc.Title("WE DETERMINE COMPANIES' INTRINSIC VALUE THROUGH KEY METRICS. YOU TAKE IT FROM THERE", order=1, color="black", align="left"),
+                            dmc.Text("Starting with the company's core business model (e.g., Netflix's subscribers), "
+                                     "we predict future cash flow to determine the current valuation", size="xl",
                                      color="dimmed", align="left"),
                             html.A(dmc.Button("Try RAST - It's Free", leftIcon=html.Img(src="/assets/Vector_white.svg",
                                                                                         alt="RAST Logo, user-based company valuation & prediction tool",

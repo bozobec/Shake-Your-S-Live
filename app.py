@@ -72,48 +72,13 @@ app.index_string = """<!DOCTYPE html>
 # Values for the dropdown (all different companies in the DB)
 labels = dataAPI.get_airtable_labels()
 #labels =["test1", "test2", "test3"]
+print("labels")
+print(labels)
 
 # Constants for the calculation
 YEAR_OFFSET = 1970  # The year "zero" for all the calculations
 MIN_DATE_INDEX = 5  # Defines the minimum year below which no date can be picked in the datepicker
 YEARS_DCF = 15  # Amount of years taken into account for DCF calculation
-
-# ------------------------------------------------------------------------------------------------------------
-# Components definition
-# Dropdown - Taking data from "Labels"
-dropdown_items = []
-for i in labels:
-    dropdown_items.append(dbc.DropdownMenuItem(i))
-dropdown = dcc.Dropdown(id='dropdown', options=[{'label': i, 'value': i} for i in labels])
-dropdown2 = dbc.DropdownMenu(id='dropdown2', label="Select dataset", children=dropdown_items)
-dropdown3 = dbc.DropdownMenu(id='dropdown3', label="Select dataset", children=[dbc.DropdownMenuItem(i) for i in labels])
-dropdown4 = dbc.DropdownMenu(id='dropdown4', label="Select dataset", children=[dbc.DropdownMenuItem(i) for i in labels])
-dropdown5 = dcc.Dropdown(id='dropdown5', placeholder="awdsfsdfsadf", options=[{'label': i, 'value': i} for i in labels])
-# company_test = "testtest"
-# labels_new.append({"value": company_test, "label": f" {company_test}", "disabled": True})
-
-dropdown6 = html.Div(
-    [
-        dmc.Select(
-            # label="Select framework",
-            placeholder="Dataset...",
-            id="dataset-selection",
-            data=labels,
-            style={"marginBottom": 10},
-            styles={"disabled": {
-                "root": {
-                    "fontWeight": 800
-                }
-            }
-            },
-            dropdownPosition="bottom",
-            searchable=True,
-            selectOnBlur=True,
-            transition="pop",
-            transitionDuration=200,
-        )
-    ]
-)
 
 # Hype meter indicator
 hype_meter_indicator_progress = dbc.Progress(

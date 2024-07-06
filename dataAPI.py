@@ -41,17 +41,17 @@ def get_airtable_labels():
         df.sort_values(by=['Category', 'Company'], inplace=True)
 
         # Iterate through the sorted DataFrame to create label_list
+        # Here is what a list with two groups should look like:
+        #   data = [
+        #       {"group": 'Frontend', "value": 'React', "label": 'React'},
+        #       {"group": 'Frontend', "value": 'Angular', "label": 'Angular'},
+        #       {"group": 'Backend', "value": 'Express', "label": 'Express'},
+        #   ],
         current_category = None
         for index, row in df.iterrows():
             category = row['Category']
             company = row['Company']
-
-            # Check if a new category is encountered
-            if current_category != category:
-                label_list.append({"value": category, "label": f" {category}", "disabled": True})
-                current_category = category
-
-            label_list.append({"value": company, "label": f" {company}", "disabled": False})
+            label_list.append({"group": category, "value": company, "label": f" {company}", "disabled": False})
 
         #print(label_list)
         return label_list
@@ -59,6 +59,8 @@ def get_airtable_labels():
     except Exception as e:
         print(f"Error fetching dataset labels: {str(e)}")
         return None
+
+
 
 def get_airtable_data(filter):
     print("Fetching the dataset data")

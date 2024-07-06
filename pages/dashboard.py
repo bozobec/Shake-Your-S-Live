@@ -41,16 +41,6 @@ YEARS_DCF = 15 # Amount of years taken into account for DCF calculation
 # ------------------------------------------------------------------------------------------------------------
 # Components definition
 # Dropdown - Taking data from "Labels"
-dropdown_items = []
-for i in labels:
-    dropdown_items.append(dbc.DropdownMenuItem(i))
-dropdown = dcc.Dropdown(id='dropdown', options=[{'label': i, 'value': i} for i in labels])
-dropdown2 = dbc.DropdownMenu(id='dropdown2', label="Select dataset", children=dropdown_items)
-dropdown3 = dbc.DropdownMenu(id='dropdown3', label="Select dataset", children=[dbc.DropdownMenuItem(i) for i in labels])
-dropdown4 = dbc.DropdownMenu(id='dropdown4', label="Select dataset", children=[dbc.DropdownMenuItem(i) for i in labels])
-dropdown5 = dcc.Dropdown(id='dropdown5', placeholder="awdsfsdfsadf", options=[{'label': i, 'value': i} for i in labels])
-#company_test = "testtest"
-#labels_new.append({"value": company_test, "label": f" {company_test}", "disabled": True})
 
 dropdown6 = html.Div(
     [
@@ -66,6 +56,7 @@ dropdown6 = html.Div(
                     }
                 }
             },
+            nothingFound="We don't have this company yet!",
             dropdownPosition="bottom",
             searchable=True,
             selectOnBlur=True,
