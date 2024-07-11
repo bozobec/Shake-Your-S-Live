@@ -19,6 +19,8 @@ from plotly.subplots import make_subplots
 from dash_iconify import DashIconify
 import time
 from dash.exceptions import PreventUpdate
+from urllib.parse import urlencode, parse_qs
+
 
 #pd.set_option('display.max_columns', None)
 pd.set_option('display.max_rows', 200)
@@ -731,6 +733,7 @@ app.layout = dmc.AppShell(
     header=navbar7,
     #footer=footer,
     children=[
+            dcc.Location(id='url', refresh=False),
             dmc.Container(fluid=True, children=[
                 dmc.Grid([
                     dmc.Col([
@@ -778,6 +781,7 @@ def enable_slider(scenario_value, data_selection):
     Output("accordion-correlation", "disabled"),
     Output("accordion-product-maturity", "disabled"),
     Output("loader-general", "style"),
+    #Output('url', 'search'), #adapts the URL
 
     Input("dataset-selection", "value")
 ], prevent_initial_call=True)
@@ -789,7 +793,29 @@ def select_value(value):
                  "the Forecast Start Date Using the Datepicker. Use the 'Past performance' section " \
                  "to see RAST's calculated hype over time."
     show_loader = {'display': 'block'}
-    return False, False, False, False, False, show_loader
+    url= '?' + urlencode({'dataset': value})
+    return False, False, False, False, False, show_loader, #url
+
+# Function supposed to define which dataset to consider -> either the one from the url or the dropdown
+'''
+@app.callback([
+    Output('dataset-selected', 'data'), # sets the dataset to be considered
+
+    Input("dataset-selection", "value"),
+    Input('url', 'search')
+])
+def dataset_selection(dropdown_value, url_search):
+    query_string = parse_qs(url_search.lstrip('?'))
+    url_value = query_string['dataset'][0]
+    if url_search is not None:
+        dataset_value = url_value
+    else:
+        dataset_value = dropdown_value
+    print("dropdown_value")
+    print(dataset_value)
+    return
+'''
+
 
 
 # Callback defining the minimum and the maximum date of the datepicker and loading the dataset
@@ -832,14 +858,14 @@ def select_value(value):
 
     Input(component_id='dataset-selection', component_property='value'),  # Take dropdown value
     Input(component_id='last-imported-data', component_property='data')],  # Take dropdown value
+    Input('url', 'search'),
     # [State('main-plot-container', 'figure')],
     prevent_initial_call=True,
 )
-def set_history_size(dropdown_value, imported_df):
+def set_history_size(dropdown_value, imported_df, search):
     t1 = time.perf_counter(), time.process_time()
     try:
         # Fetch dataset from API
-
         df = dataAPI.get_airtable_data(dropdown_value)
         if df.empty:
             dropdown_value = "Imported Data"
@@ -1150,12 +1176,12 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
                                                             width=20)
     elif share_research_and_development[-1] > 30:
         product_maturity_graph_message = "At the moment, " + str(dropdown_value) + \
-                                         "is heavily investing in its product, indicating " \
+                                         " is heavily investing in its product, indicating " \
                                          "that the company is still betting on strong growth."
         product_maturity_graph_message_color = "green"
         product_maturity_accordion_title = "The Product is Growing!"
         product_maturity_accordion_body = "At the moment, " + str(dropdown_value) + \
-                                         "is heavily investing in its product, indicating " \
+                                         " is heavily investing in its product, indicating " \
                                          "that the company is still betting on strong growth."
         product_maturity_accordion_color = "green"
         product_maturity_accordion_icon_color = DashIconify(icon="fluent-mdl2:product-release", color=dmc.theme.DEFAULT_COLORS["green"][6],
