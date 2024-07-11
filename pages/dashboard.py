@@ -1137,6 +1137,7 @@ def layout():
             # used and the revenue
             # dcc.Store(id='data-source'),  # sources of the data
             dcc.Store(id='data-selection-counter', data={'flag': False}),
+            dcc.Store(id='dataset-selected'),  # stores the dataset selected either through the dropdown or the URL
             # Counter that shows if a new dataset has been selected
             dcc.Store(id='initial-sliders-values'),
             dcc.Store(id='current-valuation-calculated'),
