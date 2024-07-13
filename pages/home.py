@@ -47,7 +47,7 @@ first_card = dmc.Card(
             dmc.Select(
                 #label="Select framework",
                 placeholder="Dropbox",
-                #disabled=True,
+                disabled=True,
                 #id="framework-select",
                 #value="ng",
                 #data=[
