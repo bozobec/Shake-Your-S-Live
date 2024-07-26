@@ -1080,6 +1080,9 @@ main_plot.update(
 aside_column = dmc.Aside(
     p="md",
     width={"base": 400},
+    withBorder=False,
+    hidden=True,
+    hiddenBreakpoint='md',
     #height=500,
     fixed=True,
     #position={"right": 0, "top": 400},
@@ -1089,63 +1092,78 @@ aside_column = dmc.Aside(
     ],
 )
 
+navbar_column = dmc.Navbar(
+    p="md",
+    width={"base": 400},
+    withBorder=False,
+    hidden=True,
+    hiddenBreakpoint='md',
+    #height=500,
+    fixed=True,
+    #position={"right": 0, "top": 400},
+    children=[
+        selector_card,
+    ],
+)
+
 
 
 def layout():
-    layout = html.Div([
-        dmc.Container(fluid=True, children=[
-            dmc.Grid([
-                # dmc.Col(span=0.5, lg=0), # Empty left column
-                dmc.Col(selector_card, span="auto", order=1),
-                dmc.Col([
-                    dmc.LoadingOverlay(graph_card),
-                    # valuation_over_time_card  # Comment this line to remove the analysis graphs
-                ], span=12, lg=6, orderXs=3, orderSm=3, orderLg=2),
-                dmc.Col([hype_meter_card, dmc.Space(h=20), functionalities_card], span=12, lg=3, orderXs=2, orderSm=2,
-                        orderLg=3),
-                #dmc.Col([aside_column], span=12, lg=3, orderXs=2, orderSm=2,
-                #               orderLg=3),
-                # dmc.Col(span="auto", lg=0), # Empty right column
+    layout =html.Div([
+            dmc.Container(fluid=True, children=[
+                dmc.Grid([
+                    # dmc.Col(span=0.5, lg=0), # Empty left column
+                    dmc.Col(selector_card, span="auto", order=1),
+                    #dmc.Col(navbar_column, span="auto", order=1),
+                    dmc.Col([
+                        dmc.LoadingOverlay(graph_card),
+                        # valuation_over_time_card  # Comment this line to remove the analysis graphs
+                    ], span=12, lg=6, orderXs=3, orderSm=3, orderLg=2),
+                    dmc.Col([hype_meter_card, dmc.Space(h=20), functionalities_card], span=12, lg=3, orderXs=2, orderSm=2,
+                            orderLg=3),
+                    #dmc.Col([aside_column], span=12, lg=3, orderXs=2, orderSm=2,
+                    #               orderLg=3),
+                    # dmc.Col(span="auto", lg=0), # Empty right column
+                ],
+                    gutter="xl",
+                    justify="space-around",
+                    # align="center",
+                ),
+                dmc.Space(h=120),
+                #bottom_card,
             ],
-                gutter="xl",
-                justify="space-around",
-                # align="center",
-            ),
-            dmc.Space(h=120),
-            #bottom_card,
-        ],
-                      ),
+                          ),
 
-        dbc.Container(children=[
-            # Storing the key dataframe with all parameters
-            dcc.Store(id='users-data'),
-            dcc.Store(id='users-dates-raw'),  # DF containing the initial users/dates from the API
-            dcc.Store(id='users-dates-formatted'),  # DF containing the users & dates in float for computation
-            dcc.Store(id='valuation-over-time'),  # DF containing the valuation over time for a given dataset
-            dcc.Store(id='scenarios-sorted'),  # DF containing all the possible growth scenarios
-            dcc.Store(id='current-market-cap'),
-            # Market cap of the company selected, 0 if N/A at the relative current time (depending on the date picked)
-            dcc.Store(id='latest-market-cap'),  # Market cap of the company at the absolute current time (now)
-            dcc.Store(id='graph-unit'),  # Graph unit (MAU, Population, etc.)
-            dcc.Store(id='symbol-dataset'),  # Symbol of the Public company (N/A if not)
-            dcc.Store(id='launch-counter', data={'flag': False}),
-            # Counter that shows 0 if no dataset has been selected, or 1 otherwise
-            dcc.Store(id='revenue-dates'),  # DF Containing the quarterly revenue and the dates
-            dcc.Store(id='current-arpu-stored'),  # DF Containing the current ARPU
-            dcc.Store(id='total-assets'),  # DF Containing the current total assets of the company
-            dcc.Store(id='users-revenue-correlation'),  # R^2 indicating the strength of the correlation between the KPI
-            # used and the revenue
-            # dcc.Store(id='data-source'),  # sources of the data
-            dcc.Store(id='data-selection-counter', data={'flag': False}),
-            dcc.Store(id='dataset-selected'),  # stores the dataset selected either through the dropdown or the URL
-            # Counter that shows if a new dataset has been selected
-            dcc.Store(id='initial-sliders-values'),
-            dcc.Store(id='current-valuation-calculated'),
-            # Current valuation calculated with the current parameters and date
-            # Counter that shows if a new dataset has been selected
-            dcc.Store(id='last-imported-data'),
+            dbc.Container(children=[
+                # Storing the key dataframe with all parameters
+                dcc.Store(id='users-data'),
+                dcc.Store(id='users-dates-raw'),  # DF containing the initial users/dates from the API
+                dcc.Store(id='users-dates-formatted'),  # DF containing the users & dates in float for computation
+                dcc.Store(id='valuation-over-time'),  # DF containing the valuation over time for a given dataset
+                dcc.Store(id='scenarios-sorted'),  # DF containing all the possible growth scenarios
+                dcc.Store(id='current-market-cap'),
+                # Market cap of the company selected, 0 if N/A at the relative current time (depending on the date picked)
+                dcc.Store(id='latest-market-cap'),  # Market cap of the company at the absolute current time (now)
+                dcc.Store(id='graph-unit'),  # Graph unit (MAU, Population, etc.)
+                dcc.Store(id='symbol-dataset'),  # Symbol of the Public company (N/A if not)
+                dcc.Store(id='launch-counter', data={'flag': False}),
+                # Counter that shows 0 if no dataset has been selected, or 1 otherwise
+                dcc.Store(id='revenue-dates'),  # DF Containing the quarterly revenue and the dates
+                dcc.Store(id='current-arpu-stored'),  # DF Containing the current ARPU
+                dcc.Store(id='total-assets'),  # DF Containing the current total assets of the company
+                dcc.Store(id='users-revenue-correlation'),  # R^2 indicating the strength of the correlation between the KPI
+                # used and the revenue
+                # dcc.Store(id='data-source'),  # sources of the data
+                dcc.Store(id='data-selection-counter', data={'flag': False}),
+                dcc.Store(id='dataset-selected'),  # stores the dataset selected either through the dropdown or the URL
+                # Counter that shows if a new dataset has been selected
+                dcc.Store(id='initial-sliders-values'),
+                dcc.Store(id='current-valuation-calculated'),
+                # Current valuation calculated with the current parameters and date
+                # Counter that shows if a new dataset has been selected
+                dcc.Store(id='last-imported-data'),
 
 
-        ], fluid=True),
-    ])
+            ], fluid=True),
+        ])
     return layout

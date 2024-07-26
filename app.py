@@ -727,8 +727,7 @@ app.layout = html.Div(style={'backgroundColor': '#F9F9F9'}, children=
     footer
 ])
 """
-
-app.layout = dmc.AppShell(
+layout_page_standard = dmc.AppShell(
     zIndex=100,
     header=navbar7,
     #footer=footer,
@@ -751,6 +750,8 @@ app.layout = dmc.AppShell(
     ],
     #footer=footer
 )
+
+app.layout = layout_page_standard
 
 server = app.server
 
