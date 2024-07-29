@@ -525,7 +525,7 @@ functionalities_card = dmc.Card(
     children=[
         dmc.Group(
             [
-                dmc.Title("Parameters", order=5),
+                dmc.Title("Valuation Drivers", order=5),
             ],
             position="apart",
             mt="md",
