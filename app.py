@@ -69,6 +69,8 @@ app.index_string = """<!DOCTYPE html>
     </body>
 </html>"""
 
+app._favicon = "/assets/favicon.ico"
+
 # ---------------------------------------------------------------------------
 
 # Values for the dropdown (all different companies in the DB)
@@ -445,7 +447,7 @@ navbar7 = dbc.NavbarSimple(
     ],
     #brand=['R A ', html.Img(src="/assets/favicon.ico", height="21px"), ' T'],
     brand=[html.Img(src="/assets/Vector_White_Full.svg", alt="RAST Logo, user-based company valuation & prediction tool", height="21px")],
-    brand_href="/",
+    brand_href=app.get_asset_url("favicon.ico"),
     sticky="top",  # Uncomment if you want the navbar to always appear at the top on scroll.
     color="primary",  # Change this to change color of the navbar e.g. "primary", "secondary" etc.
     dark=True,  # Change this to change color of text within the navbar (False for dark text)
