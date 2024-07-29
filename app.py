@@ -51,7 +51,7 @@ app.index_string = """<!DOCTYPE html>
         <title>Tech Valuation tool - RAST</title>
         <meta content="Make confident investment decisions on user-based companies such as Netflix with our unique fundamental analysis and in-depth visual 
         tool. Understand the users' growth and valuation." name="description">
-        <link rel="icon" href="https://rast.guru/assets/favicon.ico">
+        <link rel="icon" href="/assets/favicon.ico">
         <meta name="RAST is a Company valuation tool">
         <meta name="With RAST, perform User-based valuation, calculate customer equity, Customer lifetime value (CLV) 
         calculation and valuation">
@@ -68,8 +68,6 @@ app.index_string = """<!DOCTYPE html>
 
     </body>
 </html>"""
-
-app._favicon = "/assets/favicon.ico"
 
 # ---------------------------------------------------------------------------
 
@@ -447,7 +445,7 @@ navbar7 = dbc.NavbarSimple(
     ],
     #brand=['R A ', html.Img(src="/assets/favicon.ico", height="21px"), ' T'],
     brand=[html.Img(src="/assets/Vector_White_Full.svg", alt="RAST Logo, user-based company valuation & prediction tool", height="21px")],
-    brand_href=app.get_asset_url("favicon.ico"),
+    brand_href="/",
     sticky="top",  # Uncomment if you want the navbar to always appear at the top on scroll.
     color="primary",  # Change this to change color of the navbar e.g. "primary", "secondary" etc.
     dark=True,  # Change this to change color of text within the navbar (False for dark text)
