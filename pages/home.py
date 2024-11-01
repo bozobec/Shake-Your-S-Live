@@ -336,7 +336,7 @@ reset_parameters_button_home = dcc.Link(
         size="xs",
         variant="outline",
         #disabled="False",
-        color="blue",
+        color="primaryPurple",
         )
 ),
 
@@ -345,10 +345,9 @@ hype_meter_indicator_home = dmc.Badge("Super hyped", variant="outline", color="r
 hype_meter_bootstrap_home = dbc.Progress(
     children=
         [
-            dbc.Progress(value=10.78, color="#228BE6", bar=True, label="", id="hype-meter-noa-home"),
-            dbc.Progress(value=50, color="#74C0FC", bar=True, label="Cust. Equity", id="hype-meter-users-home"),
-            #dbc.Progress(value=20, color="#D1D1D1", bar=True, animated=True, striped=True, id="hype-meter-delta"),
-            dbc.Progress(value=149.22, color="#D1D1D1", bar=True, animated=True, striped=True, label="Hype", id="hype-meter-hype-home"),
+            dbc.Progress(value=10.78, color="#953AF6", bar=True, label="", id="hype-meter-noa-home"),
+            dbc.Progress(value=50, color="#F963F1", bar=True, label="Cust. Equity", id="hype-meter-users-home"),
+            dbc.Progress(value=149.22, color="#FFD000", bar=True, animated=True, striped=True, label="Hype", id="hype-meter-hype-home"),
             dbc.Tooltip("Non-Operating Assets: $10.78B", target="hype-meter-noa-home", placement="top"),
             dbc.Tooltip("Customer Equity: $110.35B", target="hype-meter-users-home", placement="top"),
             #dbc.Tooltip("Delta depending on the chosen scenario", target="hype-meter-delta", id="tooltip-equity-text", placement="top"),

@@ -126,10 +126,10 @@ reset_parameters_button = dmc.Button(
 hype_meter_bootstrap = dbc.Progress(
     children=
         [
-            dbc.Progress(value=10, color="#228BE6", bar=True, label="N-O Assets", id="hype-meter-noa"),
-            dbc.Progress(value=10, color="#74C0FC", bar=True, label="Customer Equity", id="hype-meter-users"),
+            dbc.Progress(value=10, color="#953AF6", bar=True, label="N-O Assets", id="hype-meter-noa"),
+            dbc.Progress(value=10, color="#F963F1", bar=True, label="Customer Equity", id="hype-meter-users"),
             #dbc.Progress(value=20, color="#D1D1D1", bar=True, animated=True, striped=True, id="hype-meter-delta"),
-            dbc.Progress(value=10, color="#C92A2A", bar=True, animated=True, striped=True, label="Hype", id="hype-meter-hype"),
+            dbc.Progress(value=10, color="#FFD000", bar=True, animated=True, striped=True, label="Hype", id="hype-meter-hype"),
             dbc.Tooltip("Non-Operating Assets: $3.0B", target="hype-meter-noa", id='hype-tooltip-noa', placement="top"),
             dbc.Tooltip("Customer Equity: $3.0B", target="hype-meter-users", id='hype-tooltip-users', placement="top"),
             #dbc.Tooltip("Delta depending on the chosen scenario", target="hype-meter-delta", id="tooltip-equity-text", placement="top"),
@@ -141,9 +141,9 @@ hype_meter_bootstrap = dbc.Progress(
 hype_meter_example = dbc.Progress(
     children=
         [
-            dbc.Progress(value=30, color="#228BE6", bar=True, label="N-O Assets", id="hype-meter-noa-ex"),
-            dbc.Progress(value=40, color="#74C0FC", bar=True, label="Customer Equity", id="hype-meter-users-ex"),
-            dbc.Progress(value=30, color="#D1D1D1", bar=True, animated=True, striped=True, label="Hype", id="hype-meter-hype-ex"),
+            dbc.Progress(value=30, color="#953AF6", bar=True, label="N-O Assets", id="hype-meter-noa-ex"),
+            dbc.Progress(value=40, color="#F963F1", bar=True, label="Customer Equity", id="hype-meter-users-ex"),
+            dbc.Progress(value=30, color="#FFD000", bar=True, animated=True, striped=True, label="Hype", id="hype-meter-hype-ex"),
             dbc.Tooltip("Non-Operating Assets: $3.0B", target="hype-meter-noa-ex", placement="top"),
             dbc.Tooltip("Customer Equity: $3.0B", target="hype-meter-users-ex", placement="top"),
             #dbc.Tooltip("Delta depending on the chosen scenario", target="hype-meter-delta", id="tooltip-equity-text", placement="top"),
@@ -413,7 +413,7 @@ graph_message = dmc.Alert(
     dmc.Text("About the graph"),
     id="graph-message",
     title="About the Growth Forecast",
-    color="blue",
+    color="primaryPurple",
     #hide="False",
     withCloseButton="True")
 
@@ -421,6 +421,15 @@ graph_message = dmc.Alert(
 valuation_graph_message = dmc.Alert(
     dmc.Text("About the Current Market Cap"),
     id="valuation-graph-message",
+    title="About the Current Market Cap",
+    color="blue",
+    #hide="False",
+    withCloseButton="True")
+
+# Graph message
+revenue_graph_message = dmc.Alert(
+    dmc.Text("About the Average Revenue per User"),
+    id="revenue-graph-message",
     title="About the Current Market Cap",
     color="blue",
     #hide="False",
@@ -502,7 +511,7 @@ selector_card = dmc.Card(
         ),
         dmc.Space(h=10),
         dropdown6,
-        upload_field,
+        #upload_field,
         upload_modal,
         dmc.Group(
                             [
@@ -809,6 +818,7 @@ welcome_timeline = html.Div([
 )])
 
 main_graph = dcc.Graph(id='main-graph1', config={'displayModeBar': False, 'scrollZoom': True})
+revenue_graph = dcc.Graph(id='revenue-graph', config={'displayModeBar': False, 'scrollZoom': True})
 growth_graph = dcc.Graph(id='main-graph2', config={'displayModeBar': False, 'scrollZoom': True})
 product_maturity_graph = dcc.Graph(id='product-maturity-graph', config={'displayModeBar': False, 'scrollZoom': True})
 
@@ -817,7 +827,7 @@ product_maturity_graph = dcc.Graph(id='product-maturity-graph', config={'display
 valuation_over_time = html.Div(children=[dcc.Graph(id='valuation-graph', config={'displayModeBar': False,
                                                                                  'scrollZoom': True})])
 
-# Tabs
+# Tabs and related graphs
 tabs_graph = dmc.Tabs(
     [
         dmc.Loader(color="red", size="md", variant="oval", style={'display': 'none'}, id='loader-general'),
@@ -825,14 +835,15 @@ tabs_graph = dmc.Tabs(
             #grow=True,
             children=
                 [
-                    dmc.LoadingOverlay(dmc.Tab("Market Cap over Time",
+                    dmc.LoadingOverlay(dmc.Tab("Valuation",
                                         icon=DashIconify(icon="material-symbols:history"),
                                         id="market-cap-tab",
                                         value="1",
                                         #disabled=True
                                         style={'display': ''},
                                         )),
-                    dmc.Tab("User & ARPU Evolution", icon=DashIconify(icon="simple-icons:futurelearn"), value="2"),
+                    dmc.Tab("Userbase", icon=DashIconify(icon="simple-icons:futurelearn"), value="2"),
+                    dmc.Tab("ARPU", icon=DashIconify(icon="lineicons:target-revenue"), value="5"),
                     dmc.Tab("Growth Rate",
                             icon=DashIconify(icon="radix-icons:bar-chart"),
                             value="3",
@@ -841,14 +852,22 @@ tabs_graph = dmc.Tabs(
                     dmc.Tab("Product Maturity", icon=DashIconify(icon="fluent-mdl2:product-release"), value="4"),
                 ],
         ),
+        # Valuation graph
+        dmc.TabsPanel(html.Div(children=[valuation_graph_message, valuation_over_time]), id="tab-two", value="1"),
+        # User evolution graph
         dmc.TabsPanel(html.Div(children=[graph_message, main_graph]),
             id="tab-one", value="2"),
-        dmc.TabsPanel(html.Div(children=[valuation_graph_message, valuation_over_time]), id="tab-two", value="1"),
+        # Revenue Graph
+        dmc.TabsPanel(html.Div(children=[revenue_graph_message, revenue_graph]),
+            id="tab-five", value="5"),
+        # Growth Rate Graph
         dmc.TabsPanel(html.Div(children=[growth_rate_graph_message, growth_graph]), id="tab-three", value="3"),
+        # Product Maturity Graph
         dmc.TabsPanel(html.Div(children=[product_maturity_graph_message, product_maturity_graph]), id="tab-four", value="4"),
     ],
     value="1",
-    variant="outline",
+    variant="pills",
+    color='violet',
     #id='graph-card-content',
     #style={'display': 'none'}
 )

@@ -1,0 +1,23 @@
+@font-face {
+    font-family: "Basel";
+    src: local("Basel-Regular.otf") format("truetype");
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: "Gravity";
+    src: local("ABCGravityUprightVariable-Trial.woff") format("truetype");
+    font-weight: normal;
+    font-style: normal;
+}
+
+/* Apply the custom font to all elements */
+body {
+    font-family: "Basel", sans-serif !important;
+}
+
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: "Gravity", sans-serif !important;
+}
