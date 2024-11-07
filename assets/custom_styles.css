@@ -1,13 +1,13 @@
 @font-face {
     font-family: "Basel";
-    src: local("Basel-Regular.otf") format("truetype");
+    src: local("/assets/Basel-Regular.otf") format("truetype");
     font-weight: normal;
     font-style: normal;
 }
 
 @font-face {
     font-family: "Gravity";
-    src: local("ABCGravityUprightVariable-Trial.woff") format("truetype");
+    src: local("/assets/ABCGravityUprightVariable-Trial.woff") format("truetype");
     font-weight: normal;
     font-style: normal;
 }
