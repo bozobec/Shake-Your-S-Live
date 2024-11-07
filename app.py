@@ -1740,7 +1740,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
                               ))
     y_predicted = users
     formatted_y_values = [
-        f"{y:.0f}" if y < 1e6 else f"{y / 1e6:.1f} M" if y < 1e9 else f"{y / 1e9:.2f} B"
+        f"{y:.3f}" if y < 1e6 else f"{y / 1e6:.3f} M" if y < 1e9 else f"{y / 1e9:.3f} B"
         for y in y_predicted
     ]
     # Line linking the historical data for smoothing the legend hover
@@ -1835,9 +1835,11 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     # print(len(x_dates), x_dates)
     # print(len(x), x)
     formatted_y_values = [
-        f"{y:.0f}" if y < 1e6 else f"{y / 1e6:.1f} M" if y < 1e9 else f"{y / 1e9:.2f} B"
+        f"{y:.3f}" if y < 1e6 else f"{y / 1e6:.3f} M" if y < 1e9 else f"{y / 1e9:.3f} B"
         for y in y_predicted
     ]
+
+    # Growth forecast line
     fig_main.add_trace(go.Scatter(name="Growth Forecast", x=x_dates_scenarios, y=y_predicted,
                                   mode="lines", line=dict(color='#FFD000', width=2), opacity=0.8,
                                   text=formatted_y_values, hovertemplate=hovertemplate_maingraph))
@@ -1849,7 +1851,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     # x = np.linspace(dates[-1], dates[-1] * 2 - dates[0], num=50)
     y_trace = main.logisticfunction(k_scenarios[0], r_scenarios[0], p0_scenarios[0], x_scenarios)
     formatted_y_values = [
-        f"{y:.0f}" if y < 1e6 else f"{y / 1e6:.1f} M" if y < 1e9 else f"{y / 1e9:.2f} B"
+        f"{y:.3f}" if y < 1e6 else f"{y / 1e6:.3f} M" if y < 1e9 else f"{y / 1e9:.3f} B"
         for y in y_trace
     ]
     fig_main.add_trace(go.Scatter(name="Low growth", x=x_dates_scenarios,
@@ -1861,7 +1863,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     # y=main.logisticfunction(k_scenarios[1], r_scenarios[1], p0_scenarios[1], x), mode="lines"))
     y_trace = main.logisticfunction(k_scenarios[-1], r_scenarios[-1], p0_scenarios[-1], x_scenarios)
     formatted_y_values = [
-        f"{y:.0f}" if y < 1e6 else f"{y / 1e6:.1f} M" if y < 1e9 else f"{y / 1e9:.2f} B"
+        f"{y:.3f}" if y < 1e6 else f"{y / 1e6:.3f} M" if y < 1e9 else f"{y / 1e9:.3f} B"
         for y in y_trace
     ]
     # High growth scenario, if existent
