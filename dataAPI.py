@@ -10,14 +10,16 @@ from datetime import datetime
 # This tool was used to generate the right url to be used: https://codepen.io/airtable/pen/MeXqOg
 
 # This function fetches all the unique categories in the airtable database
-def get_airtable_labels():
+def get_airtable_labels_old():
     print("Fetching the dataset labels")
+    offset = None
     try:
         url = "https://api.airtable.com/v0/appm3ffcu38jyqhi3/tbl7LiTDpXk9DeRUB?fields%5B%5D=Company&fields%5B%5D=Category"
         auth_token = "patUQKc4meIVaiLIw.efa35a957210ca18edc4fc00ae1b599a6a49851b8b7c59994e4384c19c20fcd1"
         headers = {
             "Authorization": f"Bearer {auth_token}"
         }
+
         response = requests.get(url, headers=headers)  # Call the Airtable data with the specified filter
         data = response.json()  # Transforms it into a dictionary
 
@@ -54,6 +56,78 @@ def get_airtable_labels():
             label_list.append({"group": category, "value": company, "label": f" {company}", "disabled": False})
 
         #print(label_list)
+        return label_list
+
+    except Exception as e:
+        print(f"Error fetching dataset labels: {str(e)}")
+        return None
+
+def get_airtable_labels():
+    print("Fetching the dataset labels")
+    url = "https://api.airtable.com/v0/appm3ffcu38jyqhi3/tbl7LiTDpXk9DeRUB?fields%5B%5D=Company&fields%5B%5D=Category"
+    auth_token = "patUQKc4meIVaiLIw.efa35a957210ca18edc4fc00ae1b599a6a49851b8b7c59994e4384c19c20fcd1"
+    headers = {
+        "Authorization": f"Bearer {auth_token}"
+    }
+
+    # Initialize variables
+    offset = None
+    all_records = []
+
+    try:
+        # Loop to fetch all records with pagination
+        while True:
+            # Prepare parameters, including the offset if it's present
+            params = {}
+            if offset:
+                params['offset'] = offset
+
+            # Make the request to Airtable
+            response = requests.get(url, headers=headers, params=params)
+            response.raise_for_status()  # Ensure it raises an error for bad requests
+
+            # Parse the response JSON
+            data = response.json()
+            records = data.get('records', [])
+            all_records.extend(records)  # Append current batch of records
+
+            # Check for an offset to continue fetching if necessary
+            offset = data.get('offset')
+            if not offset:
+                break  # Exit the loop if there is no more data to fetch
+
+        # Format the data into a DataFrame including only the Company and Category
+        formatted_data = [
+            {
+                'Company': record['fields'].get('Company', ''),
+                'Category': record['fields'].get('Category', '')
+            }
+            for record in all_records
+        ]
+        df = pd.DataFrame(formatted_data)  # Create a DataFrame from all records
+
+        # Keep only unique companies
+        df.drop_duplicates(subset='Company', inplace=True)
+
+        # Sort DataFrame by Category and Company
+        df.sort_values(by=['Category', 'Company'], inplace=True)
+
+        # Initialize label_list
+        label_list = []
+
+        # Iterate through the sorted DataFrame to create label_list
+        current_category = None
+        for index, row in df.iterrows():
+            category = row['Category']
+            company = row['Company']
+            label_list.append({
+                "group": category,
+                "value": company,
+                "label": f"{company}",
+                "disabled": False
+            })
+
+        # Return the label list
         return label_list
 
     except Exception as e:

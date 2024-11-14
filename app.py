@@ -73,10 +73,12 @@ app.index_string = """<!DOCTYPE html>
 # ---------------------------------------------------------------------------
 
 # Values for the dropdown (all different companies in the DB)
-labels = dataAPI.get_airtable_labels()
+#labels = dataAPI.get_airtable_labels()
+#labels2 = dataAPI.get_airtable_labels2()
 #labels =["test1", "test2", "test3"]
-print("labels")
-print(labels)
+#print("labels")
+#print(labels)
+#print(labels2)
 
 # Constants for the calculation
 YEAR_OFFSET = 1970  # The year "zero" for all the calculations
