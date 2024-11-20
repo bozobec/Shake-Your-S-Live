@@ -1775,9 +1775,11 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     #fig_main.update_layout(layout_main_graph)
     # fig_main.update_yaxes(range=[0, k_scenarios[-1]*1.1])  # Fixing the size of the Y axis
     if k_scenarios[-1] > users_raw[-1]:
-        range_y = [0, k_scenarios[-1] * 1.2]
+        range_y = [0, main.logisticfunction(k_scenarios[-1], r_scenarios[-1], p0_scenarios[-1], [60])[0] * 1.2]
     else:
         range_y = [0, users_raw[-1] * 1.2]
+
+    print("range_y", range_y)
     fig_main.update_layout(
         hovermode="x unified",
         # Styling of the "FORECAST" text
