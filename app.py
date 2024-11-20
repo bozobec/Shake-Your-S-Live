@@ -2028,13 +2028,14 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
         fig_revenue.add_trace(go.Scatter(
             name="Profit Margin",
             x=x_revenue,
-            y=profit_margin_array,
+            y=profit_margin_array[valid_indices],
             mode='lines',
             #line_dash="dot",
             marker=dict(color='#F963F1', size=4),
             showlegend=True,
             #text=formatted_y_values,
-            hovertemplate=hovertemplate_maingraph),
+            #hovertemplate=hovertemplate_maingraph
+        ),
             secondary_y=True,
         )
 
