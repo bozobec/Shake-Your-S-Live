@@ -52,7 +52,7 @@ app.index_string = """<!DOCTYPE html>
         <title>Tech Valuation tool - RAST</title>
         <meta content="Make confident investment decisions on user-based companies such as Netflix with our unique fundamental analysis and in-depth visual 
         tool. Understand the users' growth and valuation." name="description">
-        <link href="/favicon.ico" rel="icon/x-icon">
+        <link href="/assets/favicon.ico" rel="icon/x-icon">
         <meta name="RAST is a Company valuation tool">
         <meta name="With RAST, perform User-based valuation, calculate customer equity, Customer lifetime value (CLV) 
         calculation and valuation">
@@ -71,14 +71,6 @@ app.index_string = """<!DOCTYPE html>
 </html>"""
 
 # ---------------------------------------------------------------------------
-
-# Values for the dropdown (all different companies in the DB)
-#labels = dataAPI.get_airtable_labels()
-#labels2 = dataAPI.get_airtable_labels2()
-#labels =["test1", "test2", "test3"]
-#print("labels")
-#print(labels)
-#print(labels2)
 
 # Constants for the calculation
 YEAR_OFFSET = 1970  # The year "zero" for all the calculations
@@ -625,7 +617,7 @@ layout_revenue_graph = go.Layout(
         ),
     ),
     xaxis=dict(
-        title="Time",
+        #title="Time",
         linecolor="Grey",
         fixedrange=True,
         # hoverformat=".0f",
@@ -675,7 +667,7 @@ layout_product_maturity_graph = go.Layout(
         ),
     ),
     xaxis=dict(
-        title="Timeline",
+        #title="Timeline",
         linecolor="Grey",
         showgrid=False,
         fixedrange=True,
@@ -1268,6 +1260,10 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
                                      ") indicating a substantial growth."
         growth_rate_graph_color = "green"
 
+    # Revenue Graph Message
+    revenue_graph_message = "Revenue insights are coming soon, come back to us soon!"
+    revenue_graph_message_color = "gray"
+
     # Product Maturity Graph Message
     if np.all(share_research_and_development == 0):
         product_maturity_graph_message = "No R&D data available at the moment for " + str(dropdown_value) + " 🫣"
@@ -1589,8 +1585,8 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
         correlation_message_color, correlation_icon_color, product_maturity_accordion_title, product_maturity_accordion_body,\
         product_maturity_accordion_color, product_maturity_accordion_icon_color, df_sorted_dict, slider_max_value, marks_slider, current_arpu, hype_market_cap, \
         current_market_cap, latest_market_cap, arpu_growth, growth_rate_graph_message1, growth_rate_graph_color, \
-        product_maturity_graph_message, product_maturity_graph_message_color, product_maturity_graph_message, \
-        product_maturity_graph_message_color
+        product_maturity_graph_message, product_maturity_graph_message_color, revenue_graph_message, \
+        revenue_graph_message_color
 
 
 @app.callback([
@@ -1720,8 +1716,8 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
                                                    p0_scenarios[data_slider],
                                                    k_scenarios[data_slider] * 0.9) + 1970
 
-    graph_message = "Anticipated Plateau Date (blue line): " + main.string_formatting_to_date(
-        time_selected_growth) + ", Projected at " + \
+    graph_message = "With the selected growth, the plateau will be approaching as of " + main.string_formatting_to_date(
+        time_selected_growth) + ", projected at " + \
                     str(plateau_selected_growth) + " " + str(graph_unit)
 
     # Build Main Chart
@@ -1922,7 +1918,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     # -------------------------------------------------------
 
     fig_second = go.Figure(layout=layout_growth_rate_graph)
-    fig_second.update_xaxes(range=[0, users[-1] * 1.1])  # Fixing the size of the X axis with users max + 10%
+    fig_second.update_xaxes(range=[0, users[-1] * 1.1], title=graph_unit)  # Fixing the size of the X axis with users max + 10%
     dates_moved, users_moved = main.moving_average_smoothing(dates, users, moving_average)
     fig_second.update_yaxes(range=[min(main.discrete_growth_rate(users_moved, dates_moved + 1970)-0.05),
                                    max(main.discrete_growth_rate(users_moved, dates_moved + 1970)+0.05)])
@@ -2025,7 +2021,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
             #secondary_y=True,
         )
         fig_revenue.update_yaxes(range=[min(annual_revenue_per_user) * 0.9, max(annual_revenue_per_user) * 1.5],
-                              title_text="Annual Revenue per User/Unit [$]",
+                              title="Annual Revenue per " + graph_unit + " [$]",
                               color="#953AF6")
         fig_revenue.add_trace(go.Scatter(
             name="Profit Margin",
@@ -2041,7 +2037,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
             secondary_y=True,
         )
 
-        fig_revenue.update_yaxes(range=[min(profit_margin_array)+min(profit_margin_array) * 0.1,
+        fig_revenue.update_yaxes(range=[min(profit_margin_array)-abs(min(profit_margin_array)) * 0.1,
                                         max(profit_margin_array) + max(profit_margin_array) * 0.5],
                               title_text="Profit Margin [%]",
                               color="#F963F1",
@@ -2592,6 +2588,9 @@ def graph_valuation_over_time(valuation_over_time_dict, date_picked, df_formatte
         color_dot = "#300541"
     else:
         color_dot = "#953AF6"
+
+    formatted_y_values = [f"${current_valuation / 1e6:.1f} M" if current_valuation < 1e9
+                          else f"${current_valuation / 1e9:.2f} B"]
 
     fig_valuation.add_scatter(name="Calculated Valuation", x=[date_picked], y=[current_valuation],
                               marker=dict(
