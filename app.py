@@ -2612,8 +2612,7 @@ def graph_valuation_over_time(valuation_over_time_dict, date_picked, df_formatte
                               marker=dict(
                                   color=color_dot,
                                   size=10
-                              ), text=formatted_y_values,
-                              hover_name="")
+                              ), text=formatted_y_values,)
 
     # Current Date - Vertical line
     # Defining the max y value
