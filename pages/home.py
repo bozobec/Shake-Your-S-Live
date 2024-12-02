@@ -458,13 +458,13 @@ third_card = dmc.Card(
 )
 
 section_conclusion = dmc.Stack([
-                            dmc.Title("USER-BASED COMPANY VALUE CALCULATOR",
+                            dmc.Title("THE COMPANY VALUE CALCULATOR",
                                       order=1,
                                       color="black",
                                       align="left"),
-                            dmc.Text("RAST forecasts user growth and crunches numbers to get the valuation of the company."
-                                 "When will the market catch on? Your guess is as good as ours; "
-                                 "we're just here with the cold, hard facts.",
+                            dmc.Text("RAST predicts user growth to calculate the company's valuation. "
+                                     "Does the market agree? Not always—human psychology, or what we call Hype, "
+                                     "plays a role. Hype can persist, but we focus on the cold, hard facts.",
                                      size="xl",
                                      color="dimmed",
                                      align="left"),
