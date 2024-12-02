@@ -23,7 +23,7 @@ first_card = dmc.Card(
             [
                 DashIconify(icon="radix-icons:crosshair-2", width=30, flip="horizontal", color='#4dabf7'),
                 #dmc.Space(h=20),
-                dmc.Title("Pick a company", order=4),
+                dmc.Title("1.Pick a company", order=4),
             ],
             #position="apart",
             #mt="md",
@@ -77,7 +77,7 @@ second_card = dmc.Card(
             [
                 DashIconify(icon="radix-icons:bar-chart", width=30, flip="horizontal", color='#4dabf7'),
                 #dmc.Space(h=20),
-                dmc.Title("Predict the Growth", order=4),
+                dmc.Title("2.Predict the Growth", order=4),
             ],
             #position="apart",
             #mt="md",
@@ -297,7 +297,7 @@ fourth_card = dmc.Card(
             [
                 DashIconify(icon="radix-icons:width", width=30, flip="horizontal", color='#4dabf7'),
                 #dmc.Space(h=20),
-                dmc.Title("Time Travel with RAST", order=4),
+                dmc.Title("4.Time Travel with RAST", order=4),
             ],
             #position="apart",
             #mt="md",
@@ -410,7 +410,7 @@ third_card = dmc.Card(
             [
                 DashIconify(icon="fluent:sparkle-24-regular", width=30, flip="horizontal", color='#4dabf7'),
                 #dmc.Space(h=20),
-                dmc.Title("Hype-Meter Check", order=4),
+                dmc.Title("3.Hype-Meter Check", order=4),
             ],
             #position="apart",
             #mt="md",
@@ -457,28 +457,47 @@ third_card = dmc.Card(
     # style={"width": 350},
 )
 
+section_conclusion = dmc.Stack([
+                            dmc.Title("USER-BASED COMPANY VALUE CALCULATOR",
+                                      order=1,
+                                      color="black",
+                                      align="left"),
+                            dmc.Text("RAST forecasts user growth and crunches numbers to get the valuation of the company."
+                                 "When will the market catch on? Your guess is as good as ours; "
+                                 "we're just here with the cold, hard facts.",
+                                     size="xl",
+                                     color="dimmed",
+                                     align="left"),
+                            html.A(dmc.Button("Try RAST - It's Free",
+                                              leftIcon=html.Img(src="/assets/Vector_white.svg",
+                                                                alt="RAST Logo, user-based company valuation & prediction tool",
+                                                                height="15px")),
+                                   href="/app"),
+    ], align="flex-start")
+
+section_introduction = dmc.Stack([
+                        dmc.Title("WE CALCULATE COMPANIES VALUATION BY IDENTIFYING ONE CORE METRIC", order=1, color="black",
+                                  align="left"),
+                        dmc.Text("Starting with the company's core business model (e.g., Netflix's subscribers), "
+                                     "we predict future cash flow to determine the current valuation",
+                                 size="xl",
+                                 color="dimmed", align="left"),
+                        html.A(dmc.Button("Try RAST for free", leftIcon=html.Img(src="/assets/Vector_white.svg", alt="RAST Logo, user-based company valuation & prediction tool",
+                                                                                     height="15px")), href="/app"),
+                    ], align="flex-start")
+
 def layout():
     layout = html.Div(
         children=[
             dmc.Container([
                 dmc.Space(h=150),
                 dmc.Grid(
-                    #cols=5,
                     children=[
                         dmc.Col(span=2),
-                        dmc.Col(dmc.Stack([
-                            dmc.Title("WE DETERMINE COMPANIES' INTRINSIC VALUE THROUGH KEY METRICS. YOU TAKE IT FROM THERE", order=1, color="black", align="left"),
-                            dmc.Text("Starting with the company's core business model (e.g., Netflix's subscribers), "
-                                     "we predict future cash flow to determine the current valuation", size="xl",
-                                     color="dimmed", align="left"),
-                            html.A(dmc.Button("Try RAST - It's Free", leftIcon=html.Img(src="/assets/Vector_white.svg",
-                                                                                        alt="RAST Logo, user-based company valuation & prediction tool",
-                                                                                    height="15px")), href="/app"),
-                        ], align="flex-start"), span=12, sm=4),
+                        dmc.Col(section_conclusion, span=12, sm=4),
                         dmc.Col(span=1),
                         dmc.Col(hype_meter_card_home, span=12, sm=4),
                         dmc.Col(span="auto"),
-                        #dmc.Col(),
                     ],
                     ),
                 dmc.Space(h=150),
@@ -508,17 +527,7 @@ def layout():
                     dmc.Col(span=2),
                     dmc.Col(graph_example_card, span=12, sm=4),
                     dmc.Col(span=1),
-                    dmc.Col(dmc.Stack([
-                        dmc.Title("USER-BASED COMPANY VALUE CALCULATOR", order=1, color="black",
-                                  align="left"),
-                        dmc.Text("RAST forecasts user growth and crunches numbers to get the valuation of the company. "
-                                 "When will the market catch on? Your guess is as good as ours; "
-                                 "we're just here with the cold, hard facts.",
-                                 size="xl",
-                                 color="dimmed", align="left"),
-                        html.A(dmc.Button("Try RAST for free", leftIcon=html.Img(src="/assets/Vector_white.svg", alt="RAST Logo, user-based company valuation & prediction tool",
-                                                                                     height="15px")), href="/app"),
-                    ], align="flex-start"), span=12, sm=4),
+                    dmc.Col(section_introduction, span=12, sm=4),
                     dmc.Col(span="auto"),
                     # dmc.Col(),
                 ],

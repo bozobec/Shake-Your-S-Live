@@ -52,7 +52,7 @@ app.index_string = """<!DOCTYPE html>
         <title>Tech Valuation tool - RAST</title>
         <meta content="Make confident investment decisions on user-based companies such as Netflix with our unique fundamental analysis and in-depth visual 
         tool. Understand the users' growth and valuation." name="description">
-        <link href="/assets/favicon.ico" rel="image/x-icon">
+        <link rel="shortcut icon" type="image/x-icon" href="/assets/favicon.ico">
         <meta name="RAST is a Company valuation tool">
         <meta name="With RAST, perform User-based valuation, calculate customer equity, Customer lifetime value (CLV) 
         calculation and valuation">
@@ -1611,9 +1611,10 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
         Input(component_id='users-dates-raw', component_property='data'),
         Input(component_id='range-arpu-growth', component_property='value'),
         Input(component_id='current-arpu-stored', component_property='data'),
+        State(component_id='symbol-dataset', component_property='data'),
     ], prevent_initial_call=True)
 def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, df_scenarios_dict, graph_unit, df_raw,
-                 arpu_growth, current_arpu):
+                 arpu_growth, current_arpu, symbol_dataset):
     # --------- Data Loading
     t1 = time.perf_counter(), time.process_time()
     # Data prepared earlier is fetched here
@@ -1896,19 +1897,6 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     #pio.write_image(fig_main, 'image.svg', scale=6, width=1080, height=1080)
     print("Image created")
 
-    # REVENUE Lines
-    revenue = np.array([entry['Revenue'] for entry in df_dataset_dict]) * 1_000_000
-    # Find the indices where cells in the second array are not equal to "N/A"
-    valid_indices = np.where(revenue != 0)
-
-    years = 6
-    current_date = datetime.now()
-    future_arpu = [current_arpu * (1 + arpu_growth) ** year for year in range(years)]
-    future_arpu_dates = [datetime.strptime(date_picked_formatted_original, '%Y-%m-%d') + timedelta(days=365 * year) for
-                         year in range(years)]
-
-
-
     x1 = np.linspace(dates[-1] + 0.25, dates[-1] + 10, num=10)
     # Add predicted bars
     # marker_color='White', marker_line_color='Black'))
@@ -1963,201 +1951,230 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
         date_plateau_displayed = "Plateau could not be calculated"
 
     # Build chart containing the ARPU evolution chart
-    #fig_revenue = go.Figure(layout=layout_revenue_graph)
-    fig_revenue = make_subplots(specs=[[{"secondary_y": True}]])
-    fig_revenue.update_layout(layout_revenue_graph)
 
-    # Filter rows based on valid indices
-    dates_revenue = dates_raw[valid_indices]
-    users_revenue = users[valid_indices]
-    dates_revenue_actual = main.get_earlier_dates(dates[valid_indices], history_value_formatted)
-    # users_revenue_actual = main.get_earlier_dates(users_revenue, history_value_formatted)
-    data_len_revenue_array = dates_raw[data_len:]
-    revenue = revenue[valid_indices]
-    research_and_development = research_and_development[valid_indices]
-    dates_research_and_development = dates_raw[valid_indices]
-    if len(revenue) > 0:
-        annual_revenue_per_user = revenue * 4 / users_revenue
-        x_revenue = dates_revenue
-        y_revenue = annual_revenue_per_user
-        formatted_y_values = [f"${y:.1f}" if y < 1000 else f"${y / 1e3:.2f} K" for y in y_revenue]
-        # Past revenue outline to increase the contrast
-        fig_revenue.add_trace(go.Bar(
-            name="Annual Revenue per User (arpu)",
-            x=x_revenue,
-            y=y_revenue,
-            #mode='lines',
-            marker_color='#953AF6',
-            opacity=0.8,
-            #showlegend=False,
-            # text=formatted_y_values,
-            # hovertemplate=hovertemplate_maingraph
-        ),
-            #secondary_y=True,
-        )
-        fig_revenue.add_trace(go.Scatter(
-            name="Future Annual Revenue per User (arpu)",
-            x=future_arpu_dates,
-            y=future_arpu,
-            mode='lines',
-            line_dash="dot",
-            marker=dict(color='#FFD000', size=4),
-            showlegend=True,
-            text=formatted_y_values,
-            hovertemplate=hovertemplate_maingraph),
-            #secondary_y=True,
-        )
-        # Revenue past the selected date that are known [data_len:]
-        fig_revenue.add_trace(go.Scatter(
-            name="Annual Revenue per User or Unit (ARPU)",
-            x=x_revenue[len(dates_revenue_actual):],
-            y=y_revenue[len(dates_revenue_actual):],
-            mode='lines',
-            line=dict(color='Gray', width=1),
-            showlegend=False,
-            # text=formatted_y_values, #
-            hovertemplate=hovertemplate_maingraph),
-            #secondary_y=True,
-        )
-        fig_revenue.update_yaxes(range=[min(annual_revenue_per_user) * 0.9, max(annual_revenue_per_user) * 1.5],
-                              title="Annual Revenue per " + graph_unit + " [$]",
-                              color="#953AF6")
-        fig_revenue.add_trace(go.Scatter(
-            name="Profit Margin",
-            x=x_revenue,
-            y=profit_margin_array[valid_indices],
-            mode='lines',
-            #line_dash="dot",
-            marker=dict(color='#F963F1', size=4),
-            showlegend=True,
-            #text=formatted_y_values,
-            #hovertemplate=hovertemplate_maingraph
-        ),
-            secondary_y=True,
-        )
+    # All subsequent graphs are relevant to companies with revenue
+    # For now, it is assumed that two categories exist: publically traded companies and any other dataset
+    # For 'any other dataset', no revenue is printed
 
-        fig_revenue.update_yaxes(range=[min(profit_margin_array)-abs(min(profit_margin_array)) * 0.1,
-                                        max(profit_margin_array) + max(profit_margin_array) * 0.5],
-                              title_text="Profit Margin [%]",
-                              color="#F963F1",
-                              secondary_y=True)
-        print("Fig Revenue Printed")
+    symbol_company = symbol_dataset
+    if symbol_company != "N/A":
 
+        # REVENUE Lines
+        revenue = np.array([entry['Revenue'] for entry in df_dataset_dict]) * 1_000_000
+        # Find the indices where cells in the second array are not equal to "N/A"
+        valid_indices = np.where(revenue != 0)
+
+        years = 6
+        current_date = datetime.now()
+        future_arpu = [current_arpu * (1 + arpu_growth) ** year for year in range(years)]
+        future_arpu_dates = [datetime.strptime(date_picked_formatted_original, '%Y-%m-%d') + timedelta(days=365 * year)
+                             for
+                             year in range(years)]
+        #fig_revenue = go.Figure(layout=layout_revenue_graph)
+        fig_revenue = make_subplots(specs=[[{"secondary_y": True}]])
+        fig_revenue.update_layout(layout_revenue_graph)
+
+        # Filter rows based on valid indices
+        dates_revenue = dates_raw[valid_indices]
+        users_revenue = users[valid_indices]
+        dates_revenue_actual = main.get_earlier_dates(dates[valid_indices], history_value_formatted)
+        # users_revenue_actual = main.get_earlier_dates(users_revenue, history_value_formatted)
+        data_len_revenue_array = dates_raw[data_len:]
+        revenue = revenue[valid_indices]
+        research_and_development = research_and_development[valid_indices]
+        dates_research_and_development = dates_raw[valid_indices]
+        if len(revenue) > 0:
+            annual_revenue_per_user = revenue * 4 / users_revenue
+            x_revenue = dates_revenue
+            y_revenue = annual_revenue_per_user
+            formatted_y_values = [f"${y:.1f}" if y < 1000 else f"${y / 1e3:.2f} K" for y in y_revenue]
+            # Past revenue outline to increase the contrast
+            fig_revenue.add_trace(go.Bar(
+                name="Annual Revenue per User (arpu)",
+                x=x_revenue,
+                y=y_revenue,
+                #mode='lines',
+                marker_color='#953AF6',
+                opacity=0.8,
+                #showlegend=False,
+                # text=formatted_y_values,
+                # hovertemplate=hovertemplate_maingraph
+            ),
+                #secondary_y=True,
+            )
+            fig_revenue.add_trace(go.Scatter(
+                name="Future Annual Revenue per User (arpu)",
+                x=future_arpu_dates,
+                y=future_arpu,
+                mode='lines',
+                line_dash="dot",
+                marker=dict(color='#FFD000', size=4),
+                showlegend=True,
+                text=formatted_y_values,
+                hovertemplate=hovertemplate_maingraph),
+                #secondary_y=True,
+            )
+            # Revenue past the selected date that are known [data_len:]
+            fig_revenue.add_trace(go.Scatter(
+                name="Annual Revenue per User or Unit (ARPU)",
+                x=x_revenue[len(dates_revenue_actual):],
+                y=y_revenue[len(dates_revenue_actual):],
+                mode='lines',
+                line=dict(color='Gray', width=1),
+                showlegend=False,
+                # text=formatted_y_values, #
+                hovertemplate=hovertemplate_maingraph),
+                #secondary_y=True,
+            )
+            fig_revenue.update_yaxes(range=[min(annual_revenue_per_user) * 0.9, max(annual_revenue_per_user) * 1.5],
+                                  title="Annual Revenue per " + graph_unit + " [$]",
+                                  color="#953AF6")
+            fig_revenue.add_trace(go.Scatter(
+                name="Profit Margin",
+                x=x_revenue,
+                y=profit_margin_array[valid_indices],
+                mode='lines',
+                #line_dash="dot",
+                marker=dict(color='#F963F1', size=4),
+                showlegend=True,
+                #text=formatted_y_values,
+                #hovertemplate=hovertemplate_maingraph
+            ),
+                secondary_y=True,
+            )
+
+            fig_revenue.update_yaxes(range=[min(profit_margin_array)-abs(min(profit_margin_array)) * 0.1,
+                                            max(profit_margin_array) + max(profit_margin_array) * 0.5],
+                                  title_text="Profit Margin [%]",
+                                  color="#F963F1",
+                                  secondary_y=True)
+            print("Fig Revenue Printed")
+
+        else:
+            print("No revenue to be added to the graph")
     else:
-        print("No revenue to be added to the graph")
+        fig_revenue = fig_main
 
+    if symbol_company != "N/A":
+        # Build chart containing the product maturity chart
+        # -------------------------------------------------------
+        dates_research_and_development = pd.to_datetime(dates_research_and_development)
+        share_research_and_development = research_and_development / revenue * 100
+        fig_product_maturity = go.Figure(layout=layout_product_maturity_graph)
+        fig_product_maturity.update_yaxes(range=[0, 100])  # Fixing the size of the X axis with users max + 10%
 
-    # Build chart containing the product maturity chart
-    # -------------------------------------------------------
-    dates_research_and_development = pd.to_datetime(dates_research_and_development)
-    share_research_and_development = research_and_development / revenue * 100
-    fig_product_maturity = go.Figure(layout=layout_product_maturity_graph)
-    fig_product_maturity.update_yaxes(range=[0, 100])  # Fixing the size of the X axis with users max + 10%
-
-    # Add horizontal lines delimitating the different phases:
-    # 1) Early-stage product >20% 2) Growth-Stage [10-20%] 3) Mature-Stage [<10%]
-    # Mature company
-    fig_product_maturity.add_shape(
-        go.layout.Shape(
-            type="rect",
-            x0=(dates_research_and_development[0]-pd.DateOffset(months=6)).strftime('%Y-%m-%d'),
-            x1=(dates_research_and_development[-1]+pd.DateOffset(months=6)).strftime('%Y-%m-%d'),
-            y0=0,
-            y1=10,
-            #xref="paper", yref="y",
-            fillcolor="#4946F2",
-            opacity=0.3,
-            layer="below",
-            line_width=0,
+        # Add horizontal lines delimitating the different phases:
+        # 1) Early-stage product >20% 2) Growth-Stage [10-20%] 3) Mature-Stage [<10%]
+        # Mature company
+        fig_product_maturity.add_shape(
+            go.layout.Shape(
+                type="rect",
+                x0=(dates_research_and_development[0]-pd.DateOffset(months=6)).strftime('%Y-%m-%d'),
+                x1=(dates_research_and_development[-1]+pd.DateOffset(months=6)).strftime('%Y-%m-%d'),
+                y0=0,
+                y1=10,
+                #xref="paper", yref="y",
+                fillcolor="#4946F2",
+                opacity=0.3,
+                layer="below",
+                line_width=0,
+            )
         )
-    )
-    # Add the annotation
-    fig_product_maturity.add_annotation(
-        x=(dates_research_and_development[0] - pd.DateOffset(months=6)).strftime('%Y-%m-%d'),
-        # Align left within the rectangle
-        y=(0 + 10) / 2,  # Center vertically within the rectangle
-        xref="x",
-        yref="y",
-        text="  Mature Product",
-        showarrow=False,
-        font=dict(color="#4946F2", size=12),
-        align="left",
-        xanchor="left",
-        # bgcolor="rgba(231, 245, 255, 0.8)"  # Matching background color for better visibility
-    )
-
-    # Growth company
-    fig_product_maturity.add_shape(
-        go.layout.Shape(
-            type="rect",
-            x0=(dates_research_and_development[0] - pd.DateOffset(months=6)).strftime('%Y-%m-%d'),
-            x1=(dates_research_and_development[-1] + pd.DateOffset(months=6)).strftime('%Y-%m-%d'),
-            y0=10,
-            y1=30,
-            # xref="paper", yref="y",
-            fillcolor="#4946F2",
-            opacity=0.2,
-            layer="below",
-            line_width=0,
+        # Add the annotation
+        fig_product_maturity.add_annotation(
+            x=(dates_research_and_development[0] - pd.DateOffset(months=6)).strftime('%Y-%m-%d'),
+            # Align left within the rectangle
+            y=(0 + 10) / 2,  # Center vertically within the rectangle
+            xref="x",
+            yref="y",
+            text="  Mature Product",
+            showarrow=False,
+            font=dict(color="#4946F2", size=12),
+            align="left",
+            xanchor="left",
+            # bgcolor="rgba(231, 245, 255, 0.8)"  # Matching background color for better visibility
         )
-    )
-    # Add the annotation
-    fig_product_maturity.add_annotation(
-        x=(dates_research_and_development[0] - pd.DateOffset(months=6)).strftime('%Y-%m-%d'),
-        # Align left within the rectangle
-        y=(10 + 30) / 2,  # Center vertically within the rectangle
-        xref="x",
-        yref="y",
-        text="  Product Stabilization",
-        showarrow=False,
-        font=dict(color="#4946F2", size=12),
-        align="left",
-        xanchor="left",
-        # bgcolor="rgba(231, 245, 255, 0.8)"  # Matching background color for better visibility
-    )
 
-    # High growth company
-    fig_product_maturity.add_shape(
-        go.layout.Shape(
-            type="rect",
-            x0=(dates_research_and_development[0] - pd.DateOffset(months=6)).strftime('%Y-%m-%d'),
-            x1=(dates_research_and_development[-1] + pd.DateOffset(months=6)).strftime('%Y-%m-%d'),
-            y0=30,
-            y1=100,
-            # xref="paper", yref="y",
-            fillcolor="#4946F2",
-            opacity=0.1,
-            layer="below",
-            line_width=0,
+        # Growth company
+        fig_product_maturity.add_shape(
+            go.layout.Shape(
+                type="rect",
+                x0=(dates_research_and_development[0] - pd.DateOffset(months=6)).strftime('%Y-%m-%d'),
+                x1=(dates_research_and_development[-1] + pd.DateOffset(months=6)).strftime('%Y-%m-%d'),
+                y0=10,
+                y1=30,
+                # xref="paper", yref="y",
+                fillcolor="#4946F2",
+                opacity=0.2,
+                layer="below",
+                line_width=0,
+            )
         )
-    )
-    # Add the annotation
-    fig_product_maturity.add_annotation(
-        x=(dates_research_and_development[0] - pd.DateOffset(months=6)).strftime('%Y-%m-%d'),  # Align left within the rectangle
-        y=(30 + 100) / 2,  # Center vertically within the rectangle
-        xref="x",
-        yref="y",
-        text="  Heavy Product Investments",
-        showarrow=False,
-        font=dict(color="#4946F2", size=12),
-        align="left",
-        xanchor="left",
-        #bgcolor="rgba(231, 245, 255, 0.8)"  # Matching background color for better visibility
-    )
-    fig_product_maturity.add_trace(
-        go.Scatter(name="R&D Share of Revenue [%]",
-                   x=dates_research_and_development,
-                   y=share_research_and_development,
-                   mode="markers",
-                   marker=dict(
-                        color="#FFD000",       # Fill color with some transparency (tomato color here)
-                        size=10,                              # Size of the markers
-                        line=dict(
-                            color="#C58400",         # Outline color (black in this example)
-                            width=1                           # Width of the outline
+        # Add the annotation
+        fig_product_maturity.add_annotation(
+            x=(dates_research_and_development[0] - pd.DateOffset(months=6)).strftime('%Y-%m-%d'),
+            # Align left within the rectangle
+            y=(10 + 30) / 2,  # Center vertically within the rectangle
+            xref="x",
+            yref="y",
+            text="  Product Stabilization",
+            showarrow=False,
+            font=dict(color="#4946F2", size=12),
+            align="left",
+            xanchor="left",
+            # bgcolor="rgba(231, 245, 255, 0.8)"  # Matching background color for better visibility
+        )
+
+        # High growth company
+        fig_product_maturity.add_shape(
+            go.layout.Shape(
+                type="rect",
+                x0=(dates_research_and_development[0] - pd.DateOffset(months=6)).strftime('%Y-%m-%d'),
+                x1=(dates_research_and_development[-1] + pd.DateOffset(months=6)).strftime('%Y-%m-%d'),
+                y0=30,
+                y1=100,
+                # xref="paper", yref="y",
+                fillcolor="#4946F2",
+                opacity=0.1,
+                layer="below",
+                line_width=0,
+            )
+        )
+        # Add the annotation
+        fig_product_maturity.add_annotation(
+            x=(dates_research_and_development[0] - pd.DateOffset(months=6)).strftime('%Y-%m-%d'),  # Align left within the rectangle
+            y=(30 + 100) / 2,  # Center vertically within the rectangle
+            xref="x",
+            yref="y",
+            text="  Heavy Product Investments",
+            showarrow=False,
+            font=dict(color="#4946F2", size=12),
+            align="left",
+            xanchor="left",
+            #bgcolor="rgba(231, 245, 255, 0.8)"  # Matching background color for better visibility
+        )
+        # Add graph line
+        formatted_y_values = [
+            f"{y:.2f}%"for y in share_research_and_development
+        ]
+        fig_product_maturity.add_trace(
+            go.Scatter(name="R&D Share of Revenue [%]",
+                       x=dates_research_and_development,
+                       y=share_research_and_development,
+                       text=formatted_y_values,
+                       hovertemplate=hovertemplate_maingraph,
+                       mode="markers",
+                       marker=dict(
+                            color="#FFD000",       # Fill color with some transparency (tomato color here)
+                            size=10,                              # Size of the markers
+                            line=dict(
+                                color="#C58400",         # Outline color (black in this example)
+                                width=1                           # Width of the outline
+                            )
                         )
-                    )
-                   ))
+                       ))
+    else:
+        fig_product_maturity = fig_main
 
     print("2. CALLBACK END")
     t2 = time.perf_counter(), time.process_time()
@@ -2596,7 +2613,7 @@ def graph_valuation_over_time(valuation_over_time_dict, date_picked, df_formatte
                                   color=color_dot,
                                   size=10
                               ), text=formatted_y_values,
-                              hovertemplate=hovertemplate_maingraph)
+                              hover_name="")
 
     # Current Date - Vertical line
     # Defining the max y value
