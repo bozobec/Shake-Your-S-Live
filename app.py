@@ -89,7 +89,7 @@ hype_meter_indicator_progress = dbc.Progress(
         dbc.Tooltip("Hype: $4.0B", target="strongly-hyped", placement="top"),
         dbc.Tooltip("Super Hyped", target="super-hyped", placement="top"),
     ],
-    style={"height": "5px", "border-radius": "0px"},
+    style={"height": "5px", "borderRadius": "0px"},
 )
 reset_parameters_button = dmc.Button(
     id="reset-parameters",
@@ -114,7 +114,7 @@ hype_meter_bootstrap = dbc.Progress(
         # dbc.Tooltip("Delta depending on the chosen scenario", target="hype-meter-delta", id="tooltip-equity-text", placement="top"),
         dbc.Tooltip("Hype: $4.0B", target="hype-meter-hype", id='hype-tooltip-hype', placement="top"),
     ],
-    style={"height": "30px", "border-radius": "30px"},
+    style={"height": "30px", "borderRadius": "30px"},
 )
 
 hype_meter_example = dbc.Progress(
@@ -129,7 +129,7 @@ hype_meter_example = dbc.Progress(
         # dbc.Tooltip("Delta depending on the chosen scenario", target="hype-meter-delta", id="tooltip-equity-text", placement="top"),
         dbc.Tooltip("Hype: $4.0B", target="hype-meter-hype-ex", placement="top"),
     ],
-    style={"height": "30px", "border-radius": "30px"},
+    style={"height": "30px", "borderRadius": "30px"},
 )
 offcanvas_card_growth_analysis = dmc.Card(
     children=[
@@ -840,7 +840,7 @@ theme={
         "primaryColor": "primaryPurple",
         "fontFamily": "'Basel', sans-serif",
         "headings": {
-            "fontFamily": "Gravity",
+            "fontFamily": "'ABCGravityVariable-Trial', sans-serif",
         },
     },
     children=layout_page_standard)
@@ -2044,7 +2044,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
             )
 
             fig_revenue.update_yaxes(range=[min(profit_margin_array)-abs(min(profit_margin_array)) * 0.1,
-                                            max(profit_margin_array) + max(profit_margin_array) * 0.5],
+                                            max(profit_margin_array) + abs(max(profit_margin_array)) * 0.5],
                                   title_text="Profit Margin [%]",
                                   color="#F963F1",
                                   secondary_y=True)

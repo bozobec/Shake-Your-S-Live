@@ -111,7 +111,7 @@ hype_meter_indicator_progress = dbc.Progress(
             dbc.Tooltip("Hype: $4.0B", target="strongly-hyped", placement="top"),
             dbc.Tooltip("Super Hyped", target="super-hyped", placement="top"),
         ],
-    style={"height": "5px", "border-radius": "0px"},
+    style={"height": "5px", "borderRadius": "0px"},
 )
 reset_parameters_button = dmc.Button(
     id="reset-parameters",
@@ -135,7 +135,7 @@ hype_meter_bootstrap = dbc.Progress(
             #dbc.Tooltip("Delta depending on the chosen scenario", target="hype-meter-delta", id="tooltip-equity-text", placement="top"),
             dbc.Tooltip("Hype: $4.0B", target="hype-meter-hype", id='hype-tooltip-hype', placement="top"),
         ],
-    style={"height": "30px", "border-radius": "30px"},
+    style={"height": "30px", "borderRadius": "30px"},
 )
 
 hype_meter_example = dbc.Progress(
@@ -149,7 +149,7 @@ hype_meter_example = dbc.Progress(
             #dbc.Tooltip("Delta depending on the chosen scenario", target="hype-meter-delta", id="tooltip-equity-text", placement="top"),
             dbc.Tooltip("Hype: $4.0B", target="hype-meter-hype-ex", placement="top"),
         ],
-    style={"height": "30px", "border-radius": "30px"},
+    style={"height": "30px", "borderRadius": "30px"},
 )
 
 

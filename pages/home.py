@@ -353,7 +353,7 @@ hype_meter_bootstrap_home = dbc.Progress(
             #dbc.Tooltip("Delta depending on the chosen scenario", target="hype-meter-delta", id="tooltip-equity-text", placement="top"),
             dbc.Tooltip("Hype: $88.87", target="hype-meter-hype-home", placement="top"),
         ],
-    style={"height": "30px", "border-radius": "30px"},
+    style={"height": "30px", "borderRadius": "30px"},
 )
 
 
