@@ -46,7 +46,7 @@ dropdown6 = html.Div(
     [
         dmc.Select(
             # label="Select framework",
-            placeholder="Dataset...",
+            placeholder="Company (and other)...",
             id="dataset-selection",
             data=labels,
             style={"marginBottom": 10},
@@ -504,8 +504,7 @@ selector_card = dmc.Card(
             mb="xs",
         ),
         dmc.Text(
-            "Select a dataset to visualize its historical data and utilize the prediction tool "
-            "to forecast its future growth.",
+            "Select a company (or other dataset) to visualize its historical data and forecast its future growth.",
             size="xs",
             color="dimmed",
         ),

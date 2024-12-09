@@ -929,7 +929,7 @@ def select_value(value):
     title = value
     subtitle = "Explore " + str(
         value) + "'s Future Outlook to assess its current valuation and explore RAST's past valuations. Customize " \
-                 "Predictions with the Slider in the 'Functionalities' Section and Adjust " \
+                 "Predictions with the Slider in the 'Valuation Drivers' Section and Adjust " \
                  "the Forecast Start Date Using the Datepicker. Use the 'Past performance' section " \
                  "to see RAST's calculated hype over time."
     show_loader = {'display': 'block'}
@@ -1001,10 +1001,10 @@ def set_history_size(dropdown_value, imported_df, #search
 
         # Creating the title & subtitle for the graph
         title = dropdown_value + " - " + key_unit
-        subtitle = "Explore " + str(dropdown_value) + "'s Historical " + key_unit + " Data (Bars) and Future Growth " \
-                                                                                    "Projections. Customize " \
-                                                                                    "Predictions with the Slider in the 'Functionalities' Section and Adjust " \
-                                                                                    "the Forecast Start Date Using the Datepicker."
+        subtitle = "Explore " + str(dropdown_value) + "'s Historical " + key_unit + " data (Bars) and future growth " \
+                                                                                    "projections. Customize " \
+                                                                                    "predictions with the slider in the 'Valuation Drivers' section and adjust " \
+                                                                                    "the forecast start date using the datepicker."
 
         # Creating the source string for the graph
         if data_source == "Financial Report":
@@ -1302,12 +1302,12 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
     elif share_research_and_development[-1] > 30:
         product_maturity_graph_message = "At the moment, " + str(dropdown_value) + \
                                          " is heavily investing in its product, indicating " \
-                                         "that the company is still betting on strong growth."
+                                         "that the profit margin may strongly grow in the future."
         product_maturity_graph_message_color = "green"
         product_maturity_accordion_title = "The Product is Growing!"
         product_maturity_accordion_body = "At the moment, " + str(dropdown_value) + \
                                          " is heavily investing in its product, indicating " \
-                                         "that the company is still betting on strong growth."
+                                         "that the profit margin may strongly grow in the future."
         product_maturity_accordion_color = "green"
         product_maturity_accordion_icon_color = DashIconify(icon="fluent-mdl2:product-release", color=dmc.theme.DEFAULT_COLORS["green"][6],
                                              width=20)
@@ -1315,12 +1315,13 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
     elif share_research_and_development[-1] > 10:
         product_maturity_graph_message = "At the moment, " + str(dropdown_value) + \
                                          " is limiting its investment in its product, indicating that the product " \
-                                         "is on its way to being mature."
+                                         "is on its way to being mature and limited profit margin improvements should " \
+                                         "be expected."
         product_maturity_graph_message_color = "yellow"
         product_maturity_accordion_title = "The Product is Maturing"
         product_maturity_accordion_body = "At the moment, " + str(dropdown_value) + \
                                          " is limiting its investment in its product, indicating that the product " \
-                                         "is on its way to being mature."
+                                         "is on its way to being mature and profit margin may not have growth room."
         product_maturity_accordion_color = "yellow"
         product_maturity_accordion_icon_color = DashIconify(icon="fluent-mdl2:product-release",
                                                             color=dmc.theme.DEFAULT_COLORS["yellow"][6],
@@ -1328,12 +1329,12 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
     else:
         product_maturity_graph_message = "At the moment, " + str(
             dropdown_value) + " is heavily limiting its product investment, indicating" \
-                              " that the company is betting on cost optimization over growth."
+                              " that limited improvement on profit margin is to be expected"
         product_maturity_graph_message_color = "red"
         product_maturity_accordion_title = "The Product is Mature"
         product_maturity_accordion_body = "At the moment, " + str(dropdown_value) + \
-                                          " is limiting its investment in its product, indicating that the product " \
-                                          "is on its way to being mature."
+                                          " is heavily limiting its investment in its product, indicating that " \
+                                          "limited improvement on the profit margin is to be expected"
         product_maturity_accordion_color = "red"
         product_maturity_accordion_icon_color = DashIconify(icon="fluent-mdl2:product-release",
                                                             color=dmc.theme.DEFAULT_COLORS["red"][6],
@@ -1383,7 +1384,7 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
 
     # Plateau Accordion
     if diff_r2lin_log > 0.1:
-        plateau_message_title = "Plateau (95%) could be reached in " + main.string_formatting_to_date(time_high_growth) \
+        plateau_message_title = "(95% of the) Plateau could be reached in " + main.string_formatting_to_date(time_high_growth) \
                                 + " with " + str(plateau_high_growth) + " users "
         plateau_message_body = "Given the likelihood of exponential growth in the foreseeable " \
                                "future, the high growth scenario is likely with 95% of its plateau at " + \
@@ -1410,8 +1411,8 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
     formatted_correlation = f"{users_revenue_correlation * 100:.2f}"  # Formatting the displayed r^2:
     if users_revenue_correlation >= 0.8:
         correlation_message_title = "Great metric selected!"
-        correlation_message_body = "The " + str(key_unit) + " you are using seem to be the right metric to " \
-                                                            "estimate the valuation, because " + str(key_unit) + \
+        correlation_message_body = "The " + str(key_unit) + " is a key revenue driver and the right one " \
+                                                            "to estimate the valuation, because " + str(key_unit) + \
                                    " account for " + str(formatted_correlation) + "% of the revenue variability."
         correlation_message_color = "primaryGreen"
         correlation_icon_color = DashIconify(icon="uit:chart-growth", color=dmc.theme.DEFAULT_COLORS["green"][6],
@@ -1419,7 +1420,7 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
     elif users_revenue_correlation > 0:
         correlation_message_title = "Another metric could be better"
         correlation_message_body = str(key_unit) + " do not have a strong correlation with the revenue over time. " \
-                                                   "You may want to consider another metric to estimate this " \
+                                                   "We are looking into alternative metrics to estimate this " \
                                                    "company's valuation, since only " + str(formatted_correlation) + \
                                    "% of the revenue variability is explained by this metric."
         correlation_message_color = "yellow"
