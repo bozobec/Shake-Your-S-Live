@@ -19,7 +19,7 @@ from plotly.subplots import make_subplots
 from dash_iconify import DashIconify
 import time
 from dash.exceptions import PreventUpdate
-from urllib.parse import urlencode, parse_qs
+import urllib.parse
 import plotly.io as pio
 
 
@@ -787,7 +787,10 @@ layout_page_standard = dmc.AppShell(
     header=navbar7,
     #footer=footer,
     children=[
-            dcc.Location(id='url', refresh=False),
+            #dcc.Location(id='url', refresh=False),
+        dcc.Location(id='url-input', refresh=False),
+        dcc.Location(id='url-output', refresh=False),
+
             dmc.Container(fluid=True, children=[
                 dmc.Grid([
                     dmc.Col([
@@ -851,21 +854,66 @@ server = app.server
 # ----------------------------------------------------------------------------------
 # Callback behaviours and interaction
 # Callback to enable the slider if "Custom" is selected
-
-@app.callback([
+@app.callback(
     Output("range-slider-k", "disabled"),
 
-    Input("scenarios-picker", "value"),
-    Input("dataset-selection", "value")
-])
-def enable_slider(scenario_value, data_selection):
-    #print(scenario_value)
-    if scenario_value == "Custom" and data_selection != None:
-        return False,
+    [Input("dataset-selection", "value"),
+    Input("scenarios-picker", "value")])
+def enable_slider(selection, scenario_value):
+    if scenario_value == "Custom":
+        return False
     else:
-        return True,
+        return True
 
+# Callback to update the URL based on the dropdown selection
+@app.callback(
+    Output('url-input', 'pathname'),
+    Input("dataset-selection", "value"),
+    State("url-input", "search")
+)
+def update_url(data_selection, current_pathname):
+    """
+    Updates the URL pathname based on dropdown selection.
+    """
+    if not data_selection:
+        # No update if no data selection is made
+        return dash.no_update
 
+        # Parse the current pathname and extract query parameters
+    parsed_url = urllib.parse.urlparse(current_pathname)
+    current_query_params = urllib.parse.parse_qs(parsed_url.query)
+    current_company = current_query_params.get('company', [None])[0]
+    # No update if the current company matches the dropdown selection
+    if current_company == data_selection:
+        return dash.no_update
+    # Update the pathname with the selected dataset
+    return f"/app?company={urllib.parse.quote(data_selection)}"
+
+# Callback to update the dropdown selection based on the URL
+@app.callback(
+    [Output('dataset-selection', 'value'),
+     Output('dataset-selected-url', 'data')],
+    [Input('url-input', 'search')],
+    [State('dataset-selection', 'value')]
+)
+def update_select_based_on_url(url_search, current_selected_dataset):
+    """
+    Synchronizes the dropdown selection with the current URL.
+    """
+    if not url_search:
+        # No update if the URL search part is empty
+        return dash.no_update, dash.no_update
+
+    # Parse the query string from the URL
+    query_params = urllib.parse.parse_qs(url_search.lstrip('?'))
+    dataset_url = query_params.get('company', [None])[0]  # Get the 'company' parameter from the URL
+
+    # No update if the dropdown already matches the URL or the URL value is invalid
+    if dataset_url == current_selected_dataset or not dataset_url:
+        return dash.no_update, dash.no_update
+
+    # Update the dropdown value and clear the persistent URL dataset data
+    return dataset_url, None
 # Callback to change the Graph's title, enable the analysis buttons
 @app.callback([
     Output("accordion-growth", "disabled"),
@@ -874,9 +922,8 @@ def enable_slider(scenario_value, data_selection):
     Output("accordion-correlation", "disabled"),
     Output("accordion-product-maturity", "disabled"),
     Output("loader-general", "style"),
-    #Output('url', 'search'), #adapts the URL
 
-    Input("dataset-selection", "value")
+    Input("dataset-selection", "value"),
 ], prevent_initial_call=True)
 def select_value(value):
     title = value
@@ -886,29 +933,7 @@ def select_value(value):
                  "the Forecast Start Date Using the Datepicker. Use the 'Past performance' section " \
                  "to see RAST's calculated hype over time."
     show_loader = {'display': 'block'}
-    url= '?' + urlencode({'dataset': value})
-    return False, False, False, False, False, show_loader, #url
-
-# Function supposed to define which dataset to consider -> either the one from the url or the dropdown
-'''
-@app.callback([
-    Output('dataset-selected', 'data'), # sets the dataset to be considered
-
-    Input("dataset-selection", "value"),
-    Input('url', 'search')
-])
-def dataset_selection(dropdown_value, url_search):
-    query_string = parse_qs(url_search.lstrip('?'))
-    url_value = query_string['dataset'][0]
-    if url_search is not None:
-        dataset_value = url_value
-    else:
-        dataset_value = dropdown_value
-    print("dropdown_value")
-    print(dataset_value)
-    return
-'''
-
+    return False, False, False, False, False, show_loader
 
 
 # Callback defining the minimum and the maximum date of the datepicker and loading the dataset
@@ -951,11 +976,12 @@ def dataset_selection(dropdown_value, url_search):
 
     Input(component_id='dataset-selection', component_property='value'),  # Take dropdown value
     Input(component_id='last-imported-data', component_property='data')],  # Take dropdown value
-    Input('url', 'search'),
+    #Input('url', 'search'),
     # [State('main-plot-container', 'figure')],
     prevent_initial_call=True,
 )
-def set_history_size(dropdown_value, imported_df, search):
+def set_history_size(dropdown_value, imported_df, #search
+                     ):
     t1 = time.perf_counter(), time.process_time()
     try:
         # Fetch dataset from API
@@ -2804,7 +2830,7 @@ def update_output(list_of_contents, list_of_names, list_of_dates):
         #children = [table]
         df_dict = df.to_dict(orient='records')
         return children, df_dict
-'''
+
 # Callback setting the loaded data as the current selection
 @callback(
     Output("dataset-selection", "value"),
@@ -2818,7 +2844,7 @@ def save_imported_data(submit_clicks, df):
         return "Uploaded Data", False
     else:
         raise PreventUpdate
-
+'''
 
 
 if __name__ == '__main__':

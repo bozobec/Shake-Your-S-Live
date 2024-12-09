@@ -1127,7 +1127,7 @@ navbar_column = dmc.Navbar(
 
 
 
-def layout():
+def layout(company=None, **other_unknown_query_strings):
     layout =html.Div([
             dmc.Container(fluid=True, children=[
                 dmc.Grid([
@@ -1149,6 +1149,7 @@ def layout():
                     # align="center",
                 ),
                 dmc.Space(h=120),
+                dmc.Text("Company =" + str(company))
                 #bottom_card,
             ],
                           ),
@@ -1174,6 +1175,7 @@ def layout():
                 # used and the revenue
                 # dcc.Store(id='data-source'),  # sources of the data
                 dcc.Store(id='data-selection-counter', data={'flag': False}),
+                dcc.Store(id='dataset-selected-url', data=str(company)), # stores the dataset given through the url through ?company={company}
                 dcc.Store(id='dataset-selected'),  # stores the dataset selected either through the dropdown or the URL
                 # Counter that shows if a new dataset has been selected
                 dcc.Store(id='initial-sliders-values'),
@@ -1181,8 +1183,6 @@ def layout():
                 # Current valuation calculated with the current parameters and date
                 # Counter that shows if a new dataset has been selected
                 dcc.Store(id='last-imported-data'),
-
-
             ], fluid=True),
         ])
     return layout
