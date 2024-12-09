@@ -1149,7 +1149,6 @@ def layout(company=None, **other_unknown_query_strings):
                     # align="center",
                 ),
                 dmc.Space(h=120),
-                dmc.Text("Company =" + str(company))
                 #bottom_card,
             ],
                           ),
