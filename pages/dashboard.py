@@ -1131,7 +1131,7 @@ def layout(company=None, **other_unknown_query_strings):
             dmc.Container(fluid=True, children=[
                 dmc.Grid([
                     # dmc.Col(span=0.5, lg=0), # Empty left column
-                    dmc.Col(selector_card, span="auto", order=1),
+                    dmc.Col(selector_card, span="auto", order=1, orderXs=1, orderSm=1, orderLg=1),
                     #dmc.Col(navbar_column, span="auto", order=1),
                     dmc.Col([
                         dmc.LoadingOverlay(graph_card),
