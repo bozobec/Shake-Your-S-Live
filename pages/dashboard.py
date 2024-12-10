@@ -1124,6 +1124,32 @@ navbar_column = dmc.Navbar(
     ],
 )
 
+# Table
+
+header = [
+    html.Thead(
+        html.Tr(
+            [
+                html.Th("Rank"),
+                html.Th("Company"),
+                html.Th("Symbol"),
+                html.Th("Hype Level"),
+            ]
+        )
+    )
+]
+
+
+row1 = html.Tr([html.Td("1"), html.Td("Equinix"), html.Td("EQIX"), html.Td("12.011")])
+row2 = html.Tr([html.Td("2"), html.Td("Tesla"), html.Td("TSLA"), html.Td("14.007")])
+row3 = html.Tr([html.Td("3"), html.Td("Snowflake"), html.Td("SNOW"), html.Td("88.906")])
+row4 = html.Tr([html.Td("4"), html.Td("Cloudflare"), html.Td("NET"), html.Td("137.33")])
+row5 = html.Tr([html.Td("5"), html.Td("ServiceNow"), html.Td("NOW"), html.Td("140.12")])
+
+body = [html.Tbody([row1, row2, row3, row4, row5])]
+
+table_hype = dmc.Table(header + body)
+
 
 
 def layout(company=None, **other_unknown_query_strings):
@@ -1131,13 +1157,13 @@ def layout(company=None, **other_unknown_query_strings):
             dmc.Container(fluid=True, children=[
                 dmc.Grid([
                     # dmc.Col(span=0.5, lg=0), # Empty left column
-                    dmc.Col(selector_card, span="auto", order=1, orderXs=1, orderSm=1, orderLg=1),
+                    dmc.Col(selector_card, span="auto", orderXs=1, orderSm=1, orderLg=1),
                     #dmc.Col(navbar_column, span="auto", order=1),
                     dmc.Col([
                         dmc.LoadingOverlay(graph_card),
                         # valuation_over_time_card  # Comment this line to remove the analysis graphs
-                    ], span=12, lg=6, orderXs=3, orderSm=3, orderLg=2),
-                    dmc.Col([hype_meter_card, dmc.Space(h=20), functionalities_card], span=12, lg=3, orderXs=2, orderSm=2,
+                    ], span=12, lg=6, orderXs=2, orderSm=2, orderLg=2),
+                    dmc.Col([hype_meter_card, dmc.Space(h=20), functionalities_card], span=12, lg=3, orderXs=3, orderSm=3,
                             orderLg=3),
                     #dmc.Col([aside_column], span=12, lg=3, orderXs=2, orderSm=2,
                     #               orderLg=3),
@@ -1149,6 +1175,7 @@ def layout(company=None, **other_unknown_query_strings):
                 ),
                 dmc.Space(h=120),
                 #bottom_card,
+                #table_hype,
             ],
                           ),
 
