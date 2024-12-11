@@ -98,6 +98,13 @@ upload_modal = dmc.Modal(
             ],
         )
 
+download_graph_button = dmc.Button(
+                            "Download Graph",
+                            color="primaryPurple",
+                            variant="outline",
+                            id="download-graph-button",
+                        ),
+
 # Hype meter indicator
 hype_meter_indicator_progress = dbc.Progress(
     children=

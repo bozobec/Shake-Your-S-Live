@@ -1014,9 +1014,9 @@ def set_history_size(dropdown_value, imported_df, #search
 
         # Creating the source string for the graph
         if data_source == "Financial Report":
-            source_string = "Source: " + dropdown_value + " Quarterly " + str(data_source)
+            source_string = "Data Source: " + dropdown_value + " Quarterly " + str(data_source) + " | Forecast: rast.guru"
         else:
-            source_string = "Source: " + str(data_source)
+            source_string = "Data Source: " + str(data_source)
 
         # Transforming it to a dictionary to be stored
         users_dates_dict = df.to_dict(orient='records')
