@@ -327,6 +327,13 @@ offcanvas = html.Div(
     ]
 )
 
+# App button for the Navbar
+app_button_link = html.Div(
+    [
+        dbc.Button("APP", id="app-button-link", n_clicks=0, href="/app"),
+    ]
+)
+
 # Navbar
 
 navbar2 = dbc.Navbar(
@@ -413,14 +420,9 @@ navbar6 = dbc.Navbar(
 
 navbar7 = dbc.NavbarSimple(
     children=[
-        dbc.NavItem(
-            dbc.NavLink(
-                [
-                    "App"  # Text beside icon
-                ],
-                href="/app",
-                # target="_blank"
-            )
+        dbc.NavItem(children=[
+            app_button_link
+        ]
 
         ),
         dbc.NavItem(offcanvas),
@@ -438,7 +440,11 @@ navbar7 = dbc.NavbarSimple(
         # ),
     ],
     #brand=['R A ', html.Img(src="/assets/favicon.ico", height="21px"), ' T'],
-    brand=[html.Img(src="/assets/Vector_White_Full.svg", alt="RAST Logo, user-based company valuation & prediction tool", height="21px")],
+    brand=[html.Img(#src="/assets/Vector_White_Full.svg",
+                    src="/assets/RAST_Vector_Logo.svg",
+                    alt="RAST Logo, user-based company valuation & prediction tool",
+                    height="36px"
+    )],
     brand_href="/",
     sticky="top",  # Uncomment if you want the navbar to always appear at the top on scroll.
     color="primary",  # Change this to change color of the navbar e.g. "primary", "secondary" etc.
