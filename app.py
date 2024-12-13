@@ -21,6 +21,10 @@ import time
 from dash.exceptions import PreventUpdate
 import urllib.parse
 import plotly.io as pio
+import io
+from flask import send_file
+import base64
+from dateutil.relativedelta import relativedelta
 
 
 #pd.set_option('display.max_columns', None)
@@ -796,6 +800,7 @@ layout_page_standard = dmc.AppShell(
             #dcc.Location(id='url', refresh=False),
         dcc.Location(id='url-input', refresh=False),
         dcc.Location(id='url-output', refresh=False),
+        dcc.Download(id="download-chart"),  # Component to handle file download
 
             dmc.Container(fluid=True, children=[
                 dmc.Grid([
@@ -1814,9 +1819,9 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
         # Styling of the "FORECAST" text
         annotations=[
             dict(
-                x=x_coordinate,
+                x=x_coordinate + relativedelta(months=6),  # adding 0.5 so that "FORECAST" is displayed next to the line
                 y=0.9 * k_scenarios[-1],  # Adjust the y-position as needed
-                text="                      F O R E C A S T",
+                text="F O R E C A S T",
                 showarrow=False,
                 font=dict(
                     size=8,  # Adjust the size as needed
@@ -1925,6 +1930,22 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
                                   showlegend=False,
                                   )
                        )
+
+    # Adding RAST logo
+    fig_main.add_layout_image(
+        dict(
+            source="/assets/RAST_Vector_Logo_black.svg",  # Replace with your image URL or base64-encoded image
+            xref="paper",  # Reference the image to the plot area
+            yref="paper",
+            x=1.0,  # Position the image at the bottom-right corner (1.0 means the right edge of the figure)
+            y=0.01,  # Position the image at the bottom (0.0 means the bottom edge of the figure)
+            xanchor="right",  # Align the image to the right
+            yanchor="bottom",  # Align the image to the bottom
+            sizex=0.1,  # Adjust the width of the image
+            sizey=0.1,  # Adjust the height of the image
+            layer="above"  # Place the image above the plot elements
+        )
+    )
     print("Userbase Graph printed")
     #fig_main.write_image("images/fig1.svg")
     #pio.write_image(fig_main, 'image.svg', scale=6, width=1080, height=1080)
@@ -1966,6 +1987,22 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
             go.Scatter(name="Discrete Growth Rate", x=main.discrete_user_interval(users[data_len:]),
                        y=main.discrete_growth_rate(users[data_len:], dates[data_len:] + 1970),
                        mode="markers", line=dict(color='#e6ecf5')))
+
+    # Adding RAST logo
+    fig_second.add_layout_image(
+        dict(
+            source="/assets/RAST_Vector_Logo_black.svg",  # Replace with your image URL or base64-encoded image
+            xref="paper",  # Reference the image to the plot area
+            yref="paper",
+            x=0.99,  # Position the image at the bottom-right corner (1.0 means the right edge of the figure)
+            y=0.99,  # Position the image at the bottom (0.0 means the bottom edge of the figure)
+            xanchor="right",  # Align the image to the right
+            yanchor="bottom",  # Align the image to the bottom
+            sizex=0.1,  # Adjust the width of the image
+            sizey=0.1,  # Adjust the height of the image
+            layer="above"  # Place the image above the plot elements
+        )
+    )
 
     # Carrying capacity to be printed
     k_printed = int(np.rint(k) / pow(10, 6))
@@ -2088,6 +2125,22 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     else:
         fig_revenue = fig_main
 
+    # Adding RAST logo
+    fig_revenue.add_layout_image(
+        dict(
+            source="/assets/RAST_Vector_Logo_black.svg",  # Replace with your image URL or base64-encoded image
+            xref="paper",  # Reference the image to the plot area
+            yref="paper",
+            x=0.93,  # Position the image at the bottom-right corner (1.0 means the right edge of the figure)
+            y=0.01,  # Position the image at the bottom (0.0 means the bottom edge of the figure)
+            xanchor="right",  # Align the image to the right
+            yanchor="bottom",  # Align the image to the bottom
+            sizex=0.1,  # Adjust the width of the image
+            sizey=0.1,  # Adjust the height of the image
+            layer="above"  # Place the image above the plot elements
+        )
+    )
+
     if symbol_company != "N/A":
         # Build chart containing the product maturity chart
         # -------------------------------------------------------
@@ -2208,6 +2261,22 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
                        ))
     else:
         fig_product_maturity = fig_main
+
+    # Adding RAST logo
+    fig_product_maturity.add_layout_image(
+        dict(
+            source="/assets/RAST_Vector_Logo_black.svg",  # Replace with your image URL or base64-encoded image
+            xref="paper",  # Reference the image to the plot area
+            yref="paper",
+            x=0.99,  # Position the image at the bottom-right corner (1.0 means the right edge of the figure)
+            y=0.9,  # Position the image at the bottom (0.0 means the bottom edge of the figure)
+            xanchor="right",  # Align the image to the right
+            yanchor="bottom",  # Align the image to the bottom
+            sizex=0.1,  # Adjust the width of the image
+            sizey=0.1,  # Adjust the height of the image
+            layer="above"  # Place the image above the plot elements
+        )
+    )
 
     print("2. CALLBACK END")
     t2 = time.perf_counter(), time.process_time()
@@ -2699,6 +2768,22 @@ def graph_valuation_over_time(valuation_over_time_dict, date_picked, df_formatte
             )
         ],
     )
+
+    # Adding RAST logo
+    fig_valuation.add_layout_image(
+        dict(
+            source="/assets/RAST_Vector_Logo_black.svg",  # Replace with your image URL or base64-encoded image
+            xref="paper",  # Reference the image to the plot area
+            yref="paper",
+            x=1,  # Position the image at the bottom-right corner (1.0 means the right edge of the figure)
+            y=0.01,  # Position the image at the bottom (0.0 means the bottom edge of the figure)
+            xanchor="right",  # Align the image to the right
+            yanchor="bottom",  # Align the image to the bottom
+            sizex=0.1,  # Adjust the width of the image
+            sizey=0.1,  # Adjust the height of the image
+            layer="above"  # Place the image above the plot elements
+        )
+    )
     # Valuation message
     if market_cap_array[-1] < high_scenario_valuation[-1]:
         valuation_graph_title = "Promising investment!"
@@ -2853,6 +2938,26 @@ def save_imported_data(submit_clicks, df):
         raise PreventUpdate
 '''
 
+# Download Graph functionality
+'''
+@app.callback(
+    Output("download-chart", "data"),
+    Input("download-graph-button", "n_clicks"),
+    Input("main-graph1", "figure"),
+    prevent_initial_call=True
+)
+def download_chart(n_clicks, main_graph):
+    # Create an in-memory file for the chart
+    fig_test = go.Figure()
+    img_buffer = io.BytesIO()
+    export = fig_test.write_image("fig_test", format="png", scale=2, engine='kaleido')  # High-quality PNG
+    img_buffer.seek(0)
 
+    # Return file for download
+    return dcc.send_file(
+        export,
+        #download_name="chart.png"
+    )
+'''
 if __name__ == '__main__':
     app.run_server(debug=True)

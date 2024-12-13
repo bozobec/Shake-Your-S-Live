@@ -823,8 +823,25 @@ welcome_timeline = html.Div([
     ],
 )])
 
-main_graph = dcc.Graph(id='main-graph1', config={'displayModeBar': False, 'scrollZoom': True})
-revenue_graph = dcc.Graph(id='revenue-graph', config={'displayModeBar': False, 'scrollZoom': True})
+config_graph = {
+    'displayModeBar': True,
+    'scrollZoom': True,
+    'displaylogo': False,
+    'modeBarButtonsToRemove': ['zoom', 'pan', 'lasso', 'select'],
+    'toImageButtonOptions': {
+            'format': 'svg', # one of png, svg, jpeg, webp
+            'filename': 'RAST_Growth',
+            'height': 735,
+            'width': 1050,
+            'scale': 1 # Multiply title/legend/axis/canvas sizes by this factor
+          },
+}
+
+main_graph = dcc.Graph(id='main-graph1', config= config_graph)
+revenue_graph = dcc.Graph(id='revenue-graph', config={
+    'displayModeBar': False,
+    'scrollZoom': True,
+})
 growth_graph = dcc.Graph(id='main-graph2', config={'displayModeBar': False, 'scrollZoom': True})
 product_maturity_graph = dcc.Graph(id='product-maturity-graph', config={'displayModeBar': False, 'scrollZoom': True})
 
@@ -909,6 +926,7 @@ graph_card = dmc.Card(
         html.Div(tabs_graph),
         dmc.Space(h=10),
         html.Div(source),
+
         #html.Div(graph_message),
         # Card Content
         #html.Div(main_graph),
