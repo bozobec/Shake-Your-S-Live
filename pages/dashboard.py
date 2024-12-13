@@ -1234,5 +1234,6 @@ def layout(company=None, **other_unknown_query_strings):
                 # Counter that shows if a new dataset has been selected
                 dcc.Store(id='last-imported-data'),
             ], fluid=True),
-        ])
+        ]),
+
     return layout
