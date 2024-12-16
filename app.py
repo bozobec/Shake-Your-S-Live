@@ -2775,7 +2775,7 @@ def graph_valuation_over_time(valuation_over_time_dict, date_picked, df_formatte
             source="/assets/RAST_Vector_Logo_black.svg",  # Replace with your image URL or base64-encoded image
             xref="paper",  # Reference the image to the plot area
             yref="paper",
-            x=1,  # Position the image at the bottom-right corner (1.0 means the right edge of the figure)
+            x=1,  # Position the image in the bottom-right corner (1.0 means the right edge of the figure)
             y=0.01,  # Position the image at the bottom (0.0 means the bottom edge of the figure)
             xanchor="right",  # Align the image to the right
             yanchor="bottom",  # Align the image to the bottom
