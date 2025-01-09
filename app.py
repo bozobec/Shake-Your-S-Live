@@ -1892,7 +1892,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
         f"{y:.3f}" if y < 1e6 else f"{y / 1e6:.3f} M" if y < 1e9 else f"{y / 1e9:.3f} B"
         for y in y_trace
     ]
-    fig_main.add_trace(go.Scatter(name="Low growth", x=x_dates_scenarios,
+    fig_main.add_trace(go.Scatter(name="Low Growth", x=x_dates_scenarios,
                                   y=main.logisticfunction(k_scenarios[0], r_scenarios[0], p0_scenarios[0], x_scenarios),
                                   mode='lines',
                                   line=dict(color='#C58400', width=0.5), showlegend=False, text=formatted_y_values,
@@ -2120,26 +2120,27 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
                                   secondary_y=True)
             print("Fig Revenue Printed")
 
+            # Adding RAST logo
+            fig_revenue.add_layout_image(
+                dict(
+                    source="/assets/RAST_Vector_Logo_black.svg",  # Replace with your image URL or base64-encoded image
+                    xref="paper",  # Reference the image to the plot area
+                    yref="paper",
+                    x=0.93,  # Position the image at the bottom-right corner (1.0 means the right edge of the figure)
+                    y=0.01,  # Position the image at the bottom (0.0 means the bottom edge of the figure)
+                    xanchor="right",  # Align the image to the right
+                    yanchor="bottom",  # Align the image to the bottom
+                    sizex=0.1,  # Adjust the width of the image
+                    sizey=0.1,  # Adjust the height of the image
+                    layer="above"  # Place the image above the plot elements
+                )
+            )
+
         else:
             print("No revenue to be added to the graph")
     else:
         fig_revenue = fig_main
 
-    # Adding RAST logo
-    fig_revenue.add_layout_image(
-        dict(
-            source="/assets/RAST_Vector_Logo_black.svg",  # Replace with your image URL or base64-encoded image
-            xref="paper",  # Reference the image to the plot area
-            yref="paper",
-            x=0.93,  # Position the image at the bottom-right corner (1.0 means the right edge of the figure)
-            y=0.01,  # Position the image at the bottom (0.0 means the bottom edge of the figure)
-            xanchor="right",  # Align the image to the right
-            yanchor="bottom",  # Align the image to the bottom
-            sizex=0.1,  # Adjust the width of the image
-            sizey=0.1,  # Adjust the height of the image
-            layer="above"  # Place the image above the plot elements
-        )
-    )
 
     if symbol_company != "N/A":
         # Build chart containing the product maturity chart
@@ -2259,24 +2260,25 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
                             )
                         )
                        ))
+        # Adding RAST logo
+        fig_product_maturity.add_layout_image(
+            dict(
+                source="/assets/RAST_Vector_Logo_black.svg",  # Replace with your image URL or base64-encoded image
+                xref="paper",  # Reference the image to the plot area
+                yref="paper",
+                x=0.99,  # Position the image at the bottom-right corner (1.0 means the right edge of the figure)
+                y=0.9,  # Position the image at the bottom (0.0 means the bottom edge of the figure)
+                xanchor="right",  # Align the image to the right
+                yanchor="bottom",  # Align the image to the bottom
+                sizex=0.1,  # Adjust the width of the image
+                sizey=0.1,  # Adjust the height of the image
+                layer="above"  # Place the image above the plot elements
+            )
+        )
     else:
         fig_product_maturity = fig_main
 
-    # Adding RAST logo
-    fig_product_maturity.add_layout_image(
-        dict(
-            source="/assets/RAST_Vector_Logo_black.svg",  # Replace with your image URL or base64-encoded image
-            xref="paper",  # Reference the image to the plot area
-            yref="paper",
-            x=0.99,  # Position the image at the bottom-right corner (1.0 means the right edge of the figure)
-            y=0.9,  # Position the image at the bottom (0.0 means the bottom edge of the figure)
-            xanchor="right",  # Align the image to the right
-            yanchor="bottom",  # Align the image to the bottom
-            sizex=0.1,  # Adjust the width of the image
-            sizey=0.1,  # Adjust the height of the image
-            layer="above"  # Place the image above the plot elements
-        )
-    )
+
 
     print("2. CALLBACK END")
     t2 = time.perf_counter(), time.process_time()
@@ -2682,7 +2684,7 @@ def graph_valuation_over_time(valuation_over_time_dict, date_picked, df_formatte
         f"${y:.0f}" if y < 1e6 else f"${y / 1e6:.1f} M" if y < 1e9 else f"${y / 1e9:.2f} B"
         for y in low_scenario_valuation
     ]
-    fig_valuation.add_trace(go.Scatter(name="High & Low Valuation", x=dates_until_today, y=low_scenario_valuation,
+    fig_valuation.add_trace(go.Scatter(name="Low Valuation", x=dates_until_today, y=low_scenario_valuation,
                                        mode="lines", line=dict(color='#C58400', width=1, dash="dash"),
                                        text=formatted_y_values, hovertemplate=hovertemplate_maingraph))
     # High Valuation
@@ -2714,7 +2716,7 @@ def graph_valuation_over_time(valuation_over_time_dict, date_picked, df_formatte
                               marker=dict(
                                   color=color_dot,
                                   size=10
-                              ), text=formatted_y_values,)
+                              ), text=formatted_y_values, hovertemplate=hovertemplate_maingraph)
 
     # Current Date - Vertical line
     # Defining the max y value
@@ -2786,16 +2788,16 @@ def graph_valuation_over_time(valuation_over_time_dict, date_picked, df_formatte
     )
     # Valuation message
     if market_cap_array[-1] < high_scenario_valuation[-1]:
-        valuation_graph_title = "Promising investment!"
+        valuation_graph_title = "Interesting Opportunity?"
         valuation_graph_message = "The Current Market Cap is lower than the most optimistic valuation (" + \
-                                  f"{high_scenario_valuation[-1] / 1e9:.2f} B$). It could be a good time to invest!\n" + \
+                                  f"{high_scenario_valuation[-1] / 1e9:.2f} B$): this stock may be undervalued.\n" + \
                                   "Note that the most optimistic valuation is calculated by considering the best " \
                                   "growth scenario and the best profit margin ever recorded, to which 5% were added."
         valuation_graph_color = "green"
     else:
-        valuation_graph_title = "Risky investment!"
+        valuation_graph_title = "Mmmh maybe not..."
         valuation_graph_message = "The Current Market Cap is higher than the most optimistic valuation (" + \
-                                  f"{high_scenario_valuation[-1] / 1e9:.2f} B$). It could be a good time to sell!\n"+ \
+                                  f"{high_scenario_valuation[-1] / 1e9:.2f} B$): this stock seems overvalued.\n"+ \
                                   "Note that the most optimistic valuation is calculated by considering the best " \
                                 "growth scenario and the best profit margin ever recorded, to which 5% were added."
         valuation_graph_color = "yellow"

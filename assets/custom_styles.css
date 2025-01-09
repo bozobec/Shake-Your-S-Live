@@ -7,7 +7,7 @@
 
 @font-face {
     font-family: "Gravity";
-    src: local("/assets/ABCGravityUprightVariable-Trial.woff") format("truetype");
+    src: local("/assets/ABCGravityUprightVariable-Trial.woff") format("woff");
     font-weight: normal;
     font-style: normal;
 }
