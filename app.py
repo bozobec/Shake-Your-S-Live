@@ -1762,7 +1762,6 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     # ---------------------
     hovertemplate_maingraph = "%{text}"
     fig_main = go.Figure(layout=layout_main_graph)
-    #fig_main = make_subplots(specs=[[{"secondary_y": True}]])
 
     x_axis = [dates[0] + 1970, dates[-1] * 2 - dates[0] + 1970]
     # fig_main.update_xaxes(range=x_axis)  # Fixing the size of the X axis with users max + 10%

@@ -190,7 +190,10 @@ def get_marketcap(symbol_input):
         symbol = symbol_input
         response = requests.get(url, params={'symbol': symbol, 'token': auth_token})
         data = response.json()
+        currency = data.get("currency")
         market_cap = data.get("marketCapitalization")
+        if currency == "JPY":
+            market_cap = 0.0064 * market_cap  # exchange rate on 16 Jan 25, to be updated regularly
         return market_cap
     except Exception as e:
         print(f"Error fetching market cap: {str(e)}")

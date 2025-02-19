@@ -185,15 +185,13 @@ slider = html.Div(children=[dcc.RangeSlider(id="range-slider-data-ignored1", min
 
 # Card that contains the regression
 bottom_card = dbc.Card(id="bottom-card", children=[
-                        html.Div(id='graph-container2', children=[dcc.Graph(id='main-graph2',
-                                                                            config={'displayModeBar': False})])
+                        html.Div(id='graph-container2', children=[dcc.Graph(id='main-graph2')])
                       ],
                        #style={'display': 'none'}
                        )
 # Card that contains the evolution of R square and RMSD
 bottom_bottom_card = dbc.Card(id="bottom-bottom-card", children=[
-                        html.Div(id='graph-container3', children=[dcc.Graph(id='main-graph3',
-                                                                            config={'displayModeBar': False})])
+                        html.Div(id='graph-container3', children=[dcc.Graph(id='main-graph3')])
                       ], style={'display': 'none'})
 
 
@@ -827,7 +825,7 @@ config_graph = {
     'displayModeBar': True,
     'scrollZoom': True,
     'displaylogo': False,
-    'modeBarButtonsToRemove': ['zoom', 'pan', 'lasso', 'select'],
+    'modeBarButtonsToRemove': ['zoom', 'zoomIn', 'zoomOut', 'pan', 'lasso', 'select','autoScale', 'resetScale'],
     'toImageButtonOptions': {
             'format': 'svg', # one of png, svg, jpeg, webp
             'filename': 'RAST_Growth',
@@ -837,18 +835,14 @@ config_graph = {
           },
 }
 
-main_graph = dcc.Graph(id='main-graph1', config= config_graph)
-revenue_graph = dcc.Graph(id='revenue-graph', config={
-    'displayModeBar': False,
-    'scrollZoom': True,
-})
-growth_graph = dcc.Graph(id='main-graph2', config={'displayModeBar': False, 'scrollZoom': True})
-product_maturity_graph = dcc.Graph(id='product-maturity-graph', config={'displayModeBar': False, 'scrollZoom': True})
+main_graph = dcc.Graph(id='main-graph1', config=config_graph)
+revenue_graph = dcc.Graph(id='revenue-graph', config=config_graph)
+growth_graph = dcc.Graph(id='main-graph2', config=config_graph)
+product_maturity_graph = dcc.Graph(id='product-maturity-graph', config=config_graph)
 
 
 # Graph that contains the valuation calculation over time
-valuation_over_time = html.Div(children=[dcc.Graph(id='valuation-graph', config={'displayModeBar': False,
-                                                                                 'scrollZoom': True})])
+valuation_over_time = html.Div(children=[dcc.Graph(id='valuation-graph', config=config_graph)])
 
 # Tabs and related graphs
 tabs_graph = dmc.Tabs(
