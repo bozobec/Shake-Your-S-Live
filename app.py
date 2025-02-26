@@ -1808,7 +1808,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     #fig_main.update_layout(layout_main_graph)
     # fig_main.update_yaxes(range=[0, k_scenarios[-1]*1.1])  # Fixing the size of the Y axis
     if k_scenarios[-1] > users_raw[-1]:
-        range_y = [0, main.logisticfunction(k_scenarios[-1], r_scenarios[-1], p0_scenarios[-1], [60])[0] * 1.2]
+        range_y = [0, main.logisticfunction(k_scenarios[-1], r_scenarios[-1], p0_scenarios[-1], [60])[0] * 1.5]
     else:
         range_y = [0, users_raw[-1] * 1.2]
 
@@ -2359,12 +2359,13 @@ def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, current_m
         Input("range-slider-k", "value"),
         Input("range-arpu-growth", "value"),
         Input(component_id='current-market-cap', component_property='data'),
+        Input(component_id='latest-market-cap', component_property='data'),
         Input(component_id='current-arpu-stored', component_property='data'),
         Input(component_id='total-assets', component_property='data'),
         Input(component_id='users-dates-formatted', component_property='data')
     ], prevent_initial_call=True
 )
-def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, arpu_growth, current_market_cap, current_arpu,
+def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, arpu_growth, current_market_cap, latest_market_cap, current_arpu,
                    total_assets, df_dataset_dict):
     # The entire callback is skipped if the current market cap = 0, i.e. if it is not a public company
     if current_market_cap == 0:
@@ -2377,7 +2378,7 @@ def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, arpu_grow
     profit_margin = profit_margin / 100
     discount_rate = discount_rate / 100
     arpu_growth = arpu_growth / 100
-    current_market_cap = current_market_cap * 1000000
+    current_market_cap = latest_market_cap * 1000000
 
     # Equity calculation
     current_customer_equity = users[-1] * current_arpu * profit_margin
@@ -2706,7 +2707,7 @@ def graph_valuation_over_time(valuation_over_time_dict, date_picked, df_formatte
     if current_valuation > high_scenario_valuation[-1]:
         color_dot = "#300541"
     else:
-        color_dot = "#953AF6"
+        color_dot = "#FBC53C"
 
     formatted_y_values = [f"${current_valuation / 1e6:.1f} M" if current_valuation < 1e9
                           else f"${current_valuation / 1e9:.2f} B"]
