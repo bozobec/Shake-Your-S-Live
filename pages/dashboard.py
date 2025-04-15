@@ -4,7 +4,7 @@ from dash import html, register_page  #, callback # If you need callbacks, impor
 # visit http://127.0.0.1:8050/ in your web browser.
 import dash
 import dash_mantine_components as dmc
-from dash import Dash, html, dcc, callback
+from dash import Dash, html, dcc, callback, dash_table
 from dash import callback
 from dash.dependencies import Input, Output, State
 import pandas as pd
@@ -1145,29 +1145,43 @@ navbar_column = dmc.Navbar(
 
 # Table
 
-header = [
-    html.Thead(
-        html.Tr(
-            [
-                html.Th("Rank"),
-                html.Th("Company"),
-                html.Th("Symbol"),
-                html.Th("Hype Level"),
-            ]
-        )
-    )
-]
+# Sample DataFrame
+companies = pd.DataFrame({
+    "Company Name": ["Company A", "Company B", "Company C", "Company D", "Company E"],
+    "Hype Score": [90, 20, 60, 95, 85]  # Higher score means more hype
+})
 
+#Table
+table_hype = html.Div([
+    html.H1("Company Valuations"),
 
-row1 = html.Tr([html.Td("1"), html.Td("Equinix"), html.Td("EQIX"), html.Td("12.011")])
-row2 = html.Tr([html.Td("2"), html.Td("Tesla"), html.Td("TSLA"), html.Td("14.007")])
-row3 = html.Tr([html.Td("3"), html.Td("Snowflake"), html.Td("SNOW"), html.Td("88.906")])
-row4 = html.Tr([html.Td("4"), html.Td("Cloudflare"), html.Td("NET"), html.Td("137.33")])
-row5 = html.Tr([html.Td("5"), html.Td("ServiceNow"), html.Td("NOW"), html.Td("140.12")])
+    # Radio button for user selection
+    html.Div(
+        dmc.Select(
+            #label="Select the companies that you want to see",
+            #placeholder="Select one",
+            id="hyped-table-select",
+            value="Most Hyped",
+            data=[
+                {"value": "most-hyped", "label": "Most hyped"},
+                {"value": "least-hyped", "label": "Least hyped"},
+            ],
+            w=200,
+            mb=10,
+            allowDeselect=False,
+        ),
+        style={'textAlign': 'right'}  # Align radio buttons to the right -> doesn't work
+    ),
+    dmc.Space(h=10),
 
-body = [html.Tbody([row1, row2, row3, row4, row5])]
+    # Table
+    dmc.Table(id='top_25_companies')
+])
 
-table_hype = dmc.Table(header + body)
+table_hype2 = dmc.Card(children=[
+    dmc.Text("Top 25 Hyped Companies", size='lg', color='dimmed', weight=500, align='center'),
+    dmc.Table(id='top_25_companies'),
+], withBorder=True, shadow='lg', radius='md')
 
 
 

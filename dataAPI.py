@@ -268,3 +268,51 @@ def get_profit_margin(symbol_input):
     except Exception as e:
         print(f"Error fetching yearly profit_margin: {str(e)}")
         return 0
+
+# API Fetching the most hyped or least hyped companies
+# hyped is a boolean -> True for hyped companies; False for not hyped
+def get_hyped_companies(hyped):
+    print("Fetching the dataset data")
+    auth_token = "patUQKc4meIVaiLIw.efa35a957210ca18edc4fc00ae1b599a6a49851b8b7c59994e4384c19c20fcd1"
+    headers = {
+        "Authorization": f"Bearer {auth_token}"
+    }
+    if hyped: # If hyped is set as "true"
+        try:
+            url = "https://api.airtable.com/v0/appm3ffcu38jyqhi3/Companies?fields%5B%5D=Company_Name&fields%5B%5D=Hype_meter_value&view=Most+hyped+companies"
+            response = requests.get(url, headers=headers)  # Call the Airtable data with the specified filter
+            data = response.json()  # Transforms it into a dictionary
+
+            #Format the data into a dataframe including only the Date and the Users
+            records = data['records']
+            formatted_data = []
+            for record in records:
+                formatted_data.append({
+                    'Company Name': record['fields']['Company_Name'],
+                    'Hype Score': record['fields']['Hype_meter_value'],
+                })
+            df = pd.DataFrame(formatted_data)  # Create a DataFrame from the sample data
+            # sorted_df = df.sort_values(by='Date')  # Sort df to avoid bugs linked to wrong API call
+            return df
+        except Exception as e:
+            print(f"Error fetching dataset data: {str(e)}")
+            return None
+    else:
+        try:
+            url = "https://api.airtable.com/v0/appm3ffcu38jyqhi3/Companies?fields%5B%5D=Company_Name&fields%5B%5D=Hype_meter_value&view=Least+hyped+companies"
+            response = requests.get(url, headers=headers)  # Call the Airtable data with the specified filter
+            data = response.json()  # Transforms it into a dictionary
+            #Format the data into a dataframe including only the Date and the Users
+            records = data['records']
+            formatted_data = []
+            for record in records:
+                formatted_data.append({
+                    'Company Name': record['fields']['Company_Name'],
+                    'Hype Score': record['fields']['Hype_meter_value'],
+                })
+            df = pd.DataFrame(formatted_data)  # Create a DataFrame from the sample data
+            # sorted_df = df.sort_values(by='Date')  # Sort df to avoid bugs linked to wrong API call
+            return df
+        except Exception as e:
+            print(f"Error fetching dataset data: {str(e)}")
+            return None

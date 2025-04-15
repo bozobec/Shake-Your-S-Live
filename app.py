@@ -1852,6 +1852,8 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     date_a = datetime.strptime(dates_raw[0], "%Y-%m-%d")
     date_b = datetime.strptime(dates_raw[-1], "%Y-%m-%d")
 
+    date_b_actual = history_value_graph  # Date including the datepicker
+
     # Calculate date_end using the formula date_b + 2 * (date_b - date_a)
     date_end = date_b + (date_b - date_a)
 
@@ -1861,16 +1863,16 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     x = np.linspace(dates[0], float(date_end_formatted) - 1970, num=50)
 
 
-    x_scenarios = np.linspace(dates[-1], float(date_end_formatted) - 1970, num=50)
+    x_scenarios = np.linspace(dates_actual[-1], float(date_end_formatted) - 1970, num=50) # changed
     y_predicted = main.logisticfunction(k, r, p0, x_scenarios)
     # Generate x_dates array
     x_dates = np.linspace(date_a.timestamp(), date_end.timestamp(), num=50)
-    x_dates_scenarios = np.linspace(date_b.timestamp(), date_end.timestamp(), num=50)
+    x_dates_scenarios = np.linspace(date_b_actual.timestamp(), date_end.timestamp(), num=50) # changed
     x_dates = [datetime.fromtimestamp(timestamp) for timestamp in x_dates]
     x_dates_scenarios = [datetime.fromtimestamp(timestamp) for timestamp in x_dates_scenarios]
 
-    # print(len(x_dates), x_dates)
-    # print(len(x), x)
+
+
     formatted_y_values = [
         f"{y:.3f}" if y < 1e6 else f"{y / 1e6:.3f} M" if y < 1e9 else f"{y / 1e9:.3f} B"
         for y in y_predicted
@@ -2882,8 +2884,31 @@ def home_page_example(slider_value, non_op_assets):
     print("hyperatio", hype_ratio)
     hype_indicator_color, hype_indicator_text = main.hype_meter_indicator_values(hype_ratio)
     return equity, hype, hype_indicator_text, hype_indicator_color
+'''
+# Callback to update table based on selection
+@app.callback(
+    Output("top_25_companies", "children"),
+    Input('hyped-table-select', 'value')
+)
+def update_table(hype_choice):
+    if hype_choice == 'most-hyped':
+        df_sorted = dataAPI.get_hyped_companies(True)
+    else:
+        df_sorted = dataAPI.get_hyped_companies(False)
+    header = [html.Thead(html.Tr([html.Th('Company'), html.Th('Hype Score')]))]
+    rows = [
+        html.Tr([
+            html.Td(df_sorted.iloc[i]['Company Name']),
+            html.Td(f"{df_sorted.iloc[i]['Hype Score']:.2f}")
+        ]) for i in range(len(df_sorted))
+    ]
+    body = [html.Tbody(rows)]
+    print("Hyped table is")
+    print(df_sorted)
+    return header + body
 
 # Upload data functionality to be improved
+'''
 
 '''
 # Callback opening the modal when new data is uploaded and closing it when another button is clicked
