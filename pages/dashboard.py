@@ -1179,9 +1179,24 @@ table_hype = html.Div([
 ])
 
 table_hype2 = dmc.Card(children=[
-    dmc.Text("Top 25 Hyped Companies", size='lg', color='dimmed', weight=500, align='center'),
+    dmc.Text("RAST Companies Ranking", size='lg', color='black', weight=500, align='center'),
+    dmc.Select(
+                #label="Select the companies that you want to see",
+                placeholder="Most or least hyped companies",
+                id="hyped-table-select",
+                value="Rank by hype",
+                data=[
+                    {"value": "most-hyped", "label": "Most hyped"},
+                    {"value": "least-hyped", "label": "Least hyped"},
+                ],
+                w=200,
+                mb=10,
+                allowDeselect=False,
+            ),
     dmc.Table(id='top_25_companies'),
 ], withBorder=True, shadow='lg', radius='md')
+
+
 
 
 
@@ -1193,7 +1208,7 @@ def layout(company=None, **other_unknown_query_strings):
                     dmc.Col(selector_card, span="auto", orderXs=1, orderSm=1, orderLg=1),
                     #dmc.Col(navbar_column, span="auto", order=1),
                     dmc.Col([
-                        dmc.LoadingOverlay(graph_card),
+                        dmc.LoadingOverlay(graph_card), dmc.Space(h=20), table_hype2
                         # valuation_over_time_card  # Comment this line to remove the analysis graphs
                     ], span=12, lg=6, orderXs=2, orderSm=2, orderLg=2),
                     dmc.Col([hype_meter_card, dmc.Space(h=20), functionalities_card], span=12, lg=3, orderXs=3, orderSm=3,
@@ -1206,9 +1221,9 @@ def layout(company=None, **other_unknown_query_strings):
                     justify="space-around",
                     # align="center",
                 ),
-                dmc.Space(h=120),
+                dmc.Space(h=20),
                 #bottom_card,
-                #table_hype,
+
             ],
                           ),
 

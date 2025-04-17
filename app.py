@@ -2884,7 +2884,7 @@ def home_page_example(slider_value, non_op_assets):
     print("hyperatio", hype_ratio)
     hype_indicator_color, hype_indicator_text = main.hype_meter_indicator_values(hype_ratio)
     return equity, hype, hype_indicator_text, hype_indicator_color
-'''
+
 # Callback to update table based on selection
 @app.callback(
     Output("top_25_companies", "children"),
@@ -2895,11 +2895,28 @@ def update_table(hype_choice):
         df_sorted = dataAPI.get_hyped_companies(True)
     else:
         df_sorted = dataAPI.get_hyped_companies(False)
-    header = [html.Thead(html.Tr([html.Th('Company'), html.Th('Hype Score')]))]
+        header = [html.Thead(html.Tr([
+        html.Th('Company'),
+        html.Th(dmc.Group([
+            'Hype Score',
+            dmc.Tooltip(
+                DashIconify(icon="feather:info", width=15),
+                label="The hype score indicates how hyped companies are. A hype score of zero means no hype - "
+                      "the market price is close or below to RAST's calculated valuation.",
+                transition="slide-down",
+                transitionDuration=300,
+                multiline=True,
+            )
+        ])
+        )
+    ])
+    )]
     rows = [
         html.Tr([
+            # Cell 1 of the row
             html.Td(df_sorted.iloc[i]['Company Name']),
-            html.Td(f"{df_sorted.iloc[i]['Hype Score']:.2f}")
+            # Cell 2 of the row
+            html.Td([f"{df_sorted.iloc[i]['Hype Score']:.2f}"])
         ]) for i in range(len(df_sorted))
     ]
     body = [html.Tbody(rows)]
@@ -2908,7 +2925,7 @@ def update_table(hype_choice):
     return header + body
 
 # Upload data functionality to be improved
-'''
+
 
 '''
 # Callback opening the modal when new data is uploaded and closing it when another button is clicked
