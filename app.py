@@ -2914,7 +2914,13 @@ def update_table(hype_choice):
     rows = [
         html.Tr([
             # Cell 1 of the row
-            html.Td(df_sorted.iloc[i]['Company Name']),
+            # Add link: of the company
+            html.Td(
+                html.A(
+                    df_sorted.iloc[i]['Company Name'],
+                    href=f"https://rast.guru/app?company={df_sorted.iloc[i]['Company Name']}"
+                )
+            ),
             # Cell 2 of the row
             html.Td([f"{df_sorted.iloc[i]['Hype Score']:.2f}"])
         ]) for i in range(len(df_sorted))
