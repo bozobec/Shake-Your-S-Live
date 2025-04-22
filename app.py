@@ -2902,7 +2902,7 @@ def update_table(hype_choice):
     else:
         df_sorted = dataAPI.get_hyped_companies(False)
     header = [html.Thead(html.Tr([
-    html.Th('Company'),
+    html.Th('Company', style={"width": "50%"}),
     html.Th(dmc.Group([
         'Hype Score',
         dmc.Tooltip(
@@ -2913,24 +2913,44 @@ def update_table(hype_choice):
             transitionDuration=300,
             multiline=True,
         )
-    ])
+    ]), style={"width": "50%"}
     )
     ])
     )]
-    rows = [
-        html.Tr([
-            # Cell 1 of the row
-            # Add link: of the company
+    rows = []
+
+    for i in range(len(df_sorted)):
+        company_name = df_sorted.iloc[i]['Company Name']
+        hype_score = df_sorted.iloc[i]['Hype Score']
+
+        # Determine badge color and label -> To-do: apply the function in .main to this
+        if hype_score > 50:
+            badge_color = "red"
+            badge_label = "Super hyped"
+        elif hype_score > 20:
+            badge_color = "yellow"
+            badge_label = "Mildly hyped"
+        else:
+            badge_color = "green"
+            badge_label = "Marginally hyped"
+
+        row = html.Tr([
             html.Td(
                 dcc.Link(
-                    df_sorted.iloc[i]['Company Name'],
-                    href=f"https://rast.guru/app?company={df_sorted.iloc[i]['Company Name']}"
-                )
+                    company_name,
+                    href=f"https://rast.guru/app?company={company_name}"
+                ),
+                style={"width": "50%"}
             ),
-            # Cell 2 of the row
-            html.Td([f"{df_sorted.iloc[i]['Hype Score']:.2f}"])
-        ]) for i in range(len(df_sorted))
-    ]
+            html.Td(
+                dmc.Group([
+                    f"{hype_score:.2f}",
+                    dmc.Badge(badge_label, size="xs", variant="outline", color=badge_color)
+                ], spacing="md"),  # You can tweak spacing: "xs", "sm", "md", etc.
+                style={"width": "50%"}
+            )
+        ])
+        rows.append(row)
     body = [html.Tbody(rows)]
     print("Hyped table is")
     print(df_sorted)
