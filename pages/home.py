@@ -7,6 +7,7 @@ import plotly.graph_objects as go
 import numpy as np
 import main
 from datetime import datetime, timedelta, date
+from pages.dashboard import table_hype
 
 
 
@@ -486,6 +487,23 @@ section_introduction = dmc.Stack([
                                                                                      height="15px")), href="/app"),
                     ], align="flex-start")
 
+section_ranking = dmc.Stack([
+                            dmc.Title("THE HYPE CHART",
+                                      order=1,
+                                      color="black",
+                                      align="left"),
+                            dmc.Text("These are the companies everyone’s buzzing about. "
+                                     "Updated regularly, because hype never sleeps.",
+                                     size="xl",
+                                     color="dimmed",
+                                     align="left"),
+                            html.A(dmc.Button("Try RAST - It's Free",
+                                              leftIcon=html.Img(src="/assets/Vector_white.svg",
+                                                                alt="RAST Logo, user-based company valuation & prediction tool",
+                                                                height="15px")),
+                                   href="/app"),
+    ], align="flex-start")
+
 def layout():
     layout = html.Div(
         children=[
@@ -533,6 +551,15 @@ def layout():
                 ],
             ),
             dmc.Space(h=60),
+            dmc.Grid(
+                children=[
+                    dmc.Col(span=2),
+                    dmc.Col(section_ranking, span=12, sm=4),
+                    dmc.Col(span=1),
+                    dmc.Col(table_hype, span=12, sm=4),
+                    dmc.Col(span="auto"),
+                ],
+            ),
             #dmc.Space(h=300),
         ],
     )

@@ -3,7 +3,7 @@
 # visit http://127.0.0.1:8050/ in your web browser.
 import dash
 import dash_mantine_components as dmc
-from dash import Dash, html, dcc, register_page
+from dash import Dash, html, dcc, register_page, callback_context, no_update
 from dash import callback
 from dash.dependencies import Input, Output, State
 import pandas as pd
@@ -2891,24 +2891,30 @@ def home_page_example(slider_value, non_op_assets):
     Input('hyped-table-select', 'value')
 )
 def update_table(hype_choice):
+
+    # If dropdown hasn't been used yet, set a default
+    if hype_choice is None:
+        hype_choice = "most-hyped"  # or your preferred default
+
+    # Logic of changing it depending on what is chosen
     if hype_choice == 'most-hyped':
         df_sorted = dataAPI.get_hyped_companies(True)
     else:
         df_sorted = dataAPI.get_hyped_companies(False)
-        header = [html.Thead(html.Tr([
-        html.Th('Company'),
-        html.Th(dmc.Group([
-            'Hype Score',
-            dmc.Tooltip(
-                DashIconify(icon="feather:info", width=15),
-                label="The hype score indicates how hyped companies are. A hype score of zero means no hype - "
-                      "the market price is close or below to RAST's calculated valuation.",
-                transition="slide-down",
-                transitionDuration=300,
-                multiline=True,
-            )
-        ])
+    header = [html.Thead(html.Tr([
+    html.Th('Company'),
+    html.Th(dmc.Group([
+        'Hype Score',
+        dmc.Tooltip(
+            DashIconify(icon="feather:info", width=15),
+            label="The hype score indicates how hyped companies are. A hype score of zero means no hype - "
+                  "the market price is close or below to RAST's calculated valuation.",
+            transition="slide-down",
+            transitionDuration=300,
+            multiline=True,
         )
+    ])
+    )
     ])
     )]
     rows = [
@@ -2916,7 +2922,7 @@ def update_table(hype_choice):
             # Cell 1 of the row
             # Add link: of the company
             html.Td(
-                html.A(
+                dcc.Link(
                     df_sorted.iloc[i]['Company Name'],
                     href=f"https://rast.guru/app?company={df_sorted.iloc[i]['Company Name']}"
                 )

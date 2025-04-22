@@ -20,6 +20,7 @@ from plotly.subplots import make_subplots
 from dash_iconify import DashIconify
 import time
 from dash.exceptions import PreventUpdate
+import random
 
 
 register_page(
@@ -1151,40 +1152,14 @@ companies = pd.DataFrame({
     "Hype Score": [90, 20, 60, 95, 85]  # Higher score means more hype
 })
 
-#Table
-table_hype = html.Div([
-    html.H1("Company Valuations"),
 
-    # Radio button for user selection
-    html.Div(
-        dmc.Select(
-            #label="Select the companies that you want to see",
-            #placeholder="Select one",
-            id="hyped-table-select",
-            value="Most Hyped",
-            data=[
-                {"value": "most-hyped", "label": "Most hyped"},
-                {"value": "least-hyped", "label": "Least hyped"},
-            ],
-            w=200,
-            mb=10,
-            allowDeselect=False,
-        ),
-        style={'textAlign': 'right'}  # Align radio buttons to the right -> doesn't work
-    ),
-    dmc.Space(h=10),
-
-    # Table
-    dmc.Table(id='top_25_companies')
-])
-
-table_hype2 = dmc.Card(children=[
+table_hype = dmc.Card(children=[
     dmc.Text("RAST Companies Ranking", size='lg', color='black', weight=500, align='center'),
     dmc.Select(
                 #label="Select the companies that you want to see",
                 placeholder="Most or least hyped companies",
                 id="hyped-table-select",
-                value="Rank by hype",
+                value="most-hyped",
                 data=[
                     {"value": "most-hyped", "label": "Most hyped"},
                     {"value": "least-hyped", "label": "Least hyped"},
@@ -1208,7 +1183,7 @@ def layout(company=None, **other_unknown_query_strings):
                     dmc.Col(selector_card, span="auto", orderXs=1, orderSm=1, orderLg=1),
                     #dmc.Col(navbar_column, span="auto", order=1),
                     dmc.Col([
-                        dmc.LoadingOverlay(graph_card), dmc.Space(h=20), table_hype2
+                        dmc.LoadingOverlay(graph_card), dmc.Space(h=20), table_hype
                         # valuation_over_time_card  # Comment this line to remove the analysis graphs
                     ], span=12, lg=6, orderXs=2, orderSm=2, orderLg=2),
                     dmc.Col([hype_meter_card, dmc.Space(h=20), functionalities_card], span=12, lg=3, orderXs=3, orderSm=3,
