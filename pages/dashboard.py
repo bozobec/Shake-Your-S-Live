@@ -1154,20 +1154,26 @@ companies = pd.DataFrame({
 
 
 table_hype = dmc.Card(children=[
-    dmc.Text("RAST Companies, ranked by hype", size='lg', color='black', weight=500, align='center'),
-    dmc.Select(
-                #label="Select the companies that you want to see",
-                placeholder="Most or least hyped companies",
-                id="hyped-table-select",
-                value="most-hyped",
-                data=[
-                    {"value": "most-hyped", "label": "Most hyped"},
-                    {"value": "least-hyped", "label": "Least hyped"},
-                ],
-                w=200,
-                mb=10,
-                allowDeselect=False,
-            ),
+    dmc.Group([
+        dmc.Title("RAST Companies", order=5),
+        dmc.Select(
+                    #label="Select the companies that you want to see",
+                    placeholder="Most or least hyped companies",
+                    id="hyped-table-select",
+                    value="most-hyped",
+                    data=[
+                        {"value": "most-hyped", "label": "Most hyped"},
+                        {"value": "least-hyped", "label": "Least hyped"},
+                    ],
+                    w=200,
+                    mb=10,
+                    allowDeselect=False,
+                ),
+        ],
+        position="apart",
+        mt="md",
+        mb="xs",
+    ),
     dmc.Table(id='top_25_companies'),
 ], withBorder=True, shadow='lg', radius='md')
 
