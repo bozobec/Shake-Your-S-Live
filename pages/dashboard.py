@@ -1154,7 +1154,7 @@ companies = pd.DataFrame({
 
 
 table_hype = dmc.Card(children=[
-    dmc.Text("RAST Companies Ranking", size='lg', color='black', weight=500, align='center'),
+    dmc.Text("RAST Companies, ranked by hype", size='lg', color='black', weight=500, align='center'),
     dmc.Select(
                 #label="Select the companies that you want to see",
                 placeholder="Most or least hyped companies",
