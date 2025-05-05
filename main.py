@@ -392,6 +392,13 @@ def arpu_for_valuation(k, r, p0, profitmargin, discount_rate, years, valuation):
     arpu = float(function_to_solve[0])
     return arpu
 
+# Calculating the profit margin needed to reach a certain valuation
+def profit_margin_for_valuation(k, r, p0, arpu, arpu_growth, discount_rate, years, noa_assets, valuation):
+    x = Symbol('x')
+    function_to_solve = solve(net_present_value_arpu_growth(k, r, p0, arpu, arpu_growth, x, discount_rate, years) + noa_assets - valuation, x)
+    profit_margin = float(function_to_solve[0])
+    return profit_margin
+
 # Calculate the minimum time you can go back in time, given a certain dataset with an array of dates (dates)
 # One can go back only until 4 data are left to be analyzed
 def date_minimum_history(dates):

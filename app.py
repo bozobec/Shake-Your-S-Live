@@ -927,7 +927,7 @@ def update_select_based_on_url(url_search, current_selected_dataset):
     return dataset_url, None
 # Callback to change the Graph's title, enable the analysis buttons
 @app.callback([
-    Output("accordion-growth", "disabled"),
+    #Output("accordion-growth", "disabled"),
     Output("accordion-plateau", "disabled"),
     Output("accordion-valuation", "disabled"),
     Output("accordion-correlation", "disabled"),
@@ -944,7 +944,7 @@ def select_value(value):
                  "the Forecast Start Date Using the Datepicker. Use the 'Past performance' section " \
                  "to see RAST's calculated hype over time."
     show_loader = {'display': 'block'}
-    return False, False, False, False, False, show_loader
+    return False, False, False, False, show_loader
 
 
 # Callback defining the minimum and the maximum date of the datepicker and loading the dataset
@@ -1012,6 +1012,8 @@ def set_history_size(dropdown_value, imported_df, #search
 
         # Creating the title & subtitle for the graph
         title = dropdown_value + " - " + key_unit
+        title_image = dmc.Group([dropdown_value, dmc.Image(
+            src="https://upload.wikimedia.org/wikipedia/commons/6/69/Airbnb_Logo_B%C3%A9lo.svg", height=10)])
         subtitle = "Explore " + str(dropdown_value) + "'s Historical " + key_unit + " data (Bars) and future growth " \
                                                                                     "projections. Customize " \
                                                                                     "predictions with the slider in the 'Valuation Drivers' section and adjust " \
@@ -1152,19 +1154,11 @@ def set_history_size(dropdown_value, imported_df, #search
     # Output("loading-component", "loading"),
     Output(component_id='range-slider-k', component_property='value'),  # Reset slider value to the best value
     Output(component_id='initial-sliders-values', component_property='data', allow_duplicate=True),
-    Output(component_id="growth-message", component_property="title"),
-    Output(component_id="growth-message", component_property="children"),
-    Output(component_id="growth-message", component_property="color"),
-    Output(component_id="accordion-growth", component_property="icon"),
     Output(component_id="accordion-main", component_property="value"),
     Output(component_id="plateau-message", component_property="title"),
     Output(component_id="plateau-message", component_property="children"),
     Output(component_id="plateau-message", component_property="color"),
     Output(component_id="accordion-plateau", component_property="icon"),
-    Output(component_id="valuation-message", component_property="title"),
-    Output(component_id="valuation-message", component_property="children"),
-    Output(component_id="valuation-message", component_property="color"),
-    Output(component_id="accordion-valuation", component_property="icon"),
     Output(component_id="correlation-message", component_property="title"),
     Output(component_id="correlation-message", component_property="children"),
     Output(component_id="correlation-message", component_property="color"),
@@ -1395,12 +1389,12 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
 
     # Plateau Accordion
     if diff_r2lin_log > 0.1:
-        plateau_message_title = "(95% of the) Plateau could be reached in " + main.string_formatting_to_date(time_high_growth) \
-                                + " with " + str(plateau_high_growth) + " users "
+        plateau_message_title = "The revenue is unlikely to stop growing before " + \
+                                main.string_formatting_to_date(time_high_growth)
         plateau_message_body = "Given the likelihood of exponential growth in the foreseeable " \
                                "future, the high growth scenario is likely with 95% of its plateau at " + \
                                str(plateau_high_growth) + " users which should happen in " + main.string_formatting_to_date(
-            time_high_growth)
+            time_high_growth) + ". If overvalued, the company's hype can remain a while until the revenue stop growing."
     else:
         plateau_message_title = "Plateau could be reached in " + main.string_formatting_to_date(time_best_growth) \
                                 + " with " + str(plateau_best_growth) + " users"
@@ -1411,38 +1405,38 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
     # Plateau message color
     if time_best_growth < date_picked_formatted:
         plateau_message_color = "red"
-        plateau_icon_color = DashIconify(icon="radix-icons:pin-top", color=dmc.theme.DEFAULT_COLORS["red"][6], width=20)
+        plateau_icon_color = DashIconify(icon="simple-icons:futurelearn", color=dmc.theme.DEFAULT_COLORS["red"][6], width=20)
     else:
         plateau_message_color = "green"
-        plateau_icon_color = DashIconify(icon="radix-icons:pin-top", color=dmc.theme.DEFAULT_COLORS["green"][6], width=20)
+        plateau_icon_color = DashIconify(icon="simple-icons:futurelearn", color=dmc.theme.DEFAULT_COLORS["green"][6], width=20)
 
 
     # Formatting of the displayed correlation message
 
     formatted_correlation = f"{users_revenue_correlation * 100:.2f}"  # Formatting the displayed r^2:
-    if users_revenue_correlation >= 0.8:
-        correlation_message_title = "Great metric selected!"
-        correlation_message_body = "The " + str(key_unit) + " is a key revenue driver and the right one " \
+    if users_revenue_correlation >= 0.6:
+        correlation_message_title = str(key_unit) + " is a great revenue indicator"
+        correlation_message_body = "We use " + str(key_unit) + " as a key revenue driver" \
                                                             "to estimate the valuation, because " + str(key_unit) + \
                                    " account for " + str(formatted_correlation) + "% of the revenue variability."
         correlation_message_color = "primaryGreen"
-        correlation_icon_color = DashIconify(icon="uit:chart-growth", color=dmc.theme.DEFAULT_COLORS["green"][6],
+        correlation_icon_color = DashIconify(icon="lineicons:target-revenue", color=dmc.theme.DEFAULT_COLORS["green"][6],
                                          width=20)
     elif users_revenue_correlation > 0:
-        correlation_message_title = "Another metric could be better"
+        correlation_message_title = "Take it with a grain of salt"
         correlation_message_body = str(key_unit) + " do not have a strong correlation with the revenue over time. " \
                                                    "We are looking into alternative metrics to estimate this " \
                                                    "company's valuation, since only " + str(formatted_correlation) + \
                                    "% of the revenue variability is explained by this metric."
         correlation_message_color = "yellow"
-        correlation_icon_color = DashIconify(icon="uit:chart-growth", color=dmc.theme.DEFAULT_COLORS["yellow"][6],
+        correlation_icon_color = DashIconify(icon="lineicons:target-revenue", color=dmc.theme.DEFAULT_COLORS["yellow"][6],
                                              width=20)
 
     else:
         correlation_message_title = "Correlation not applicable"
         correlation_message_body = "The correlation information is only relevant for companies"
         correlation_message_color = "gray"
-        correlation_icon_color = DashIconify(icon="uit:chart-growth", color=dmc.theme.DEFAULT_COLORS["gray"][6],
+        correlation_icon_color = DashIconify(icon="lineicons:target-revenue", color=dmc.theme.DEFAULT_COLORS["gray"][6],
                                              width=20)
 
     # Slider definition
@@ -1616,9 +1610,9 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
     print(plateau_message_color)
     print(f" Real time: {t2[0] - t1[0]:.2f} seconds")
     print(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
-    return highest_r2_index, initial_slider_values, growth_message_title, growth_message_body, growth_message_color, growth_icon_color, \
-        ["growth"], plateau_message_title, plateau_message_body, plateau_message_color, plateau_icon_color, valuation_message_title, \
-        valuation_message_body, valuation_message_color, valuation_icon_color, correlation_message_title, correlation_message_body, \
+    return highest_r2_index, initial_slider_values, \
+        ["valuation"], plateau_message_title, plateau_message_body, plateau_message_color, plateau_icon_color, \
+        correlation_message_title, correlation_message_body, \
         correlation_message_color, correlation_icon_color, product_maturity_accordion_title, product_maturity_accordion_body,\
         product_maturity_accordion_color, product_maturity_accordion_icon_color, df_sorted_dict, slider_max_value, marks_slider, current_arpu, hype_market_cap, \
         current_market_cap, latest_market_cap, arpu_growth, growth_rate_graph_message1, growth_rate_graph_color, \
@@ -2411,7 +2405,7 @@ def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, arpu_grow
         hype_tooltip, hype_indicator_color, hype_indicator_text, current_valuation
 
 
-# Callback displaying the functionalities & graph cards, and hiding the text
+# Callback calculating the valuation over time and displaying the functionalities & graph cards, and hiding the text
 @app.callback(
     Output(component_id='data-selection-counter', component_property='data', allow_duplicate=True),
     Output(component_id='valuation-over-time', component_property='data'),
@@ -2566,6 +2560,7 @@ def historical_valuation_calculation(df_formatted, total_assets, data, df_raw, l
     columns = ['Date', 'Date Raw', 'K', 'r', 'p0', 'Profit Margin', 'ARPU', 'Valuation', 'Market Cap']
     df_valuation_over_time = pd.DataFrame(valuation_data, columns=columns)
     df_valuation_over_time_dict = df_valuation_over_time.to_dict(orient='records')
+
     print("DF Valuation over time")
     print(df_valuation_over_time)
     hide_loader = {'display': 'none'}
@@ -2586,6 +2581,10 @@ def historical_valuation_calculation(df_formatted, total_assets, data, df_raw, l
     Output(component_id='valuation-graph-message', component_property='children'),
     Output(component_id='valuation-graph-message', component_property='color'),
     Output(component_id='valuation-graph-message', component_property='title'),
+    Output(component_id="valuation-message", component_property="title"),
+    Output(component_id="valuation-message", component_property="children"),
+    Output(component_id="valuation-message", component_property="color"),
+    Output(component_id="accordion-valuation", component_property="icon"),
 
     Input(component_id='valuation-over-time', component_property='data'),
     State(component_id='date-picker', component_property='value'),  # Take date-picker date
@@ -2593,11 +2592,14 @@ def historical_valuation_calculation(df_formatted, total_assets, data, df_raw, l
     State(component_id='total-assets', component_property='data'),
     State(component_id='users-dates-raw', component_property='data'),
     State(component_id='latest-market-cap', component_property='data'),  # Stores the current (now) company market cap
+    State(component_id='scenarios-sorted', component_property='data'),  # Stores the calculated growth scenarios
+    State(component_id='current-arpu-stored', component_property='data'),  # Stores the current arpu
+    State(component_id='dataset-selection', component_property='value'),  # Stores the name of the dataset selected
     Input(component_id="current-valuation-calculated", component_property="data"),
     prevent_initial_call=True,
 )
 def graph_valuation_over_time(valuation_over_time_dict, date_picked, df_formatted, total_assets, df_raw,
-                              latest_market_cap, current_valuation):
+                              latest_market_cap, df_sorted, current_arpu, company_sign, current_valuation):
     if latest_market_cap == 0:
         raise PreventUpdate
     print("Graph Valuation Start")
@@ -2606,6 +2608,7 @@ def graph_valuation_over_time(valuation_over_time_dict, date_picked, df_formatte
     dates_new = np.array([entry['Date'] for entry in df_formatted])
     revenue_df = np.array([entry['Revenue'] for entry in df_formatted])
     profit_margin_df = np.array([entry['Profit Margin'] for entry in df_formatted])
+    company_symbol = str(company_sign)
 
     # Valuation calculation
     non_operating_assets = total_assets
@@ -2788,23 +2791,50 @@ def graph_valuation_over_time(valuation_over_time_dict, date_picked, df_formatte
             layer="above"  # Place the image above the plot elements
         )
     )
+    # Valuation message for the accordion
+    k_high_valuation = df_sorted[-1]['K']
+    r_high_valuation = df_sorted[-1]['r']
+    p0_high_valuation = df_sorted[-1]['p0']
+
+    profit_margin_needed = main.profit_margin_for_valuation(k_high_valuation, r_high_valuation, p0_high_valuation,
+                                                            current_arpu, 0.05, 0.1, YEARS_DCF, non_operating_assets, latest_market_cap * 1000000)
+    max_profit_margin = np.max(profit_margin_df)
+
     # Valuation message
     if market_cap_array[-1] < high_scenario_valuation[-1]:
+        # Messages in the accordion
+        valuation_accordion_title = company_symbol + " may be undervalued"
+        valuation_accordion_message = company_symbol + "’s current price is below our top estimate. " \
+                                                       "If you see long-term potential, it might be a good buy."
+        # Messages right above the graph
         valuation_graph_title = "Interesting Opportunity?"
         valuation_graph_message = "The Current Market Cap is lower than the most optimistic valuation (" + \
                                   f"{high_scenario_valuation[-1] / 1e9:.2f} B$): this stock may be undervalued.\n" + \
                                   "Note that the most optimistic valuation is calculated by considering the best " \
                                   "growth scenario and the best profit margin ever recorded, to which 5% were added."
         valuation_graph_color = "green"
+        valuation_icon_color = DashIconify(icon="radix-icons:rocket", color=dmc.theme.DEFAULT_COLORS["green"][6],
+                                           width=20)
     else:
+        # Messages in the accordion
+        valuation_accordion_title = company_symbol + " is overvalued"
+        valuation_accordion_message = company_symbol + "'s current price is above even our highest estimate. " \
+                                                       "To justify it, they'd need a  " + \
+                                      f"{profit_margin_needed *100:.1f}% " + \
+                                      "profit margin, despite their best ever being… " + f"{max_profit_margin:.1f}%. " \
+                                                                                         f"So yeah, a bit of a stretch."
+        # Messages right above the graph
         valuation_graph_title = "Mmmh maybe not..."
         valuation_graph_message = "The Current Market Cap is higher than the most optimistic valuation (" + \
                                   f"{high_scenario_valuation[-1] / 1e9:.2f} B$): this stock seems overvalued.\n"+ \
                                   "Note that the most optimistic valuation is calculated by considering the best " \
                                 "growth scenario and the best profit margin ever recorded, to which 5% were added."
         valuation_graph_color = "yellow"
+        valuation_icon_color = DashIconify(icon="radix-icons:rocket", color=dmc.theme.DEFAULT_COLORS["yellow"][6],
+                                           width=20)
     print("Valuation graph printed")
-    return fig_valuation, valuation_graph_message, valuation_graph_color, valuation_graph_title,
+    return fig_valuation, valuation_graph_message, valuation_graph_color, valuation_graph_title, valuation_accordion_title, \
+        valuation_accordion_message, valuation_graph_color, valuation_icon_color
 
 
 # Callback resetting enabling the reset button

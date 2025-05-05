@@ -344,34 +344,6 @@ accordion = dmc.AccordionMultiple(
         dmc.AccordionItem(
             [
                 dmc.AccordionControl(
-                    "Growth",
-                    id="accordion-growth",
-                    disabled=True,
-                    icon=DashIconify(icon="uit:chart-growth", width=20),
-                ),
-                dmc.AccordionPanel(
-                    growth_message
-                ),
-            ],
-            value="growth",
-        ),
-        dmc.AccordionItem(
-            [
-                dmc.AccordionControl(
-                    "Plateau",
-                    id="accordion-plateau",
-                    disabled=True,
-                    icon=DashIconify(icon="radix-icons:pin-top", width=20)
-                                     ),
-                dmc.AccordionPanel(
-                    plateau_message
-                ),
-            ],
-            value="plateau",
-        ),
-        dmc.AccordionItem(
-            [
-                dmc.AccordionControl(
                     "Valuation",
                     id="accordion-valuation",
                     disabled=True,
@@ -386,10 +358,24 @@ accordion = dmc.AccordionMultiple(
         dmc.AccordionItem(
             [
                 dmc.AccordionControl(
-                    "Correlation",
+                    "Growth",
+                    id="accordion-plateau",
+                    disabled=True,
+                    icon=DashIconify(icon="simple-icons:futurelearn", width=20)
+                                     ),
+                dmc.AccordionPanel(
+                    plateau_message
+                ),
+            ],
+            value="plateau",
+        ),
+        dmc.AccordionItem(
+            [
+                dmc.AccordionControl(
+                    "Revenue",
                     id="accordion-correlation",
                     disabled=True,
-                    icon=DashIconify(icon="uit:chart-growth", width=20)
+                    icon=DashIconify(icon="lineicons:target-revenue", width=20)
                 ),
                 dmc.AccordionPanel(
                     correlation_message
@@ -854,14 +840,14 @@ tabs_graph = dmc.Tabs(
             children=
                 [
                     dmc.LoadingOverlay(dmc.Tab("Valuation",
-                                        icon=DashIconify(icon="material-symbols:history"),
+                                        icon=DashIconify(icon="radix-icons:rocket"),
                                         id="market-cap-tab",
                                         value="1",
                                         #disabled=True
                                         style={'display': ''},
                                         )),
-                    dmc.Tab("Userbase", icon=DashIconify(icon="simple-icons:futurelearn"), value="2"),
-                    dmc.Tab("ARPU", icon=DashIconify(icon="lineicons:target-revenue"), value="5"),
+                    dmc.Tab("Growth", icon=DashIconify(icon="simple-icons:futurelearn"), value="2"),
+                    dmc.Tab("Revenue", icon=DashIconify(icon="lineicons:target-revenue"), value="5"),
                     dmc.Tab("Growth Rate",
                             icon=DashIconify(icon="radix-icons:bar-chart"),
                             value="3",
@@ -902,8 +888,19 @@ graph_card = dmc.Card(
         dmc.Group(
                     [
                         dmc.Title("Welcome to RAST", id="graph-title", order=5),
+                        html.Img(id='image-display',
+                                 src='',
+                                 style={
+                                     'height': '20px',  # Fixed height
+                                     'width': 'auto',  # Width adjusts automatically to maintain aspect ratio
+                                     'display': 'block',  # Prevents inline spacing issues
+                                     #'marginTop': '20px',
+                                     'maxWidth': '100%',  # Prevents overflow in smaller containers
+                                     'objectFit': 'contain'  # Ensures the image is scaled inside the box
+                                 }
+                                 )
                     ],
-                    position="apart",
+                    #position="apart",
                     mt="md",
                     mb="xs",
                 ),
@@ -1189,7 +1186,7 @@ def layout(company=None, **other_unknown_query_strings):
                     dmc.Col(selector_card, span="auto", orderXs=1, orderSm=1, orderLg=1),
                     #dmc.Col(navbar_column, span="auto", order=1),
                     dmc.Col([
-                        dmc.LoadingOverlay(graph_card), dmc.Space(h=20), table_hype
+                        dmc.LoadingOverlay(graph_card), dmc.Space(h=20), dmc.LoadingOverlay(table_hype)
                         # valuation_over_time_card  # Comment this line to remove the analysis graphs
                     ], span=12, lg=6, orderXs=2, orderSm=2, orderLg=2),
                     dmc.Col([hype_meter_card, dmc.Space(h=20), functionalities_card], span=12, lg=3, orderXs=3, orderSm=3,
