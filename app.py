@@ -1844,9 +1844,11 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     # Prediction, S-Curves
 
     date_a = datetime.strptime(dates_raw[0], "%Y-%m-%d")
-    date_b = datetime.strptime(dates_raw[-1], "%Y-%m-%d")
+    #date_b = datetime.strptime(dates_raw[-1], "%Y-%m-%d")
+    date_b = datetime.strptime(dates_raw[len(dates_actual)-1], "%Y-%m-%d")
 
-    date_b_actual = history_value_graph  # Date including the datepicker
+    #date_b_actual = history_value_graph  # Date including the datepicker
+    date_b_actual = dates_actual[-1]
 
     # Calculate date_end using the formula date_b + 2 * (date_b - date_a)
     date_end = date_b + (date_b - date_a)
@@ -1861,7 +1863,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     y_predicted = main.logisticfunction(k, r, p0, x_scenarios)
     # Generate x_dates array
     x_dates = np.linspace(date_a.timestamp(), date_end.timestamp(), num=50)
-    x_dates_scenarios = np.linspace(date_b_actual.timestamp(), date_end.timestamp(), num=50) # changed
+    x_dates_scenarios = np.linspace(date_b.timestamp(), date_end.timestamp(), num=50) # changed
     x_dates = [datetime.fromtimestamp(timestamp) for timestamp in x_dates]
     x_dates_scenarios = [datetime.fromtimestamp(timestamp) for timestamp in x_dates_scenarios]
 
