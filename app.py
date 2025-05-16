@@ -2958,11 +2958,14 @@ def update_table(hype_choice):
             badge_color = "red"
             badge_label = "Super hyped"
         elif hype_score > 20:
-            badge_color = "yellow"
+            badge_color = "orange"
             badge_label = "Mildly hyped"
+        elif hype_score > 0:
+            badge_color = "yellow"
+            badge_label = "Marginally hyped"
         else:
             badge_color = "green"
-            badge_label = "Marginally hyped"
+            badge_label = "Fairly priced"
 
         row = html.Tr([
             html.Td(
