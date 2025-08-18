@@ -593,7 +593,8 @@ functionalities_card = dmc.Card(
                             DashIconify(icon="feather:info", width=15),
                             label="Adjust the profit margin using the slider to observe the impact on the company's "
                                   "annual average revenue per user. Increasing the profit margin increases the company's"
-                                  "profit and therefore the company's value.",
+                                  " profit and therefore the company's value. MAX indicates the maximum theoretical"
+                                  " net profit margin for this company given its current business model",
                             transition="slide-down",
                             transitionDuration=300,
                             multiline=True,
@@ -1234,6 +1235,10 @@ def layout(company=None, **other_unknown_query_strings):
                 # Current valuation calculated with the current parameters and date
                 # Counter that shows if a new dataset has been selected
                 dcc.Store(id='last-imported-data'),
+                dcc.Store(id='all-companies-information'),  # stores all the companies and the related information
+                dcc.Store(id='max-net-margin'),  # stores the max theoretical net margin for the selected company
+                html.Div(id='page-load-trigger'),  # Dummy trigger to launch a callback once the page loads
+                dcc.Location(id='url', refresh=False)
             ], fluid=True),
         ]),
 

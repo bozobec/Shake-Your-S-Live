@@ -183,7 +183,7 @@ def get_airtable_data(filter):
 
 # API Fetching the market cap of the company in $mio.
 def get_marketcap(symbol_input):
-    print("Fetching the dataset data")
+    print("Fetching the current market cap")
     try:
         url = "https://finnhub.io/api/v1/stock/profile2?"
         auth_token = "clmplq1r01qjj8i8s6ugclmplq1r01qjj8i8s6v0"  # Free token visible here: https://finnhub.io/dashboard
@@ -272,7 +272,7 @@ def get_profit_margin(symbol_input):
 # API Fetching the most hyped or least hyped companies
 # hyped is a boolean -> True for hyped companies; False for not hyped
 def get_hyped_companies(hyped):
-    print("Fetching the dataset data")
+    print("Fetching the hyped/not hyped data list")
     auth_token = "patUQKc4meIVaiLIw.efa35a957210ca18edc4fc00ae1b599a6a49851b8b7c59994e4384c19c20fcd1"
     headers = {
         "Authorization": f"Bearer {auth_token}"
@@ -316,3 +316,32 @@ def get_hyped_companies(hyped):
         except Exception as e:
             print(f"Error fetching dataset data: {str(e)}")
             return None
+
+# Function fetching the list of all the companies (companies sheet on airtable) and the related information
+# (max net margin, other info, etc.)
+def get_hyped_companies_data():
+    print("Fetching the dataset data")
+    auth_token = "patUQKc4meIVaiLIw.efa35a957210ca18edc4fc00ae1b599a6a49851b8b7c59994e4384c19c20fcd1"
+    headers = {
+        "Authorization": f"Bearer {auth_token}"
+    }
+    try:
+        url = "https://api.airtable.com/v0/appm3ffcu38jyqhi3/Companies?fields%5B%5D=Company_Name&fields%5B%5D=Hype_meter_value&fields%5B%5D=Max_Net_Margin&view=Most+hyped+companies"
+        response = requests.get(url, headers=headers)  # Call the Airtable data with the specified filter
+        data = response.json()  # Transforms it into a dictionary
+
+        #Format the data into a dataframe including only the Date and the Users
+        records = data['records']
+        formatted_data = []
+        for record in records:
+            formatted_data.append({
+                'Company Name': record['fields']['Company_Name'],
+                'Hype Score': record['fields']['Hype_meter_value'],
+                'Max Net Margin': record['fields']['Max_Net_Margin']
+            })
+        df = pd.DataFrame(formatted_data)  # Create a DataFrame from the sample data
+        # sorted_df = df.sort_values(by='Date')  # Sort df to avoid bugs linked to wrong API call
+        return df
+    except Exception as e:
+        print(f"Error fetching dataset data: {str(e)}")
+        return None

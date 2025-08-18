@@ -762,36 +762,7 @@ main_plot.update(
 
 # ----------------------------------------------------------------------------------
 # App Layout
-"""
-app.layout = html.Div(style={'backgroundColor': '#F9F9F9'}, children=
-[
-    # navbar6,
-    navbar7,
-    dmc.Space(mb=20),  # Margin/space between the navbar and the content
-    # Mantine Grid
 
-    dmc.Container(fluid=True, children=[
-        dmc.Grid([
-            # dmc.Col(span=0.5, lg=0), # Empty left column
-            # dmc.Col(selector_card, span="auto", order=1),
-            dmc.Col([
-                dmc.LoadingOverlay(
-                    # graph_card
-                ),
-                # valuation_over_time_card  # Comment this line to remove the analysis graphs
-            ], span=12, lg=6, orderXs=3, orderSm=3, orderLg=2),
-            # dmc.Col([hype_meter_card, dmc.Space(h=20), functionalities_card], span=12, lg=3, orderXs=2, orderSm=2, orderLg=3),
-            # dmc.Col(span="auto", lg=0), # Empty right column
-        ],
-            gutter="xl",
-            justify="space-around",
-            # align="center",
-        ),
-    ]),
-    dash.page_container,
-    footer
-])
-"""
 layout_page_standard = dmc.AppShell(
     zIndex=100,
     header=navbar7,
@@ -864,6 +835,18 @@ server = app.server
 
 # ----------------------------------------------------------------------------------
 # Callback behaviours and interaction
+# Callback loading and storing the company information
+@app.callback(
+    Output('all-companies-information', 'data'),
+    Input('url', 'href') # Triggered once when the page is loaded
+)
+def initialize_data(href):
+    print("Loading company information")
+    # Load or compute data
+    df_all_companies_information = dataAPI.get_hyped_companies_data()
+    all_companies_information_store = df_all_companies_information.to_dict('records')
+    return all_companies_information_store
+
 # Callback to enable the slider if "Custom" is selected
 @app.callback(
     Output("range-slider-k", "disabled"),
@@ -982,17 +965,17 @@ def select_value(value):
     Output("loader-general", "style", allow_duplicate=True),
     Output(component_id='market-cap-tab', component_property='style'),  # Hides Market cap tab if other data is selected
     Output(component_id='symbol-dataset', component_property='data'),  # Hides Market cap tab if other data is selected
+    Output(component_id='max-net-margin', component_property='data'),  # Stores the max net margin opf the selected company
 
     # the chosen KPI and the revenue
 
     Input(component_id='dataset-selection', component_property='value'),  # Take dropdown value
     Input(component_id='last-imported-data', component_property='data')],  # Take dropdown value
-    #Input('url', 'search'),
+    State(component_id='all-companies-information', component_property='data'),  # Take information about all companies
     # [State('main-plot-container', 'figure')],
     prevent_initial_call=True,
 )
-def set_history_size(dropdown_value, imported_df, #search
-                     ):
+def set_history_size(dropdown_value, imported_df, df_all_companies):
     t1 = time.perf_counter(), time.process_time()
     try:
         # Fetch dataset from API
@@ -1037,6 +1020,23 @@ def set_history_size(dropdown_value, imported_df, #search
         print(dates)
         print(users_formatted)
 
+        # Fetches Max net Margin and stores it
+        # max_net_margin = df_all_companies.loc[df_all_companies["Company Name"] == dropdown_value, "Max Net Margin"]
+        max_net_margin = None
+
+        # Ugly "if" statement making sure that the information are loaded, because it can happen that the initial callback is not triggered
+        if not df_all_companies:
+            df_all_companies_information = dataAPI.get_hyped_companies_data()
+            df_all_companies = df_all_companies_information.to_dict('records')
+        for company in df_all_companies:
+            if company['Company Name'].lower() == dropdown_value.lower():
+                max_net_margin = company['Max Net Margin']
+                break
+
+        print("Basisnetmargin")
+        print(type(max_net_margin))
+        print(max_net_margin)
+
         # Logic to be used when implementing changing the ARPU depending on the date picked
         # date_last_quarter = main.previous_quarter_calculation().strftime("%Y-%m-%d")
         # closest_index = main.find_closest_date(date_last_quarter,dates_unformatted)
@@ -1069,26 +1069,25 @@ def set_history_size(dropdown_value, imported_df, #search
 
             current_annual_profit_margin = profit_margin_array[-1]
             max_annual_profit_margin = max(profit_margin_array)
-            text_best_profit_margin = "Best recorded profit margin ever: " + str(max_annual_profit_margin) + "%",
+            text_max_profit_margin = "Max theoretical profit margin: " + str(max_net_margin) + "%"
+            text_best_profit_margin = "Best recorded profit margin ever: " + str(max_annual_profit_margin) + "%"
             if current_annual_profit_margin > 1:
                 value_profit_margin_slider = float(current_annual_profit_margin)
                 marks_profit_margin_slider = [
                     {"value": 2, "label": "2%"},
-                    {"value": 10, "label": "10%"},
-                    {"value": 20, "label": "20%"},
+                    {"value": max_net_margin, "label": "MAX"},
                     {"value": 50, "label": "50%"},
                 ]
-                text_profit_margin = "Latest annual profit margin: " + str(current_annual_profit_margin) + "% 🤩",
+                text_profit_margin = "Latest annual profit margin: " + str(current_annual_profit_margin) + "% 🤩"
 
             else:
                 marks_profit_margin_slider = [
                     {"value": 2, "label": "2%"},
-                    {"value": 10, "label": "10%"},
-                    {"value": 20, "label": "20%"},
+                    {"value": max_net_margin, "label": "MAX"},
                     {"value": 50, "label": "50%"},
                 ]
-                value_profit_margin_slider = 5.0
-                text_profit_margin = "Latest annual profit margin: " + str(current_annual_profit_margin) + "% 😰",
+                value_profit_margin_slider = max_net_margin
+                text_profit_margin = "Latest annual profit margin: " + str(current_annual_profit_margin) + "% 😰"
 
         else:
             hide_loader = {'display': 'none'}
@@ -1144,7 +1143,7 @@ def set_history_size(dropdown_value, imported_df, #search
             show_company_functionalities, show_company_functionalities, show_company_functionalities, \
             show_company_functionalities, text_profit_margin, text_best_profit_margin, marks_profit_margin_slider, \
             value_profit_margin_slider, total_assets, users_revenue_regression, value_discount_rate_slider, \
-            initial_sliders_values, source_string, True, hide_loader, show_company_functionalities, symbol_company
+            initial_sliders_values, source_string, True, hide_loader, show_company_functionalities, symbol_company, max_net_margin
     except Exception as e:
         print(f"Error fetching or processing dataset: {str(e)}")
         return "", "", "", "", "", "", "", "", "",
@@ -1242,7 +1241,7 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
     df_sorted_dict = df_sorted.to_dict(orient='records')  # Transforming it to dict to be stored
     if dropdown_value is None:  # Exception for when dropdown is not selected yet, initializing df
         df = df_full
-    current_valuation = 100
+        current_valuation = 100
     if date_picked_formatted:
         if df_sorted.empty:
             state_alert = True
@@ -1597,6 +1596,7 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
         valuation_message_color = "gray"
         valuation_icon_color = DashIconify(icon="radix-icons:rocket", color=dmc.theme.DEFAULT_COLORS["gray"][6],
                                            width=20)
+
 
     # Initial ARPU Growth definition
     arpu_growth = 5
@@ -2415,17 +2415,21 @@ def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, arpu_grow
     # Input(component_id='date-picker', component_property='value'),  # Take date-picker date
     Input(component_id='users-dates-formatted', component_property='data'),
     Input(component_id='total-assets', component_property='data'),
-    Input(component_id='dataset-selection', component_property='value'),
+    #Input(component_id='dataset-selection', component_property='value'),
     Input(component_id='users-dates-raw', component_property='data'),
     Input(component_id='latest-market-cap', component_property='data'),  # Stores the current (now) company market cap
     # State(component_id='valuation-over-time', component_property='data'),
+    State(component_id='max-net-margin', component_property='data'),
     [State('data-selection-counter', 'data')]
     , prevent_initial_call=True
 )
-def historical_valuation_calculation(df_formatted, total_assets, data, df_raw, latest_market_cap,
-                                     df_rawdataset_counter, ):
+def historical_valuation_calculation(df_formatted, total_assets, df_raw, latest_market_cap, max_net_margin,
+                                     df_rawdataset_counter):
     print("Dataset Flag")
+    print(max_net_margin)
+    print(type(max_net_margin))
     print(df_rawdataset_counter)
+    max_net_margin = max_net_margin/100
     # The entire callback is skipped if the current market cap = 0, i.e. if it is not a public company OR
     # if it was already calculated
     if latest_market_cap == 0 or df_rawdataset_counter == False:
@@ -2503,15 +2507,18 @@ def historical_valuation_calculation(df_formatted, total_assets, data, df_raw, l
             profit_margin_previous_year = profit_margin_valuation[-4:]
             average_profit_margin = sum(profit_margin_previous_year) / 4
             if average_profit_margin <= 0:
-                min_profit_margin = 0.01
-                max_profit_margin = 0.1
+                #min_profit_margin = 0.01
+                min_profit_margin = max_net_margin * 0.8  # Taking 80% of the max profit margin as a lower scenario
+                #max_profit_margin = 0.1
+                max_profit_margin = max_net_margin
             else:
-                min_profit_margin = average_profit_margin
+                #min_profit_margin = average_profit_margin
+                min_profit_margin = max_net_margin*0.8
                 #max_profit_margin = average_profit_margin + 0.05
-                max_profit_margin = max(profit_margin_valuation) + 0.05
-
+                #max_profit_margin = max(profit_margin_valuation) + 0.05
+                max_profit_margin = max_net_margin # High scenario taking the max theoretical profit margin
             profit_margin[0] = min_profit_margin  # Low scenario
-            profit_margin[1] = max_profit_margin  # High scenario
+            profit_margin[1] = max_profit_margin  # High scenario taking the max seen profit margin
 
             # Discount Rate assessment
             discount_rate = np.empty(2)
@@ -2598,10 +2605,11 @@ def historical_valuation_calculation(df_formatted, total_assets, data, df_raw, l
     State(component_id='current-arpu-stored', component_property='data'),  # Stores the current arpu
     State(component_id='dataset-selection', component_property='value'),  # Stores the name of the dataset selected
     Input(component_id="current-valuation-calculated", component_property="data"),
+    State(component_id='max-net-margin', component_property='data'),
     prevent_initial_call=True,
 )
 def graph_valuation_over_time(valuation_over_time_dict, date_picked, df_formatted, total_assets, df_raw,
-                              latest_market_cap, df_sorted, current_arpu, company_sign, current_valuation):
+                              latest_market_cap, df_sorted, current_arpu, company_sign, current_valuation, max_net_margin):
     if latest_market_cap == 0:
         raise PreventUpdate
     print("Graph Valuation Start")
@@ -2800,7 +2808,8 @@ def graph_valuation_over_time(valuation_over_time_dict, date_picked, df_formatte
 
     profit_margin_needed = main.profit_margin_for_valuation(k_high_valuation, r_high_valuation, p0_high_valuation,
                                                             current_arpu, 0.05, 0.1, YEARS_DCF, non_operating_assets, latest_market_cap * 1000000)
-    max_profit_margin = np.max(profit_margin_df)
+    #max_profit_margin = np.max(profit_margin_df) old method, using the max known PM
+    max_profit_margin = max_net_margin  # new method, using the max theoretical net profit margin.
 
     # Valuation message
     if market_cap_array[-1] < high_scenario_valuation[-1]:
@@ -2813,17 +2822,18 @@ def graph_valuation_over_time(valuation_over_time_dict, date_picked, df_formatte
         valuation_graph_message = "The Current Market Cap is lower than the most optimistic valuation (" + \
                                   f"{high_scenario_valuation[-1] / 1e9:.2f} B$): this stock may be undervalued.\n" + \
                                   "Note that the most optimistic valuation is calculated by considering the best " \
-                                  "growth scenario and the best profit margin ever recorded, to which 5% were added."
+                                  "growth scenario and " + company_symbol + "'s max theoretical profit margin of " + \
+                                  f"{max_profit_margin:.1f}%."
         valuation_graph_color = "green"
         valuation_icon_color = DashIconify(icon="radix-icons:rocket", color=dmc.theme.DEFAULT_COLORS["green"][6],
                                            width=20)
     else:
         # Messages in the accordion
         valuation_accordion_title = company_symbol + " is overvalued"
-        valuation_accordion_message = company_symbol + "'s current price is above even our highest estimate. " \
+        valuation_accordion_message = company_symbol + "'s current price is above our highest estimate. " \
                                                        "To justify it, they'd need a  " + \
                                       f"{profit_margin_needed *100:.1f}% " + \
-                                      "profit margin, despite their best ever being… " + f"{max_profit_margin:.1f}%. " \
+                                      "profit margin, even though they could theoretically aim at best at " + f"~{max_profit_margin:.0f}%... " \
                                                                                          f"So yeah, a bit of a stretch."
         # Messages right above the graph
         valuation_graph_title = "Mmmh maybe not..."
@@ -2987,9 +2997,11 @@ def update_table(hype_choice):
         ])
         rows.append(row)
     body = [html.Tbody(rows)]
-    print("Hyped table is")
-    print(df_sorted)
+    #print("Hyped table is")
+    #print(df_sorted)
     return header + body
+
+
 
 # Upload data functionality to be improved
 
