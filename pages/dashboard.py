@@ -27,7 +27,7 @@ register_page(
     __name__,
     name='RAST | APP Dashboard for user-based companies valuation',
     top_nav=True,
-    path='/'
+    path='/app'
 )
 
 # Values for the dropdown (all different companies in the DB)
