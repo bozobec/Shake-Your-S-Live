@@ -9,7 +9,6 @@ import main
 from datetime import datetime, timedelta, date
 from pages.dashboard import table_hype
 
-'''
 
 register_page(
     __name__,
@@ -17,7 +16,7 @@ register_page(
     top_nav=True,
     path='/'
 )
-'''
+
 first_card = dmc.Card(
     children=[
         dmc.Stack(
