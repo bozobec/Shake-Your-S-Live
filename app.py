@@ -335,7 +335,7 @@ offcanvas = html.Div(
 # App button for the Navbar
 app_button_link = html.Div(
     [
-        dbc.Button("APP", id="app-button-link", n_clicks=0, href="/app"),
+        dbc.Button("APP", id="app-button-link", n_clicks=0, href="www.rast.guru"),
     ]
 )
 
