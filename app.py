@@ -1103,6 +1103,7 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
                 {"value": 50, "label": "50%"},
             ]
             text_best_profit_margin = ""
+            max_net_margin = 0
 
         df_formatted = df
         df_formatted["Date"] = dates_formatted
