@@ -38,6 +38,7 @@ app = dash.Dash(__name__,
                 #external_stylesheets=[dbc.themes.MORPH], Nice stylesheet
                 title=APP_TITLE,
                 use_pages=True,
+                url_base_pathname="/"
                 )
 
 app.index_string = """<!DOCTYPE html>
