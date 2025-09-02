@@ -882,7 +882,7 @@ def update_url(data_selection, current_pathname):
     if current_company == data_selection:
         return dash.no_update
     # Update the pathname with the selected dataset
-    return f"/app?company={urllib.parse.quote(data_selection)}"
+    return f"/?company={urllib.parse.quote(data_selection)}"
 
 # Callback to update the dropdown selection based on the URL
 @app.callback(
