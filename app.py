@@ -335,7 +335,7 @@ offcanvas = html.Div(
 # App button for the Navbar
 app_button_link = html.Div(
     [
-        dbc.Button("APP", id="app-button-link", n_clicks=0, href="www.rast.guru"),
+        dbc.Button("APP", id="app-button-link", n_clicks=0, href="/"),
     ]
 )
 
@@ -450,7 +450,7 @@ navbar7 = dbc.NavbarSimple(
                     alt="RAST Logo, user-based company valuation & prediction tool",
                     height="36px"
     )],
-    brand_href="/",
+    brand_href="https://www.rast.guru",
     sticky="top",  # Uncomment if you want the navbar to always appear at the top on scroll.
     color="primary",  # Change this to change color of the navbar e.g. "primary", "secondary" etc.
     dark=True,  # Change this to change color of text within the navbar (False for dark text)
