@@ -25,6 +25,7 @@ import io
 from flask import send_file
 import base64
 from dateutil.relativedelta import relativedelta
+from scipy.stats import mstats
 
 
 #pd.set_option('display.max_columns', None)
@@ -1273,6 +1274,35 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
 
     k_full = np.array(df_full['K'])
     r_full = np.array(df_full['r'])
+
+    # Growth score calculation, around (a) how fast the company is growing today, and (b) how much headroom they still have.
+    # Per-capita (normalized) growth today: g = r(1−u); penetration: u=N/K - (N(t) = current users (or your key driver))
+    # For the calculation, we take the best potential growth scenario, not the most probable one
+    # g is high if the company has speed (high r) and headroom (low u)
+    u = users[-1]/k_scenarios[-1]
+
+    # Core, stage-aware momentum (dimensionless)
+    g = r_scenarios[-1]*(1-u)
+
+    # Headroom (dimensionless) - captures how far they are from saturation regardless of speed
+    h = 1-u
+
+    # Calculation of a reference r, by winsorizing at 5 - 95 pct -> it should be done across ALL companies
+    #r_wins = mstats.winsorize(r_scenarios, limits=[0.05, 0.05])  # returns numpy masked array
+    r_ref_global = 0.4
+
+    # Growth score calculation (early rocket: low u, high r): BIG GS | tired incumbent (high u, low r): low GS
+    # Here we take a simple 0.5 weight, different weight could be given to the headroom or core
+    GS = 0.5*g/r_ref_global+0.5*h
+
+    print("Growth score calculation")
+    print("users",users)
+    print("k_scenarios",k_scenarios)
+    print("u",u)
+    print("g",g)
+    print("h",h)
+    print("rref",r_ref_global)
+    print("GS",GS)
 
     # Growth Rate
     rd = main.discrete_growth_rate(users[0:data_len], dates[0:data_len] + 1970)
@@ -2596,6 +2626,8 @@ def historical_valuation_calculation(df_formatted, total_assets, df_raw, latest_
     Output(component_id="valuation-message", component_property="children"),
     Output(component_id="valuation-message", component_property="color"),
     Output(component_id="accordion-valuation", component_property="icon"),
+    Output(component_id="hype-score", component_property="data"), # hype score storage
+    Output(component_id="hype-score-text", component_property="children"), #hype score text
 
     Input(component_id='valuation-over-time', component_property='data'),
     State(component_id='date-picker', component_property='value'),  # Take date-picker date
@@ -2642,6 +2674,19 @@ def graph_valuation_over_time(valuation_over_time_dict, date_picked, df_formatte
     # Create market cap array
     market_cap_array = np.array([entry['Market Cap'] for entry in df_formatted]) * 1e9
     market_cap_array = market_cap_array[MIN_DATE_INDEX:]
+
+    # Calculates the hype level ratio HypeScore(HS)= (HV−LV) / (MC−LV)
+    # If HS < 0 → Market is below your conservative estimate (undervalued).
+    # If HS = 0.5 → Market is right in the middle of your valuation range.
+    # If HS > 1 → Market exceeds even your optimistic case (potential hype).
+
+    hype_score = (latest_market_cap*1e6 - low_scenario_valuation[-1]) / \
+                 (high_scenario_valuation[-1] - low_scenario_valuation[-1])
+    print("hype score calculation")
+    print(latest_market_cap)
+    print(low_scenario_valuation[-1])
+    print(high_scenario_valuation[-1])
+    hype_score_text = f"Hype score: {hype_score:.2f}"  # Formatted text for hype meter
     # Append today's date and latest market cap
     today_date = date.today()
     market_cap_array = np.append(market_cap_array, latest_market_cap * 1e6)
@@ -2848,7 +2893,7 @@ def graph_valuation_over_time(valuation_over_time_dict, date_picked, df_formatte
                                            width=20)
     print("Valuation graph printed")
     return fig_valuation, valuation_graph_message, valuation_graph_color, valuation_graph_title, valuation_accordion_title, \
-        valuation_accordion_message, valuation_graph_color, valuation_icon_color
+        valuation_accordion_message, valuation_graph_color, valuation_icon_color, hype_score, hype_score_text
 
 
 # Callback resetting enabling the reset button
@@ -2938,7 +2983,7 @@ def update_table(hype_choice):
 
     # If dropdown hasn't been used yet, set a default
     if hype_choice is None:
-        hype_choice = "most-hyped"  # or your preferred default
+        hype_choice = "least-hyped"  # default setting
 
     # Logic of changing it depending on what is chosen
     if hype_choice == 'most-hyped':
@@ -2968,18 +3013,21 @@ def update_table(hype_choice):
         hype_score = df_sorted.iloc[i]['Hype Score']
 
         # Determine badge color and label -> To-do: apply the function in .main to this
-        if hype_score > 50:
+        if hype_score > 2.5:
             badge_color = "red"
             badge_label = "Super hyped"
-        elif hype_score > 20:
+        elif hype_score > 1.5:
             badge_color = "orange"
             badge_label = "Mildly hyped"
-        elif hype_score > 0:
+        elif hype_score > 1:
             badge_color = "yellow"
             badge_label = "Marginally hyped"
-        else:
+        elif hype_score > 0:
             badge_color = "green"
             badge_label = "Fairly priced"
+        else:
+            badge_color = "teal"
+            badge_label = "Undervalued"
 
         row = html.Tr([
             html.Td(

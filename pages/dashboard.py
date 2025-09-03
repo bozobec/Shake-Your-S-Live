@@ -21,6 +21,7 @@ from dash_iconify import DashIconify
 import time
 from dash.exceptions import PreventUpdate
 import random
+import dash_daq as daq
 
 
 register_page(
@@ -959,6 +960,18 @@ data = [
 ]
 hype_meter_indicator = dmc.Badge("Super hyped", variant="outline", color="red", id="hype-meter-indicator")
 
+hype_score_gauge = html.Div([
+            daq.Gauge(
+                id='my-gauge-1',
+                color={"gradient":False,"ranges":{"teal":[-1,0],"green":[0,1],"yellow":[1,1.5],"orange":[1.5,2.5],"red":[2.5,3]}},
+                showCurrentValue=True,
+                #label="Hype score",
+                size=180,
+                min=-1,
+                max=3,
+                value=0
+             )])
+
 hype_meter_card = dmc.Card(
     children=[
         dmc.Group(
@@ -975,6 +988,8 @@ hype_meter_card = dmc.Card(
         dmc.Stack([
                 dmc.Text("Market Cap: $10.1B", size="xs", weight=500, align="center", id="hype-market-cap"),
                 hype_meter_bootstrap,
+                dmc.Text("Hype Score: 0.98", size="xs", weight=500, align="center", id="hype-score-text"),
+                #hype_score_gauge,
             ],
             align="stretch"
         ),
@@ -1158,7 +1173,7 @@ table_hype = dmc.Card(children=[
                     #label="Select the companies that you want to see",
                     placeholder="Most or least hyped companies",
                     id="hyped-table-select",
-                    value="most-hyped",
+                    value="least-hyped",
                     data=[
                         {"value": "most-hyped", "label": "Most hyped"},
                         {"value": "least-hyped", "label": "Least hyped"},
@@ -1237,6 +1252,7 @@ def layout(company=None, **other_unknown_query_strings):
                 dcc.Store(id='last-imported-data'),
                 dcc.Store(id='all-companies-information'),  # stores all the companies and the related information
                 dcc.Store(id='max-net-margin'),  # stores the max theoretical net margin for the selected company
+                dcc.Store(id='hype-score'),  # calculates the company's hype level that is used in the ranking
                 html.Div(id='page-load-trigger'),  # Dummy trigger to launch a callback once the page loads
                 dcc.Location(id='url', refresh=False)
             ], fluid=True),
