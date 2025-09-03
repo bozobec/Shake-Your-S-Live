@@ -5,7 +5,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse, parse_qs
-
+'''
 # List of URLs to crawl
 urls = [
     "https://rast.guru/app?company=Affirm",
@@ -95,3 +95,5 @@ if response.status_code in [200, 201]:
     print("Data successfully written to Airtable!")
 else:
     print(f"Failed to write data to Airtable: {response.text}")
+
+'''
