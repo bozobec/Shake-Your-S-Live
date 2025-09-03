@@ -847,6 +847,8 @@ def initialize_data(href):
     # Load or compute data
     df_all_companies_information = dataAPI.get_hyped_companies_data()
     all_companies_information_store = df_all_companies_information.to_dict('records')
+
+    # Creates the graph mapping companies
     return all_companies_information_store
 
 # Callback to enable the slider if "Custom" is selected
@@ -2991,18 +2993,30 @@ def update_table(hype_choice):
     else:
         df_sorted = dataAPI.get_hyped_companies(False)
     header = [html.Thead(html.Tr([
-    html.Th('Company', style={"width": "50%"}),
+    html.Th('Company', style={"width": "30%"}),
     html.Th(dmc.Group([
         'Hype Score',
         dmc.Tooltip(
             DashIconify(icon="feather:info", width=15),
-            label="The hype score indicates how hyped companies are. A hype score of zero means no hype - "
-                  "the market price is close or below to RAST's calculated valuation.",
+            label="The hype score indicates how hyped companies are. A hype score between 0 & 1 means that the company "
+                  "is fairly priced. A negative hype score indicates an undevaluation.",
             transition="slide-down",
             transitionDuration=300,
             multiline=True,
         )
-    ]), style={"width": "50%"}
+    ]), style={"width": "35%"}
+    ),
+    html.Th(dmc.Group([
+        'Growth Score',
+        dmc.Tooltip(
+            DashIconify(icon="feather:info", width=15),
+            label="The growth score indicates the growth potential of the company. A growth score of zero means limited "
+                  "growth potential",
+            transition="slide-down",
+            transitionDuration=300,
+            multiline=True,
+        )
+    ]), style={"width": "35%"}
     )
     ])
     )]
@@ -3011,6 +3025,7 @@ def update_table(hype_choice):
     for i in range(len(df_sorted)):
         company_name = df_sorted.iloc[i]['Company Name']
         hype_score = df_sorted.iloc[i]['Hype Score']
+        growth_score = df_sorted.iloc[i]['Growth Score']
 
         # Determine badge color and label -> To-do: apply the function in .main to this
         if hype_score > 2.5:
@@ -3029,21 +3044,42 @@ def update_table(hype_choice):
             badge_color = "teal"
             badge_label = "Undervalued"
 
+        # Determine growth badge color and label -> To-do: apply the function in .main to this
+        if growth_score > 0.5:
+            badge_color_growth = "teal"
+            badge_label_growth = "Massive potential"
+        elif growth_score > 0.3:
+            badge_color_growth = "green"
+            badge_label_growth = "Significant potential"
+        elif hype_score > 0.1:
+            badge_color_growth = "yellow"
+            badge_label_growth = "Limited potential"
+        else:
+            badge_color_growth = "red"
+            badge_label_growth = "Poor potential"
+
         row = html.Tr([
             html.Td(
                 dcc.Link(
                     company_name,
                     href=f"https://rast.guru/app?company={company_name}"
                 ),
-                style={"width": "50%"}
+                style={"width": "20%"}
             ),
             html.Td(
                 dmc.Group([
                     f"{hype_score:.2f}",
                     dmc.Badge(badge_label, size="xs", variant="outline", color=badge_color)
-                ], spacing="md"),  # You can tweak spacing: "xs", "sm", "md", etc.
-                style={"width": "50%"}
-            )
+                ], spacing="md"),
+                style={"width": "30%"}
+            ),
+            html.Td(
+                dmc.Group([
+                    f"{growth_score:.2f}",
+                    dmc.Badge(badge_label_growth, size="xs", variant="outline", color=badge_color_growth)
+                ], spacing="md"),
+                style={"width": "40%"}
+            ),
         ])
         rows.append(row)
     body = [html.Tbody(rows)]

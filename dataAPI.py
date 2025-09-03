@@ -299,7 +299,7 @@ def get_hyped_companies(hyped):
             return None
     else:
         try:
-            url = "https://api.airtable.com/v0/appm3ffcu38jyqhi3/Companies?fields%5B%5D=Company_Name&fields%5B%5D=Hype_meter_value&view=Least+hyped+companies"
+            url = "https://api.airtable.com/v0/appm3ffcu38jyqhi3/Companies?fields%5B%5D=Company_Name&fields%5B%5D=Hype_meter_value&fields%5B%5D=Growth_score&view=Least+hyped+companies"
             response = requests.get(url, headers=headers)  # Call the Airtable data with the specified filter
             data = response.json()  # Transforms it into a dictionary
             #Format the data into a dataframe including only the Date and the Users
@@ -309,6 +309,7 @@ def get_hyped_companies(hyped):
                 formatted_data.append({
                     'Company Name': record['fields']['Company_Name'],
                     'Hype Score': record['fields']['Hype_meter_value'],
+                    'Growth Score': record['fields']['Growth_score']
                 })
             df = pd.DataFrame(formatted_data)  # Create a DataFrame from the sample data
             # sorted_df = df.sort_values(by='Date')  # Sort df to avoid bugs linked to wrong API call
@@ -326,7 +327,7 @@ def get_hyped_companies_data():
         "Authorization": f"Bearer {auth_token}"
     }
     try:
-        url = "https://api.airtable.com/v0/appm3ffcu38jyqhi3/Companies?fields%5B%5D=Company_Name&fields%5B%5D=Hype_meter_value&fields%5B%5D=Max_Net_Margin&view=Most+hyped+companies"
+        url = "https://api.airtable.com/v0/appm3ffcu38jyqhi3/Companies?fields%5B%5D=Company_Name&fields%5B%5D=Hype_meter_value&fields%5B%5D=Growth_score&fields%5B%5D=Max_Net_Margin&view=Most+hyped+companies"
         response = requests.get(url, headers=headers)  # Call the Airtable data with the specified filter
         data = response.json()  # Transforms it into a dictionary
 
@@ -337,7 +338,8 @@ def get_hyped_companies_data():
             formatted_data.append({
                 'Company Name': record['fields']['Company_Name'],
                 'Hype Score': record['fields']['Hype_meter_value'],
-                'Max Net Margin': record['fields']['Max_Net_Margin']
+                'Max Net Margin': record['fields']['Max_Net_Margin'],
+                'Growth Score': record['fields']['Growth_score']
             })
         df = pd.DataFrame(formatted_data)  # Create a DataFrame from the sample data
         # sorted_df = df.sort_values(by='Date')  # Sort df to avoid bugs linked to wrong API call
