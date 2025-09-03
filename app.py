@@ -2956,7 +2956,7 @@ def activate_reset_button(n_clicks, initial_sliders_values):
     slider_arpu_growth = initial_sliders_values['slider_arpu']
 
     return slider_k, slider_profit_margin, slider_discount_rate, slider_arpu_growth
-
+'''
 # Callback changing the example hypemeter on the homepage
 @app.callback(
     Output(component_id='hype-meter-users-home', component_property='value'),
@@ -2975,6 +2975,7 @@ def home_page_example(slider_value, non_op_assets):
     print("hyperatio", hype_ratio)
     hype_indicator_color, hype_indicator_text = main.hype_meter_indicator_values(hype_ratio)
     return equity, hype, hype_indicator_text, hype_indicator_color
+'''
 
 # Callback to update table based on selection
 @app.callback(
