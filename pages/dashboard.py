@@ -1167,7 +1167,7 @@ companies = pd.DataFrame({
 
 table_hype = dmc.Card(children=[
     dmc.Group([
-        dmc.Title("RAST Companies", order=5),
+        dmc.Title("RAST Ranking", order=5),
         dmc.Select(
                     #label="Select the companies that you want to see",
                     placeholder="Most or least hyped companies",
@@ -1191,7 +1191,7 @@ table_hype = dmc.Card(children=[
 
 graph_hype = dmc.Card(children=[
     dmc.Group([
-        dmc.Title("RAST Companies", order=5),
+        dmc.Title("RAST Quadrant", order=5),
         ],
         position="apart",
         mt="md",
@@ -1212,7 +1212,7 @@ def layout(company=None, **other_unknown_query_strings):
                     dmc.Col(selector_card, span="auto", orderXs=1, orderSm=1, orderLg=1),
                     #dmc.Col(navbar_column, span="auto", order=1),
                     dmc.Col([
-                        dmc.LoadingOverlay(graph_card), dmc.Space(h=20), dmc.LoadingOverlay(table_hype),
+                        dmc.LoadingOverlay(graph_card), dmc.Space(h=20), dmc.LoadingOverlay(table_hype), dmc.Space(h=20),
                         dmc.LoadingOverlay(graph_hype)
                         # valuation_over_time_card  # Comment this line to remove the analysis graphs
                     ], span=12, lg=6, orderXs=2, orderSm=2, orderLg=2),

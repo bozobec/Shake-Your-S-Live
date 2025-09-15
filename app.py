@@ -26,6 +26,8 @@ from flask import send_file
 import base64
 from dateutil.relativedelta import relativedelta
 from scipy.stats import mstats
+from posthog import Posthog
+import random
 
 
 #pd.set_option('display.max_columns', None)
@@ -41,6 +43,11 @@ app = dash.Dash(__name__,
                 use_pages=True,
                 url_base_pathname="/"
                 )
+
+posthog = Posthog(
+  project_api_key='phc_b1l76bi8dgph2LI23vhWTdSNkiL34y2dkholjYEC7gw',
+  host='https://eu.i.posthog.com'
+)
 
 app.index_string = """<!DOCTYPE html>
 <html>
@@ -350,89 +357,6 @@ app_button_link = html.Div(
     ]
 )
 
-# Navbar
-
-navbar2 = dbc.Navbar(
-    dbc.Container([
-        html.A(
-            dbc.Row(
-                [dbc.Col([html.Img(src="/assets/Vector_white.svg", style={'height': '20px'}),
-                          dbc.NavbarBrand("RAST", style={'margin-left': '10px'})
-                          ], className="align-items-center d-flex"),
-                 ]
-            ), href="https://fathomless-scrubland-44017-2a7f83d10555.herokuapp.com/"
-        ),
-    ],
-        fluid=True), color="primary", dark=True)
-
-navbar = dbc.Navbar(
-    dbc.Container(
-        dbc.Row(
-            [
-                dbc.Col(
-                    html.A(
-                        dbc.Row([
-                            dbc.Col(
-                                [
-                                    html.Img(src="/assets/Vector_white.svg", style={'height': '25px'}),
-                                    dbc.NavbarBrand("RAST", style={'margin-left': '20px'}),
-                                    # dropdown5,
-                                ], className="align-items-center d-flex"
-                            ),
-                            dbc.Col(
-                                [
-                                    dbc.NavItem(dbc.NavLink("About", n_clicks=0, href="#")),
-                                ], className="align-items-center d-flex",
-                            ),
-                        ]),
-                    )
-                ),
-            ],
-        ),
-        fluid=True
-    ),
-    color="primary",
-    dark=True
-)
-
-navbar6 = dbc.Navbar(
-    dbc.Container(
-        [
-            dbc.Row([
-                dbc.Col(html.Img(src="/assets/Vector_white.svg", height="25px")),
-                dbc.Col(dbc.NavbarBrand("RAST", className="ms-2", href='/'))
-            ],
-                align="bottom",
-                className="g-0"),
-            dbc.Row([
-                dbc.Col([
-                    dbc.Nav([
-                        dbc.NavItem(app_button),
-                    ],
-                        navbar=True
-                    )
-                ],
-                    width={"size": "auto"})
-            ],
-                align="right"),
-            dbc.Row([
-                dbc.Col([
-                    dbc.Nav([
-                        dbc.NavItem(offcanvas),
-                    ],
-                        navbar=True
-                    )
-                ],
-                    width={"size": "auto"})
-            ],
-                align="left"),
-            # dbc.Col(dbc.NavbarToggler(id="navbar-toggler", n_clicks=0)),
-        ],
-        fluid=True
-    ),
-    color="primary",
-    dark=True,
-)
 
 navbar7 = dbc.NavbarSimple(
     children=[
@@ -879,16 +803,6 @@ def initialize_data(href):
     # Create figure
     fig = go.Figure()
 
-    # Add scatter points with labels
-    fig.add_trace(go.Scatter(
-        x=growth_score,
-        y=hype_score_log,
-        mode="markers+text",
-        text=companies,
-        textposition="top center",
-        textfont=dict(size=8),
-        marker=dict(size=10, color="#953AF6", line=dict(width=2, color="white"))
-    ))
 
     # Midpoints for quadrants (here using 0.5, adjust if needed, 1.386 for y because log1p(1+2)
     x_mid, y_mid = 0.5, 1.386
@@ -908,13 +822,43 @@ def initialize_data(href):
     fig.add_shape(type="rect", x0=0, x1=x_mid, y0=0, y1=y_mid,
                   fillcolor="lightgray", opacity=0.2, line_width=0)
     fig.add_shape(type="rect", x0=x_mid, x1=1, y0=0, y1=y_mid,
-                  fillcolor="white", opacity=0.2, line_width=0)
+                  fillcolor="#FFD000", opacity=0.2, line_width=0)
 
     # Add quadrant labels
     fig.add_annotation(x=0.75, y=y1-0.05, text="Hot & hyped", showarrow=False, font=dict(size=10), bgcolor="white")
     fig.add_annotation(x=0.25, y=y1-0.05, text="Bubble zone", showarrow=False, font=dict(size=10), bgcolor="white")
     fig.add_annotation(x=0.25, y=0.05, text="Steady, Forgotten", showarrow=False, font=dict(size=10), bgcolor="white")
     fig.add_annotation(x=0.75, y=0.05, text="Undervalued gems", showarrow=False, font=dict(size=10), bgcolor="white")
+
+    # Marking points as gold and bolded if in the "undervalued gems", otherwise as purple
+    marker_colors = [
+        "#C58400" if (x > x_mid and y < y_mid) else "#953AF6"
+        for x, y in zip(growth_score, hype_score_log)
+    ]
+
+    text_font = [
+        dict(size=8, weight="bold") if (x > x_mid and y < y_mid) else dict(size=8)
+        for x, y in zip(growth_score, hype_score_log)
+    ]
+
+    # Alternate text positions to try to limit overlapping
+    text_positions = ['top center' if i % 2 == 0 else 'bottom center' for i in range(len(growth_score))]
+
+
+    # Add scatter points with labels
+    fig.add_trace(go.Scatter(
+        x=growth_score,
+        y=hype_score_log,
+        mode="markers+text",
+        text=companies,
+        textposition=text_positions,
+        textfont=dict(size=8),
+        marker=dict(
+            size=10,
+            color=marker_colors,
+            line=dict(width=2, color="white")
+        )
+    ))
 
     # Layout tweaks
     #fig.update_layout(layout_main_graph)
@@ -954,7 +898,7 @@ def enable_slider(selection, scenario_value):
     else:
         return True
 
-# Callback to update the URL based on the dropdown selection
+# Callback to update the URL based on the dropdown selection and track the dataset selected via posthog
 @app.callback(
     Output('url-input', 'pathname'),
     Input("dataset-selection", "value"),
@@ -976,6 +920,18 @@ def update_url(data_selection, current_pathname):
     if current_company == data_selection:
         return dash.no_update
     # Update the pathname with the selected dataset
+
+    """
+    Posthog event
+    """
+    posthog.capture(
+        distinct_id='user_or_session_id',  # replace with real user/session ID
+        event='dash_select_changed',
+        properties={
+            'location': 'dash_app',
+            'selected_value': data_selection
+        }
+    )
     return f"/?company={urllib.parse.quote(data_selection)}"
 
 # Callback to update the dropdown selection based on the URL
@@ -2540,7 +2496,6 @@ def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, arpu_grow
     # Input(component_id='date-picker', component_property='value'),  # Take date-picker date
     Input(component_id='users-dates-formatted', component_property='data'),
     Input(component_id='total-assets', component_property='data'),
-    #Input(component_id='dataset-selection', component_property='value'),
     Input(component_id='users-dates-raw', component_property='data'),
     Input(component_id='latest-market-cap', component_property='data'),  # Stores the current (now) company market cap
     # State(component_id='valuation-over-time', component_property='data'),
