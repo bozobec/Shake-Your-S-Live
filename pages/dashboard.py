@@ -751,15 +751,14 @@ welcome_timeline = html.Div([
     id='welcome-timeline',
     children=[
         dmc.TimelineItem(
-            title="Choose Your Dataset",
+            title="Choose a company",
             bullet=DashIconify(icon="teenyicons:add-solid", width=12),
             #lineVariant="dashed",
             color="dimmed",
             children=[
                 dmc.Text(
                     [
-                        "Use the dropdown menu on the side to select a dataset. Analyze its growth and get a "
-                        "feeling for when the growth is going to end.",
+                        "Use the dropdown menu on the side to select a company. Visualize its valuation and growth.",
                         dmc.Anchor("", href="#", size="sm"),
                     ],
                     color="dimmed",
@@ -768,7 +767,7 @@ welcome_timeline = html.Div([
             ],
         ),
         dmc.TimelineItem(
-            title="Explore Growth and Valuation",
+            title="Explore growth and valuation",
             bullet=DashIconify(icon="teenyicons:adjust-vertical-alt-outline", width=12),
             lineVariant="dashed",
             children=[
@@ -1198,7 +1197,7 @@ graph_hype = dmc.Card(children=[
         mt="md",
         mb="xs",
     ),
-    html.Div(id='hyped-ranking-graph'),
+    dcc.Graph(id='hyped-ranking-graph', config=config_graph),
 ], withBorder=True, shadow='lg', radius='md')
 
 
@@ -1214,7 +1213,7 @@ def layout(company=None, **other_unknown_query_strings):
                     #dmc.Col(navbar_column, span="auto", order=1),
                     dmc.Col([
                         dmc.LoadingOverlay(graph_card), dmc.Space(h=20), dmc.LoadingOverlay(table_hype),
-                        #dmc.LoadingOverlay(graph_hype)
+                        dmc.LoadingOverlay(graph_hype)
                         # valuation_over_time_card  # Comment this line to remove the analysis graphs
                     ], span=12, lg=6, orderXs=2, orderSm=2, orderLg=2),
                     dmc.Col([hype_meter_card, dmc.Space(h=20), functionalities_card], span=12, lg=3, orderXs=3, orderSm=3,

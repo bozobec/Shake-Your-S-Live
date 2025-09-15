@@ -53,6 +53,16 @@ app.index_string = """<!DOCTYPE html>
           gtag('js', new Date());
           gtag('config', 'G-DE44VVN8LR');
         </script>
+        
+        <!-- PostHog -->
+        <script src="https://eu.i.posthog.com/static/array.js"></script>
+        <script>
+          posthog.init('phc_b1l76bi8dgph2LI23vhWTdSNkiL34y2dkholjYEC7gw', {
+            api_host: 'https://eu.i.posthog.com',
+            person_profiles: 'always'
+          });
+        </script>
+        
         <meta name="RAST | Customer-based companies valuation" content="RAST is a tool for valuating customer-based or
         user-based publicly traded companies">
         <title>Tech Valuation tool - RAST</title>
@@ -840,6 +850,7 @@ server = app.server
 # Callback loading and storing the company information
 @app.callback(
     Output('all-companies-information', 'data'),
+    Output(component_id='hyped-ranking-graph', component_property='figure'),  # Update graph 1
     Input('url', 'href') # Triggered once when the page is loaded
 )
 def initialize_data(href):
@@ -849,7 +860,87 @@ def initialize_data(href):
     all_companies_information_store = df_all_companies_information.to_dict('records')
 
     # Creates the graph mapping companies
-    return all_companies_information_store
+    # Example company data
+    #companies = ["Company A", "Company B", "Company C", "Company D"]
+    companies = df_all_companies_information["Company Name"].tolist()
+    growth_score = df_all_companies_information["Growth Score"].tolist()
+    hype_score = df_all_companies_information["Hype Score"]
+    # Normalizing of hype_score because growth score values already range from 0 to 1
+    min_hype_val = min(hype_score)
+    max_hype_val = max(hype_score)
+
+    hype_score_normalized = [(x - min_hype_val) / (max_hype_val - min_hype_val) for x in hype_score]
+
+    # Shift to make all positive, then log
+    hype_score_log = np.log1p(hype_score + 2)  # +2 shifts so -1 becomes 1
+
+
+
+    # Create figure
+    fig = go.Figure()
+
+    # Add scatter points with labels
+    fig.add_trace(go.Scatter(
+        x=growth_score,
+        y=hype_score_log,
+        mode="markers+text",
+        text=companies,
+        textposition="top center",
+        textfont=dict(size=8),
+        marker=dict(size=10, color="#953AF6", line=dict(width=2, color="white"))
+    ))
+
+    # Midpoints for quadrants (here using 0.5, adjust if needed, 1.386 for y because log1p(1+2)
+    x_mid, y_mid = 0.5, 1.386
+    y1= max(hype_score_log)
+
+    # Add quadrant lines
+    fig.add_shape(type="line", x0=x_mid, x1=x_mid, y0=0, y1=y1,
+                  line=dict(dash="dash", width=2, color="black"))
+    fig.add_shape(type="line", x0=0, x1=1, y0=y_mid, y1=y_mid,
+                  line=dict(dash="dash", width=2, color="black"))
+
+    # Optional: Add shaded quadrants
+    fig.add_shape(type="rect", x0=x_mid, x1=1, y0=y_mid, y1=y1,
+                  fillcolor="lightgray", opacity=0.2, line_width=0)
+    fig.add_shape(type="rect", x0=0, x1=x_mid, y0=y_mid, y1=y1,
+                  fillcolor="white", opacity=0.2, line_width=0)
+    fig.add_shape(type="rect", x0=0, x1=x_mid, y0=0, y1=y_mid,
+                  fillcolor="lightgray", opacity=0.2, line_width=0)
+    fig.add_shape(type="rect", x0=x_mid, x1=1, y0=0, y1=y_mid,
+                  fillcolor="white", opacity=0.2, line_width=0)
+
+    # Add quadrant labels
+    fig.add_annotation(x=0.75, y=y1-0.05, text="Hot & hyped", showarrow=False, font=dict(size=10), bgcolor="white")
+    fig.add_annotation(x=0.25, y=y1-0.05, text="Bubble zone", showarrow=False, font=dict(size=10), bgcolor="white")
+    fig.add_annotation(x=0.25, y=0.05, text="Steady, Forgotten", showarrow=False, font=dict(size=10), bgcolor="white")
+    fig.add_annotation(x=0.75, y=0.05, text="Undervalued gems", showarrow=False, font=dict(size=10), bgcolor="white")
+
+    # Layout tweaks
+    #fig.update_layout(layout_main_graph)
+    fig.update_layout(
+        #title="Hype-Growth quadrant",
+        xaxis=dict(title="Growth potential", range=[0, 1]),
+        yaxis=dict(
+            title="Hype level",
+            #range=[-2, 12],
+            #type="log",  # 🔹 log scale
+            #autorange=True  # auto-fit the range
+        ),
+        plot_bgcolor="white",
+        dragmode=False,
+        clickmode=None,
+        #config = {'scrollZoom': False},
+        margin=go.layout.Margin(
+            l=0,  # left margin
+            r=0,  # right margin
+            b=0,  # bottom margin
+            t=20,  # top margin
+        ),
+        #width=700, height=600
+    )
+
+    return all_companies_information_store, fig
 
 # Callback to enable the slider if "Custom" is selected
 @app.callback(
