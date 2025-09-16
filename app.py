@@ -934,7 +934,7 @@ def update_url(data_selection, current_pathname):
     )
     return f"/?company={urllib.parse.quote(data_selection)}"
 
-# Callback to update the dropdown selection based on the URL
+# Callback to update the dropdown selection based on the URL.
 @app.callback(
     [Output('dataset-selection', 'value'),
      Output('dataset-selected-url', 'data')],
