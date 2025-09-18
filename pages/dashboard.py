@@ -1193,15 +1193,6 @@ graph_hype = dmc.Card(children=[
     dcc.Graph(id='hyped-ranking-graph', config=config_graph),
 ], withBorder=True, shadow='lg', radius='md')
 
-# Testing stuff
-card_test = dmc.Card(children=[
-    html.Div([
-        html.Div(id="highcharts-container", style={"width": "600px", "height": "400px"}),
-        DeferScript(src="https://code.highcharts.com/highcharts.js"),
-        DeferScript(src="/assets/highcharts-init.js")  # your init script
-    ]),
-], withBorder=True, shadow='lg', radius='md')
-
 
 
 
