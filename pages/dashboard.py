@@ -22,7 +22,7 @@ import time
 from dash.exceptions import PreventUpdate
 import random
 import dash_daq as daq
-from dash_extensions import DeferScript
+#from dash_extensions import DeferScript
 
 
 register_page(
