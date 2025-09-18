@@ -22,6 +22,7 @@ import time
 from dash.exceptions import PreventUpdate
 import random
 import dash_daq as daq
+from dash_extensions import DeferScript
 
 
 register_page(
@@ -122,14 +123,7 @@ hype_meter_indicator_progress = dbc.Progress(
         ],
     style={"height": "5px", "borderRadius": "0px"},
 )
-reset_parameters_button = dmc.Button(
-    id="reset-parameters",
-    children="Reset Parameters to Default",
-    leftIcon=DashIconify(icon="fluent:arrow-reset-24-filled"),
-    size="xs",
-    variant="outline",
-    disabled="True",
-        ),
+
 
 # Hype meter
 hype_meter_bootstrap = dbc.Progress(
@@ -249,7 +243,7 @@ slider_discount_rate = dmc.Slider(
             id="range-discount-rate",
             min=2,
             max=20,
-            value=5,
+            value=10,
             step=0.1,
             marks=[
                 {"value": 2, "label": "2%"},
@@ -448,14 +442,15 @@ product_maturity_graph_message = dmc.Alert(
 
 
 # Scenario picker
-data_scenarios = ["Most Probable Scenario", "Custom"]
+data_scenarios = ["Worst", "Base", "Best", "Custom"]
 
-scenarios_picker = dmc.Stack(
-    [dmc.SegmentedControl(
+scenarios_picker = dmc.SegmentedControl(
         data=data_scenarios,
+        value="Base",
+        fullWidth=True,
+        color="#953AF6",
         radius=20,
-        id="scenarios-picker")],
-)
+        id="scenarios-picker")
 
 # Main plot definition
 main_plot = go.Figure()
@@ -526,7 +521,7 @@ functionalities_card = dmc.Card(
     children=[
         dmc.Group(
             [
-                dmc.Title("Valuation Drivers", order=5),
+                dmc.Title("Scenarios analysis", order=5),
             ],
             position="apart",
             mt="md",
@@ -540,9 +535,11 @@ functionalities_card = dmc.Card(
         #),
         #dmc.Space(h=10),
         dmc.Space(h=10),
+        scenarios_picker,
         # Plateau slider
         html.Div(
             children=[
+                dmc.Space(h=10),
                 dmc.Group([
                     dmc.Text(
                         "Growth Forecast",
@@ -568,9 +565,6 @@ functionalities_card = dmc.Card(
                         ),
                 ],
                     spacing=5),
-
-                dmc.Space(h=10),
-                dmc.Container(scenarios_picker),
             ]),
         dmc.Space(h=10),
         html.Div(slider_k, style={"marginLeft":15, "marginRight": 15}),
@@ -1009,7 +1003,6 @@ hype_meter_card = dmc.Card(
             style={'display':'inline-block'}
         ),
         dmc.Space(h=10),
-        dmc.Center(reset_parameters_button),
     ],
     id="hype-meter-card",
     style={'display': 'none'},
@@ -1198,6 +1191,15 @@ graph_hype = dmc.Card(children=[
         mb="xs",
     ),
     dcc.Graph(id='hyped-ranking-graph', config=config_graph),
+], withBorder=True, shadow='lg', radius='md')
+
+# Testing stuff
+card_test = dmc.Card(children=[
+    html.Div([
+        html.Div(id="highcharts-container", style={"width": "600px", "height": "400px"}),
+        DeferScript(src="https://code.highcharts.com/highcharts.js"),
+        DeferScript(src="/assets/highcharts-init.js")  # your init script
+    ]),
 ], withBorder=True, shadow='lg', radius='md')
 
 

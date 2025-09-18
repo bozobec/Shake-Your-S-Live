@@ -114,14 +114,7 @@ hype_meter_indicator_progress = dbc.Progress(
     ],
     style={"height": "5px", "borderRadius": "0px"},
 )
-reset_parameters_button = dmc.Button(
-    id="reset-parameters",
-    children="Reset Parameters to Default",
-    leftIcon=DashIconify(icon="fluent:arrow-reset-24-filled"),
-    size="xs",
-    variant="outline",
-    disabled="True",
-),
+
 
 # Hype meter
 hype_meter_bootstrap = dbc.Progress(
@@ -393,15 +386,7 @@ navbar7 = dbc.NavbarSimple(
 
 
 
-# Scenario picker
-data_scenarios = ["Most Probable Scenario", "Custom"]
 
-scenarios_picker = dmc.Stack(
-    [dmc.SegmentedControl(
-        data=data_scenarios,
-        radius=20,
-        id="scenarios-picker")],
-)
 
 # Main plot definition
 main_plot = go.Figure()
@@ -889,14 +874,17 @@ def initialize_data(href):
 # Callback to enable the slider if "Custom" is selected
 @app.callback(
     Output("range-slider-k", "disabled"),
+    Output("range-arpu-growth", "disabled"),
+    Output("range-discount-rate", "disabled"),
+    Output("range-profit-margin", "disabled"),
 
     [Input("dataset-selection", "value"),
     Input("scenarios-picker", "value")])
 def enable_slider(selection, scenario_value):
     if scenario_value == "Custom":
-        return False
+        return False, False, False, False
     else:
-        return True
+        return True, True, True, True
 
 # Callback to update the URL based on the dropdown selection and track the dataset selected via posthog
 @app.callback(
@@ -991,13 +979,10 @@ def select_value(value):
     Output(component_id='users-dates-formatted', component_property='data'),
     # Stores the users + dates formatted for computation
     Output(component_id='graph-unit', component_property='data'),  # Stores the graph unit (y axis legend)
-    # Output(component_id='main-graph0', component_property='figure'), # Stores the users + dates formatted for computation
     Output("graph-title", "children"),
     Output("graph-subtitle", "children"),
-    # Output(component_id='main-plot-container', component_property='figure'), # Stores the users + dates formatted for computation
     Output(component_id='profit-margin', component_property='style'),  # Show/hide depending on company or not
     Output(component_id='discount-rate', component_property='style'),  # Show/hide depending on company or not
-    # Output(component_id='arpu-card', component_property='style'),  # Show/hide depending on company or not
     Output(component_id='hype-meter-card', component_property='style'),  # Show/hide depending on company or not
     Output(component_id='arpu-growth', component_property='style'),  # Show/hide depending on company or not
     Output(component_id='profit-margin-container', component_property='children'),
@@ -1005,11 +990,11 @@ def select_value(value):
     # Change the text below the profit margin slider
     Output(component_id='range-profit-margin', component_property='marks'),
     # Adds a mark to the slider if the profit margin > 0
-    Output(component_id='range-profit-margin', component_property='value'),
+    #Output(component_id='range-profit-margin', component_property='value'),
     # Sets the value to the current profit margin
     Output(component_id='total-assets', component_property='data'),  # Stores the current arpu
     Output(component_id='users-revenue-correlation', component_property='data'),  # Stores the correlation between
-    Output(component_id='range-discount-rate', component_property='value'),
+    #Output(component_id='range-discount-rate', component_property='value'),
     Output(component_id='initial-sliders-values', component_property='data'),  # Stores the default slider values
     Output(component_id='data-source', component_property='children'),  # Stores the source of the data shown
     Output(component_id='data-selection-counter', component_property='data'),  # Flags that the data has changed
@@ -1067,9 +1052,6 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
         dates_formatted = dates + YEAR_OFFSET
         dates_unformatted = np.array(df["Date"])
         users_formatted = np.array(df["Users"]).astype(float) * 1000000
-        print("fetcheddata")
-        print(dates)
-        print(users_formatted)
 
         # Fetches Max net Margin and stores it
         # max_net_margin = df_all_companies.loc[df_all_companies["Company Name"] == dropdown_value, "Max Net Margin"]
@@ -1194,7 +1176,7 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
             users_dates_formatted_dict, y_legend_title, title, subtitle, \
             show_company_functionalities, show_company_functionalities, show_company_functionalities, \
             show_company_functionalities, text_profit_margin, text_best_profit_margin, marks_profit_margin_slider, \
-            value_profit_margin_slider, total_assets, users_revenue_regression, value_discount_rate_slider, \
+            total_assets, users_revenue_regression, \
             initial_sliders_values, source_string, True, hide_loader, show_company_functionalities, symbol_company, max_net_margin
     except Exception as e:
         print(f"Error fetching or processing dataset: {str(e)}")
@@ -1203,7 +1185,6 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
 
 @app.callback(
     # Output("loading-component", "loading"),
-    Output(component_id='range-slider-k', component_property='value'),  # Reset slider value to the best value
     Output(component_id='initial-sliders-values', component_property='data', allow_duplicate=True),
     Output(component_id="accordion-main", component_property="value"),
     Output(component_id="plateau-message", component_property="title"),
@@ -1225,13 +1206,16 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
     Output(component_id='hype-market-cap', component_property='children'),  # Stores the current arpu
     Output(component_id='current-market-cap', component_property='data'),  # Stores the company market cap
     Output(component_id='latest-market-cap', component_property='data'),  # Stores the current (now) company market cap
-    Output(component_id='range-arpu-growth', component_property='value'),  # Stores the current (now) company market cap
     Output(component_id='growth-rate-graph-message', component_property='children'),
     Output(component_id='growth-rate-graph-message', component_property='color'),
     Output(component_id='product-maturity-graph-message', component_property='children'),
     Output(component_id='product-maturity-graph-message', component_property='color'),
     Output(component_id='revenue-graph-message', component_property='children'),  # Prints the revenue graph message
     Output(component_id='revenue-graph-message', component_property='color'),  # Prints the revenue graph message color
+    Output(component_id='range-slider-k', component_property='value'),  # Reset slider value to the best value
+    Output("range-arpu-growth", "value", allow_duplicate=True),
+    Output("range-discount-rate", "value", allow_duplicate=True),
+    Output("range-profit-margin", "value", allow_duplicate=True),
 
     Input(component_id='dataset-selection', component_property='value'),  # Take dropdown value
     Input(component_id='date-picker', component_property='value'),  # Take date-picker date
@@ -1242,10 +1226,11 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
     Input(component_id='users-dates-raw', component_property='data'),
     Input(component_id='initial-sliders-values', component_property='data'),
     State(component_id='symbol-dataset', component_property='data'),
+    State(component_id='max-net-margin', component_property='data'), # Max net margin opf the selected company
     prevent_initial_call=True)
 # Analysis to load the different scenarios (low & high) when a dropdown value is selected
 def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
-              users_revenue_correlation, key_unit, df_raw, initial_slider_values, symbol_dataset):
+              users_revenue_correlation, key_unit, df_raw, initial_slider_values, symbol_dataset, max_net_margin):
     print("Starting scenarios calculation")
     t1 = time.perf_counter(), time.process_time()
     date_picked_formatted = main.date_formatting_from_string(date_picked)
@@ -1343,15 +1328,6 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
     # Growth score calculation (early rocket: low u, high r): BIG GS | tired incumbent (high u, low r): low GS
     # Here we take a simple 0.5 weight, different weight could be given to the headroom or core
     GS = 0.5*g/r_ref_global+0.5*h
-
-    print("Growth score calculation")
-    print("users",users)
-    print("k_scenarios",k_scenarios)
-    print("u",u)
-    print("g",g)
-    print("h",h)
-    print("rref",r_ref_global)
-    print("GS",GS)
 
     # Growth Rate
     rd = main.discrete_growth_rate(users[0:data_len], dates[0:data_len] + 1970)
@@ -1530,15 +1506,16 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
     min_limit_slider_label = data_ignored_array[int(len(data_ignored_array)*percentage_limit_label)]
     print(max_limit_slider_label)
     print(min_limit_slider_label)
+    print(highest_r2_index)
     # Slider max definition
     if k_scenarios[-1] >= 1_000_000_000:  # If the max value of the slider is over 1 B
-        if highest_r2_index > max_limit_slider_label:  # If the best = max, then display them side by side"
+        if highest_r2_index >= max_limit_slider_label:  # If the best = max, then display them side by side
             marks_slider = [
                 {"value": data_ignored_array[0], "label": f"{k_scenarios[0] / 1000000000:.1f}B"},
                 {"value": highest_r2_index},
                 {"value": data_ignored_array[-1], "label": f"★{k_scenarios[-1] / 1000000000:.1f}B"},
             ]
-        elif highest_r2_index < min_limit_slider_label:  # If the best = mind, then display them side by side"
+        elif highest_r2_index <= min_limit_slider_label:  # If the best = min, then display them side by side
             marks_slider = [
                 {"value": data_ignored_array[0], "label": f"{k_scenarios[0] / 1000000000:.1f}B ★"},
                 {"value": highest_r2_index},
@@ -1551,12 +1528,12 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
                 {"value": data_ignored_array[-1], "label": f"{k_scenarios[-1] / 1000000000:.1f}B"},
             ]
     elif k_scenarios[-1] >= 1_000_000:
-        if highest_r2_index > max_limit_slider_label:
+        if highest_r2_index >= max_limit_slider_label:
             marks_slider = [
                 {"value": data_ignored_array[0], "label": f"{k_scenarios[0] / 1000000:.0f}M"},
                 {"value": data_ignored_array[-1], "label": f"★{k_scenarios[-1] / 1000000:.0f}M"},
             ]
-        elif highest_r2_index < min_limit_slider_label:
+        elif highest_r2_index <= min_limit_slider_label:
             marks_slider = [
                 {"value": data_ignored_array[0], "label": f"{k_scenarios[0] / 1000000:.0f}M ★"},
                 {"value": data_ignored_array[-1], "label": f"{k_scenarios[-1] / 1000000:.0f}M"},
@@ -1569,12 +1546,12 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
             ]
 
     else:  # If K max smaller than 1 million
-        if highest_r2_index > max_limit_slider_label:
+        if highest_r2_index >= max_limit_slider_label:
             marks_slider = [
                 {"value": data_ignored_array[0], "label": f"{k_scenarios[0] / 1000:.0f}K"},
                 {"value": data_ignored_array[-1], "label": f"★{k_scenarios[-1] / 1000:.0f}K"},
             ]
-        elif highest_r2_index < min_limit_slider_label:
+        elif highest_r2_index <= min_limit_slider_label:
             marks_slider = [
                 {"value": data_ignored_array[0], "label": f"{k_scenarios[0] / 1000:.0f}K ★"},
                 {"value": data_ignored_array[-1], "label": f"{k_scenarios[-1] / 1000:.0f}K"},
@@ -1686,19 +1663,72 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
     initial_slider_values['slider_k'] = highest_r2_index
     initial_slider_values['slider_arpu'] = arpu_growth
 
+    # Growth for each scenario
+    best_growth = df_sorted['K'].idxmax()
+    worst_growth = df_sorted['K'].idxmin()
+    base_growth = highest_r2_index
+
+    # Profit margin for each scenario - Important note: same function used for the valuation graph. If changes are made
+    # here, they should be reflected there
+
+    profit_margin_array = np.array(df_dataset['Profit Margin'])
+    profit_margin_previous_year = profit_margin_array[-4:]
+    average_profit_margin = sum(profit_margin_previous_year) / 4
+    if average_profit_margin <= 0:
+        # min_profit_margin = 0.01
+        min_profit_margin = max_net_margin * 0.8  # Taking 80% of the max profit margin as a lower scenario
+        # max_profit_margin = 0.1
+        max_profit_margin = max_net_margin
+    else:
+        # min_profit_margin = average_profit_margin
+        min_profit_margin = max_net_margin * 0.8
+        # max_profit_margin = average_profit_margin + 0.05
+        # max_profit_margin = max(profit_margin_valuation) + 0.05
+        max_profit_margin = max_net_margin  # High scenario taking the max theoretical profit margin
+
+    best_profit_margin = max_profit_margin
+    worst_profit_margin = min_profit_margin
+    base_profit_margin = (min_profit_margin + max_profit_margin) / 2
+
+    # ARPU growth for each scenario
+
+    worst_arpu_growth = 1  # Low scenario
+    best_arpu_growth = 5  # High scenario
+    base_arpu_growth = 3
+
+    # Discount rate for each scenario --> set as 10%
+    discount_rate_slider_value = 10
+
+    if scenario_value == "Worst":
+        profit_margin_slider_value = worst_profit_margin
+        arpu_growth_slider_value = worst_arpu_growth
+        growth_slider_value = worst_growth
+    elif scenario_value == "Base":
+        profit_margin_slider_value = base_profit_margin
+        arpu_growth_slider_value = base_arpu_growth
+        growth_slider_value = base_growth
+    elif scenario_value == "Best":
+        profit_margin_slider_value = best_profit_margin
+        arpu_growth_slider_value = best_arpu_growth
+        growth_slider_value = best_growth
+    else:
+        profit_margin_slider_value = no_update
+        arpu_growth_slider_value = no_update
+        growth_slider_value = no_update
+
     t2 = time.perf_counter(), time.process_time()
     print(f" Scenarios calculation")
     print(plateau_message_color)
     print(f" Real time: {t2[0] - t1[0]:.2f} seconds")
     print(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
-    return highest_r2_index, initial_slider_values, \
+    return initial_slider_values, \
         ["valuation"], plateau_message_title, plateau_message_body, plateau_message_color, plateau_icon_color, \
         correlation_message_title, correlation_message_body, \
         correlation_message_color, correlation_icon_color, product_maturity_accordion_title, product_maturity_accordion_body,\
         product_maturity_accordion_color, product_maturity_accordion_icon_color, df_sorted_dict, slider_max_value, marks_slider, current_arpu, hype_market_cap, \
-        current_market_cap, latest_market_cap, arpu_growth, growth_rate_graph_message1, growth_rate_graph_color, \
+        current_market_cap, latest_market_cap, growth_rate_graph_message1, growth_rate_graph_color, \
         product_maturity_graph_message, product_maturity_graph_message_color, revenue_graph_message, \
-        revenue_graph_message_color
+        revenue_graph_message_color, growth_slider_value, arpu_growth_slider_value, discount_rate_slider_value, profit_margin_slider_value
 
 
 @app.callback([
@@ -2956,52 +2986,10 @@ def toggle_offcanvas(n1, is_open):
     return is_open
 
 
-# Callback activating the button resetting the parameters
-@app.callback(
-    Output(component_id='reset-parameters', component_property='disabled'),
-    Input(component_id='initial-sliders-values', component_property='data'),
-    Input(component_id='range-slider-k', component_property='value'),
-    Input(component_id='range-profit-margin', component_property='value'),
-    Input(component_id='range-discount-rate', component_property='value'),
-    Input(component_id='range-arpu-growth', component_property='value'),
-    prevent_initial_call=True,
-)
-def activate_reset_button(initial_sliders_values, slider_k, slider_profit_margin, slider_discount_rate,
-                          slider_arpu_growth):
-    sliders_moved = any([
-        int(slider_k) != int(initial_sliders_values['slider_k']),
-        float(slider_profit_margin) != float(initial_sliders_values['slider_profit_margin']),
-        float(slider_discount_rate) != float(initial_sliders_values['slider_discount_rate']),
-        float(slider_arpu_growth) != float(initial_sliders_values['slider_arpu'])
-    ])
-    if sliders_moved == False:
-        disabled_button = True
-
-    else:
-        disabled_button = False
-
-    return disabled_button
 
 
-# Callback resetting the initial values
-@app.callback(
-    Output(component_id='range-slider-k', component_property='value', allow_duplicate=True),
-    Output(component_id='range-profit-margin', component_property='value', allow_duplicate=True),
-    Output(component_id='range-discount-rate', component_property='value', allow_duplicate=True),
-    Output(component_id='range-arpu-growth', component_property='value', allow_duplicate=True),
-    Input(component_id='reset-parameters', component_property='n_clicks'),
-    Input(component_id='initial-sliders-values', component_property='data'),
-    prevent_initial_call=True,
-)
-def activate_reset_button(n_clicks, initial_sliders_values):
-    if n_clicks is None:
-        raise dash.exceptions.PreventUpdate
-    slider_k = initial_sliders_values['slider_k']
-    slider_profit_margin = initial_sliders_values['slider_profit_margin']
-    slider_discount_rate = initial_sliders_values['slider_discount_rate']
-    slider_arpu_growth = initial_sliders_values['slider_arpu']
 
-    return slider_k, slider_profit_margin, slider_discount_rate, slider_arpu_growth
+
 '''
 # Callback changing the example hypemeter on the homepage
 @app.callback(
