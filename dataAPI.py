@@ -321,28 +321,50 @@ def get_hyped_companies(hyped):
 # Function fetching the list of all the companies (companies sheet on airtable) and the related information
 # (max net margin, other info, etc.)
 def get_hyped_companies_data():
-    print("Fetching the dataset data")
+    print("Fetching the dataset data...")
     auth_token = "patUQKc4meIVaiLIw.efa35a957210ca18edc4fc00ae1b599a6a49851b8b7c59994e4384c19c20fcd1"
     headers = {
         "Authorization": f"Bearer {auth_token}"
     }
-    try:
-        url = "https://api.airtable.com/v0/appm3ffcu38jyqhi3/Companies?fields%5B%5D=Company_Name&fields%5B%5D=Hype_meter_value&fields%5B%5D=Growth_score&fields%5B%5D=Max_Net_Margin&view=Most+hyped+companies"
-        response = requests.get(url, headers=headers)  # Call the Airtable data with the specified filter
-        data = response.json()  # Transforms it into a dictionary
 
-        #Format the data into a dataframe including only the Date and the Users
-        records = data['records']
-        formatted_data = []
-        for record in records:
-            formatted_data.append({
-                'Company Name': record['fields']['Company_Name'],
-                'Hype Score': record['fields']['Hype_meter_value'],
-                'Max Net Margin': record['fields']['Max_Net_Margin'],
-                'Growth Score': record['fields']['Growth_score']
-            })
-        df = pd.DataFrame(formatted_data)  # Create a DataFrame from the sample data
-        # sorted_df = df.sort_values(by='Date')  # Sort df to avoid bugs linked to wrong API call
+    base_url = "https://api.airtable.com/v0/appm3ffcu38jyqhi3/Companies"
+    params = {
+        "fields[]": ["Company_Name", "Hype_meter_value", "Growth_score", "Max_Net_Margin"],
+        "view": "Most hyped companies"
+    }
+
+    all_records = []
+    offset = None
+
+    try:
+        while True:
+            # Add offset if we have one
+            if offset:
+                params["offset"] = offset
+
+            # Fetch one page of records
+            response = requests.get(base_url, headers=headers, params=params)
+            response.raise_for_status()
+            data = response.json()
+
+            # Append current batch
+            records = data.get("records", [])
+            for record in records:
+                fields = record.get("fields", {})
+                all_records.append({
+                    "Company Name": fields.get("Company_Name"),
+                    "Hype Score": fields.get("Hype_meter_value"),
+                    "Max Net Margin": fields.get("Max_Net_Margin"),
+                    "Growth Score": fields.get("Growth_score")
+                })
+
+            # Check if there’s another page
+            offset = data.get("offset")
+            if not offset:
+                break  # No more pages
+
+        df = pd.DataFrame(all_records)
+        print(f"Fetched {len(df)} records successfully.")
         return df
     except Exception as e:
         print(f"Error fetching dataset data: {str(e)}")

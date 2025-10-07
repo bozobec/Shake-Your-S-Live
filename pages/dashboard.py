@@ -24,7 +24,6 @@ import random
 import dash_daq as daq
 #from dash_extensions import DeferScript
 
-
 register_page(
     __name__,
     name='RAST | APP Dashboard for user-based companies valuation',
@@ -129,16 +128,49 @@ hype_meter_indicator_progress = dbc.Progress(
 hype_meter_bootstrap = dbc.Progress(
     children=
         [
-            dbc.Progress(value=10, color="#953AF6", bar=True, label="N-O Assets", id="hype-meter-noa"),
-            dbc.Progress(value=10, color="#F963F1", bar=True, label="Customer Equity", id="hype-meter-users"),
+            dbc.Progress(value=10, color="#C58400", bar=True, label="N-O Assets", id="hype-meter-noa"),
+            dbc.Progress(value=10, color="#FFD000", bar=True, label="Intrinsic value", id="hype-meter-users"),
             #dbc.Progress(value=20, color="#D1D1D1", bar=True, animated=True, striped=True, id="hype-meter-delta"),
-            dbc.Progress(value=10, color="#FFD000", bar=True, animated=True, striped=True, label="Hype", id="hype-meter-hype"),
+            dbc.Progress(value=10, color="white", bar=True, animated=True, striped=True, label="Hype", id="hype-meter-hype"),
             dbc.Tooltip("Non-Operating Assets: $3.0B", target="hype-meter-noa", id='hype-tooltip-noa', placement="top"),
-            dbc.Tooltip("Customer Equity: $3.0B", target="hype-meter-users", id='hype-tooltip-users', placement="top"),
+            dbc.Tooltip("Intrinsic value: $3.0B", target="hype-meter-users", id='hype-tooltip-users', placement="top"),
             #dbc.Tooltip("Delta depending on the chosen scenario", target="hype-meter-delta", id="tooltip-equity-text", placement="top"),
             dbc.Tooltip("Hype: $4.0B", target="hype-meter-hype", id='hype-tooltip-hype', placement="top"),
         ],
-    style={"height": "30px", "borderRadius": "30px"},
+    style={"height": "30px", "borderRadius": "0px"},
+)
+
+hype_meter_bootstrap_undervaluation = dbc.Progress(
+    children=
+        [
+            dbc.Progress(value=91.1025, color="white", bar=True, id="hype-meter-undervaluation-rest"),
+            dbc.Progress(value=8.8975, color="#FFD000", bar=True, striped=True, id="hype-meter-undervaluation-hype"),
+            #dbc.Progress(value=20, color="#D1D1D1", bar=True, animated=True, striped=True, id="hype-meter-delta"),
+            #dbc.Progress(value=10, color="#FFD000", bar=True, animated=True, striped=True, label="Hype", id="hype-meter-hype"),
+            #dbc.Tooltip("Non-Operating Assets: $3.0B", target="hype-meter-noa", id='hype-tooltip-noa', placement="top"),
+            #dbc.Tooltip("Hype: $3.0B", target="hype-meter-users", id='hype-tooltip-users', placement="top"),
+            #dbc.Tooltip("Delta depending on the chosen scenario", target="hype-meter-delta", id="tooltip-equity-text", placement="top"),
+            #dbc.Tooltip("Hype: $4.0B", target="hype-meter-hype", id='hype-tooltip-hype', placement="top"),
+        ],
+    #style={"height": "30px", "borderRadius": "30px"},
+    style={"height": "10px", "borderRadius": "0px"},
+)
+
+hype_meter_bootstrap_price = dbc.Progress(
+    children=
+        [
+            dbc.Progress(value=100, color="#953AF6", bar=True, label="Current price", id="hype-meter-price"),
+            dbc.Progress(value=0, color="white", bar=True, label="Current price", id="hype-meter-price-rest"),
+            #dbc.Progress(value=8.8975, color="#FFD000", bar=True, label="Customer Equity"),
+            #dbc.Progress(value=20, color="#D1D1D1", bar=True, animated=True, striped=True, id="hype-meter-delta"),
+            #dbc.Progress(value=10, color="#FFD000", bar=True, animated=True, striped=True, label="Hype", id="hype-meter-hype"),
+            #dbc.Tooltip("Non-Operating Assets: $3.0B", target="hype-meter-noa", id='hype-tooltip-noa', placement="top"),
+            #dbc.Tooltip("Hype: $3.0B", target="hype-meter-users", id='hype-tooltip-users', placement="top"),
+            #dbc.Tooltip("Delta depending on the chosen scenario", target="hype-meter-delta", id="tooltip-equity-text", placement="top"),
+            #dbc.Tooltip("Hype: $4.0B", target="hype-meter-hype", id='hype-tooltip-hype', placement="top"),
+        ],
+    #style={"height": "30px", "borderRadius": "30px"},
+    style={"height": "30px", "borderRadius": "0px"},
 )
 
 hype_meter_example = dbc.Progress(
@@ -965,6 +997,29 @@ hype_score_gauge = html.Div([
                 value=0
              )])
 
+line = html.Div(
+            style={
+                #"width": "2px",
+                "height": "20px",
+                #"backgroundColor": "black",
+                "borderLeft": "2px dotted black",
+                "marginLeft": "auto",
+                "marginBottom": 0,   # remove bottom margin
+                "marginTop": 0   # remove bottom margin
+            }
+        )
+line_middle = html.Div(
+            style={
+                #"width": "2px",
+                "height": "20px",
+                #"backgroundColor": "black",
+                "borderLeft": "2px dotted black",
+                "marginRight": "auto",
+                "marginBottom": 0,   # remove bottom margin
+                "marginTop": 0   # remove bottom margin
+            }
+        )
+
 hype_meter_card = dmc.Card(
     children=[
         dmc.Group(
@@ -979,12 +1034,18 @@ hype_meter_card = dmc.Card(
         ),
         #hype_meter,
         dmc.Stack([
-                dmc.Text("Market Cap: $10.1B", size="xs", weight=500, align="center", id="hype-market-cap"),
+                dmc.Text("Hype score, base case = 0.98", size="xs", weight=500, align="left", id="hype-score-text", m=0),
+                dmc.Text("Overvaluation", size="xs", weight=500, align="right", id="hype-overvaluation-label", m=0),
+                line,
+                hype_meter_bootstrap_undervaluation,
                 hype_meter_bootstrap,
-                dmc.Text("Hype Score: 0.98", size="xs", weight=500, align="center", id="hype-score-text"),
+                hype_meter_bootstrap_price,
+                line_middle,
+                dmc.Text("Market cap = $10.1B", size="xs", weight=500, align="left", id="hype-market-cap"),
                 #hype_score_gauge,
             ],
-            align="stretch"
+            align="stretch",
+            spacing="xs"
         ),
         dmc.Space(h=20),
         dmc.Text(

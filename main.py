@@ -556,13 +556,13 @@ def datepicker_limit(dataset_df):
 # the total market cap. The color changes the outline of the badge while the text changes its value
 def hype_meter_indicator_values(hype_ratio):
     if hype_ratio <= 0: # if hype ratio is smaller than 10%
-        indicator_color = "green"
-        indicator_text = "Not Hyped!"
-    if hype_ratio < 0.1: # if hype ratio is smaller than 10%
-        indicator_color = "green"
+        indicator_color = "teal"
+        indicator_text = "Undervalued!"
+    elif hype_ratio < 0.1: # if hype ratio is smaller than 10%
+        indicator_color = "orange"
         indicator_text = "Marginally Hyped"
     elif hype_ratio < 0.15: # if hype ratio is smaller than 15%
-        indicator_color = "yellow"
+        indicator_color = "orange"
         indicator_text = "Moderately Hyped"
     elif hype_ratio < 0.2: # if hype ratio is smaller than 20%
         indicator_color = "orange"

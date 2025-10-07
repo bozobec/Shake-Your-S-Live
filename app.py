@@ -774,15 +774,10 @@ def initialize_data(href):
     companies = df_all_companies_information["Company Name"].tolist()
     growth_score = df_all_companies_information["Growth Score"].tolist()
     hype_score = df_all_companies_information["Hype Score"]
-    # Normalizing of hype_score because growth score values already range from 0 to 1
-    min_hype_val = min(hype_score)
-    max_hype_val = max(hype_score)
 
-    hype_score_normalized = [(x - min_hype_val) / (max_hype_val - min_hype_val) for x in hype_score]
 
     # Shift to make all positive, then log
     hype_score_log = np.log1p(hype_score + 2)  # +2 shifts so -1 becomes 1
-
 
 
     # Create figure
@@ -1030,7 +1025,7 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
             symbol_company = df.loc[0, 'Symbol']
 
         # Creating the title & subtitle for the graph
-        title = dropdown_value + " - " + key_unit
+        title = dropdown_value + " | Revenue driver: " + key_unit
         title_image = dmc.Group([dropdown_value, dmc.Image(
             src="https://upload.wikimedia.org/wikipedia/commons/6/69/Airbnb_Logo_B%C3%A9lo.svg", height=10)])
         subtitle = "Explore " + str(dropdown_value) + "'s Historical " + key_unit + " data (Bars) and future growth " \
@@ -1329,6 +1324,9 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
     # Here we take a simple 0.5 weight, different weight could be given to the headroom or core
     GS = 0.5*g/r_ref_global+0.5*h
 
+    print("GS")
+    print(GS)
+
     # Growth Rate
     rd = main.discrete_growth_rate(users[0:data_len], dates[0:data_len] + 1970)
     average_rd = sum(rd[-3:])/3
@@ -1598,7 +1596,7 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
         else:
             current_market_cap = df_dataset.loc[closest_index, 'Market Cap'] * 1e3
         filtered_revenue = current_revenue_array[current_revenue_array != 0]
-        hype_market_cap = f"Market Cap: ${latest_market_cap / 1000:.2f}B"  # Formatted text for hype meter
+        hype_market_cap = f"Market Cap = ${latest_market_cap / 1000:.2f}B"  # Formatted text for hype meter
         quarterly_revenue = filtered_revenue * 1_000_000  # Getting in database
         yearly_revenue_quarters = sum(quarterly_revenue[-4:])
         average_users_past_year = (current_users + current_users_array[closest_index - 4]) / 2
@@ -2461,6 +2459,12 @@ def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, current_m
     Output(component_id="hype-meter-indicator", component_property="color"),
     Output(component_id="hype-meter-indicator", component_property="children"),
     Output(component_id="current-valuation-calculated", component_property="data"),
+    Output(component_id="hype-meter-undervaluation-hype", component_property="value"),  # Progress 1 colored value (hype)
+    Output(component_id="hype-meter-undervaluation-hype", component_property="color"),  # Progress 1 color
+    Output(component_id="hype-meter-undervaluation-rest", component_property="value"), # Progress 1 white part
+    Output(component_id="hype-meter-price", component_property="value"),
+    Output(component_id="hype-meter-price-rest", component_property="value"),
+    Output(component_id="hype-overvaluation-label", component_property="children"),
     [
         Input(component_id='scenarios-sorted', component_property='data'),
         Input("range-profit-margin", "value"),
@@ -2504,18 +2508,50 @@ def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, arpu_grow
     noa_tooltip = f"Non-Operating Assets: ${total_assets / 1e9:.2f} B. \n They represent additional valuable company " \
                   f"assets, such as Goodwill"
     customer_equity_ratio = total_customer_equity / current_market_cap * 100
-    customer_equity_tooltip = f"Customer Equity: ${total_customer_equity / 1e9:.2f} B.   It represents current and " \
-                              f"future customer-generated profit, calculated with the selected parameters with a " \
-                              f"discounted cashflow method"
+    customer_equity_tooltip = f"Core business value: ${total_customer_equity / 1e9:.2f} B.   The portion of value " \
+                              f"attributable to the company’s main profit-generating operations, " \
+                              f"estimated using a DCF approach."
+    # 3 Progress bars are displayed
+    # Progress 1: hype_ratio & hype_ratio_rest bar
+    # -> under_valuation shows hype/overvaluation, under_valuation_rest is the white part on the left
+    # Progress 2: intrinsic_value bar
+    # -> non_operating_assets_ratio, customer_equity_ratio (colored) & intrinsic_value_rest (white)
+    # Progress 3: price (market cap) bar
+    # -> only shows price if hype > 0, shows price and the price_rest_ratio if hype < 0
     hype_ratio = hype_total / current_market_cap * 100
-    if hype_total < 0.0:
-        hype_ratio = 0.0
+    hype_ratio_absolute = abs(hype_ratio)
+
+    if hype_total >= 0.0:
+        # Progress 1
+        hype_ratio_progress = hype_ratio_absolute
+        hype_ratio_rest = 100 - hype_ratio_absolute
+        hype_color_indicator = "#fa5252"    # red
+        # Progress 2
+        intrinsic_value_ratio_rest = 100 - (non_operating_assets_ratio + customer_equity_ratio)   # white part of the intrinsic value bar
+        # Progress 3
+        price_rest_ratio = 0.0
+        current_market_cap_ratio = 100  # the price bar is full if hype is positive
+        text_overvaluation = "Overvaluation"
+    # if hype is negative
+    else:
+        # Progress 1
+        hype_ratio_progress = hype_ratio_absolute
+        hype_ratio_rest = 100 - hype_ratio_absolute
+        hype_color_indicator = "#40c057"    # green
+        # Progress 2
+        intrinsic_value_ratio_rest = 0.0
+        # Progress 3
+        current_market_cap_ratio = hype_ratio_rest
+        price_rest_ratio = 100 - current_market_cap_ratio
+        text_overvaluation = "Undervaluation"
+
     hype_tooltip = f"Hype: ${hype_total / 1e9:.2f} B.  It reflects the current overvaluation of the company in terms " \
                    f"of market capitalization versus actual value."
     hype_indicator_color, hype_indicator_text = main.hype_meter_indicator_values(hype_ratio / 100)
 
-    return non_operating_assets_ratio, noa_tooltip, customer_equity_ratio, customer_equity_tooltip, hype_ratio, \
-        hype_tooltip, hype_indicator_color, hype_indicator_text, current_valuation
+    return non_operating_assets_ratio, noa_tooltip, customer_equity_ratio, customer_equity_tooltip, intrinsic_value_ratio_rest, \
+        hype_tooltip, hype_indicator_color, hype_indicator_text, current_valuation, hype_ratio_progress, hype_indicator_color, hype_ratio_rest, \
+        current_market_cap_ratio, price_rest_ratio, text_overvaluation
 
 
 # Callback calculating the valuation over time and displaying the functionalities & graph cards, and hiding the text
@@ -2761,6 +2797,7 @@ def graph_valuation_over_time(valuation_over_time_dict, date_picked, df_formatte
     hype_score = (latest_market_cap*1e6 - low_scenario_valuation[-1]) / \
                  (high_scenario_valuation[-1] - low_scenario_valuation[-1])
     print("hype score calculation")
+    print(hype_score)
     print(latest_market_cap)
     print(low_scenario_valuation[-1])
     print(high_scenario_valuation[-1])
@@ -3062,7 +3099,8 @@ def update_table(hype_choice):
         hype_score = df_sorted.iloc[i]['Hype Score']
         growth_score = df_sorted.iloc[i]['Growth Score']
 
-        # Determine badge color and label -> To-do: apply the function in .main to this
+        # Determine badge color and label -> To-do: apply the function in .main to this -> done, replace it by main.hype_meter_indicator_values
+        # badge_color, badge_label = main.hype_meter_indicator_values(hype_score)
         if hype_score > 2.5:
             badge_color = "red"
             badge_label = "Super hyped"
@@ -3097,7 +3135,8 @@ def update_table(hype_choice):
             html.Td(
                 dcc.Link(
                     company_name,
-                    href=f"https://rast.guru/app?company={company_name}"
+                    target="_blank",  # 👈 this makes it open in a new tab
+                    href=f"https://app.rast.guru/?company={company_name}"
                 ),
                 style={"width": "20%"}
             ),
