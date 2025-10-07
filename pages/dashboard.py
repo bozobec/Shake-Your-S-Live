@@ -915,7 +915,7 @@ graph_card = dmc.Card(
         dmc.Group(
                     [
                         dmc.Title("Welcome to RAST", id="graph-title", order=5),
-                        html.Img(id='image-display',
+                        html.Img(id='company-logo',
                                  src='',
                                  style={
                                      'height': '20px',  # Fixed height
@@ -927,7 +927,7 @@ graph_card = dmc.Card(
                                  }
                                  )
                     ],
-                    #position="apart",
+                    position="apart",
                     mt="md",
                     mb="xs",
                 ),

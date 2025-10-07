@@ -22,12 +22,14 @@ from dash.exceptions import PreventUpdate
 import urllib.parse
 import plotly.io as pio
 import io
-from flask import send_file
+from flask import send_file, request, jsonify
 import base64
 from dateutil.relativedelta import relativedelta
 from scipy.stats import mstats
 from posthog import Posthog
 import random
+import jwt
+import requests
 
 
 #pd.set_option('display.max_columns', None)
@@ -356,21 +358,13 @@ navbar7 = dbc.NavbarSimple(
         dbc.NavItem(children=[
             app_button_link
         ]
-
         ),
         dbc.NavItem(offcanvas),
-        # dbc.DropdownMenu(
-        #    nav=True,
-        #    in_navbar=True,
-        #    label="Menu",
-        #    align_end=True,
-        #    children=[  # Add as many menu items as you need
-        #        dbc.DropdownMenuItem("Home", href='/'),
-        #        dbc.DropdownMenuItem(divider=True),
-        #        dbc.DropdownMenuItem("Page 2", href='/page2'),
-        #       dbc.DropdownMenuItem("Page 3", href='/page3'),
-        #     ],
-        # ),
+        #Login
+        #dbc.NavItem([
+        #    html.Div(id="clerk-header"),  # placeholder for the user button
+        #    html.Script(src="/assets/clerk.js"),  # include the Clerk script
+        #])
     ],
     #brand=['R A ', html.Img(src="/assets/favicon.ico", height="21px"), ' T'],
     brand=[html.Img(#src="/assets/Vector_White_Full.svg",
@@ -751,8 +745,46 @@ theme={
     },
     children=layout_page_standard)
 
+# Clerk domain (e.g., "your-app.clerk.accounts.dev")
+CLERK_JWKS_URL = "https://happy-skylark-73.clerk.accounts.dev/.well-known/jwks.json"
+jwks = requests.get(CLERK_JWKS_URL).json()
+
 server = app.server
 
+# ----------------------------------------------------------------------------------
+# Login flow
+
+# --- Verify Clerk JWT ---
+def verify_token(token):
+    # NOTE: For production, use Clerk’s JWKS public keys properly.
+    try:
+        claims = jwt.decode(token, options={"verify_signature": False})
+        return claims
+    except Exception:
+        return None
+
+
+@server.before_request
+def check_auth():
+    # Let static files and assets load
+    if request.path.startswith("/_dash") or request.path.startswith("/assets"):
+        return None
+
+    # Skip auth for homepage
+    if request.path == "/":
+        return None
+
+    # Get Authorization header
+    auth_header = request.headers.get("Authorization")
+    if not auth_header:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    token = auth_header.split(" ")[1]
+    claims = verify_token(token)
+    if not claims:
+        return jsonify({"error": "Invalid token"}), 401
+
+    request.user = claims  # attach user info
 
 # ----------------------------------------------------------------------------------
 # Callback behaviours and interaction
@@ -760,7 +792,7 @@ server = app.server
 @app.callback(
     Output('all-companies-information', 'data'),
     Output(component_id='hyped-ranking-graph', component_property='figure'),  # Update graph 1
-    Input('url', 'href') # Triggered once when the page is loaded
+    Input('url', 'pathname') # Triggered once when the page is loaded
 )
 def initialize_data(href):
     print("Loading company information")
@@ -997,12 +1029,13 @@ def select_value(value):
     Output(component_id='market-cap-tab', component_property='style'),  # Hides Market cap tab if other data is selected
     Output(component_id='symbol-dataset', component_property='data'),  # Hides Market cap tab if other data is selected
     Output(component_id='max-net-margin', component_property='data'),  # Stores the max net margin opf the selected company
+    Output('company-logo', 'src'),
 
     # the chosen KPI and the revenue
 
     Input(component_id='dataset-selection', component_property='value'),  # Take dropdown value
     Input(component_id='last-imported-data', component_property='data')],  # Take dropdown value
-    State(component_id='all-companies-information', component_property='data'),  # Take information about all companies
+    Input(component_id='all-companies-information', component_property='data'),  # Take information about all companies
     # [State('main-plot-container', 'figure')],
     prevent_initial_call=True,
 )
@@ -1025,10 +1058,14 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
             symbol_company = df.loc[0, 'Symbol']
 
         # Creating the title & subtitle for the graph
-        title = dropdown_value + " | Revenue driver: " + key_unit
+        if symbol_company != "N/A":
+            title = dropdown_value + " (" + symbol_company + ")"
+        else:
+            title = dropdown_value
+
         title_image = dmc.Group([dropdown_value, dmc.Image(
             src="https://upload.wikimedia.org/wikipedia/commons/6/69/Airbnb_Logo_B%C3%A9lo.svg", height=10)])
-        subtitle = "Explore " + str(dropdown_value) + "'s Historical " + key_unit + " data (Bars) and future growth " \
+        subtitle = "Explore " + str(dropdown_value) + "'s Historical " + key_unit + " data (Bars) used to calculate the valuation and future growth " \
                                                                                     "projections. Customize " \
                                                                                     "predictions with the slider in the 'Valuation Drivers' section and adjust " \
                                                                                     "the forecast start date using the datepicker."
@@ -1051,6 +1088,7 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
         # Fetches Max net Margin and stores it
         # max_net_margin = df_all_companies.loc[df_all_companies["Company Name"] == dropdown_value, "Max Net Margin"]
         max_net_margin = None
+        company_logo_link_src = None
 
         # Ugly "if" statement making sure that the information are loaded, because it can happen that the initial callback is not triggered
         if not df_all_companies:
@@ -1059,6 +1097,7 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
         for company in df_all_companies:
             if company['Company Name'].lower() == dropdown_value.lower():
                 max_net_margin = company['Max Net Margin']
+                company_logo_link_src = company['Company Logo']
                 break
 
         print("Basisnetmargin")
@@ -1172,10 +1211,10 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
             show_company_functionalities, show_company_functionalities, show_company_functionalities, \
             show_company_functionalities, text_profit_margin, text_best_profit_margin, marks_profit_margin_slider, \
             total_assets, users_revenue_regression, \
-            initial_sliders_values, source_string, True, hide_loader, show_company_functionalities, symbol_company, max_net_margin
+            initial_sliders_values, source_string, True, hide_loader, show_company_functionalities, symbol_company, max_net_margin, company_logo_link_src
     except Exception as e:
         print(f"Error fetching or processing dataset: {str(e)}")
-        return "", "", "", "", "", "", "", "", "",
+        raise PreventUpdate
 
 
 @app.callback(
@@ -1471,7 +1510,7 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
     if users_revenue_correlation >= 0.6:
         correlation_message_title = str(key_unit) + " is a great revenue indicator"
         correlation_message_body = "We use " + str(key_unit) + " as a key revenue driver" \
-                                                            "to estimate the valuation, because " + str(key_unit) + \
+                                                            " to estimate the valuation, because " + str(key_unit) + \
                                    " account for " + str(formatted_correlation) + "% of the revenue variability."
         correlation_message_color = "primaryGreen"
         correlation_icon_color = DashIconify(icon="lineicons:target-revenue", color=dmc.theme.DEFAULT_COLORS["green"][6],
@@ -1586,6 +1625,8 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
         # If the date picked is the latest, then API call
         try:
             latest_market_cap = dataAPI.get_marketcap(symbol_company)
+            if latest_market_cap is None:
+                raise ValueError("Market cap returned None")
             print("Latest_market_cap", latest_market_cap)
         except Exception as e:
             print("Couldn't fetch latest market cap, assigning DB value")
