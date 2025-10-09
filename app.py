@@ -1030,6 +1030,7 @@ def select_value(value):
     Output(component_id='symbol-dataset', component_property='data'),  # Hides Market cap tab if other data is selected
     Output(component_id='max-net-margin', component_property='data'),  # Stores the max net margin opf the selected company
     Output('company-logo', 'src'),
+    Output('tabs-component', 'value'),  # Tab selected 'value' -> 2 for the growth tab, 1 for the valuation
 
     # the chosen KPI and the revenue
 
@@ -1113,6 +1114,7 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
         if symbol_company != "N/A":
             hide_loader = {'display': ''} # keep on showing the loader
             show_company_functionalities = {'display': ''}  # Style component showing the fin. function.
+            tab_selected = "1"  # show the first tab i.e. the valuation one
             try:
                 yearly_revenue, total_assets = dataAPI.get_previous_quarter_revenue(symbol_company)  # Getting with API
                 print("Latest yearly revenue & total assets fetched")
@@ -1160,6 +1162,7 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
             hide_loader = {'display': 'none'}
             total_assets = 0
             show_company_functionalities = {'display': 'none'}
+            tab_selected = "2" # show the second tab i.e. the Growth one
             users_revenue_regression = 0
             text_profit_margin = ""
             value_profit_margin_slider = 5.0
@@ -1170,7 +1173,7 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
                 {"value": 50, "label": "50%"},
             ]
             text_best_profit_margin = ""
-            max_net_margin = 0
+            max_net_margin = 0.0
 
         df_formatted = df
         df_formatted["Date"] = dates_formatted
@@ -1211,7 +1214,7 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
             show_company_functionalities, show_company_functionalities, show_company_functionalities, \
             show_company_functionalities, text_profit_margin, text_best_profit_margin, marks_profit_margin_slider, \
             total_assets, users_revenue_regression, \
-            initial_sliders_values, source_string, True, hide_loader, show_company_functionalities, symbol_company, max_net_margin, company_logo_link_src
+            initial_sliders_values, source_string, True, hide_loader, show_company_functionalities, symbol_company, max_net_margin, company_logo_link_src, tab_selected
     except Exception as e:
         print(f"Error fetching or processing dataset: {str(e)}")
         raise PreventUpdate
@@ -1657,15 +1660,15 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
             text_profit_margin = "Latest annual profit margin: " + str(current_annual_profit_margin) + "% 😰",
 
     else:
-        current_market_cap = 0  # Otherwise, market_cap = zero
-        current_arpu = 0
-        total_assets = 0
+        current_market_cap = 0.0  # Otherwise, market_cap = zero
+        current_arpu = 0.0
+        total_assets = 0.0
         hype_market_cap = ""
         show_company_functionalities = {'display': 'none'}
-        users_revenue_regression = 0
-        printed_current_arpu = 0
+        users_revenue_regression = 0.0
+        printed_current_arpu = 0.0
         text_profit_margin = ""
-        latest_market_cap = 0
+        latest_market_cap = 0.0
 
     # Plateau Accordion
     arpu_needed = main.arpu_for_valuation(k_scenarios[highest_r2_index], r_scenarios[highest_r2_index],
@@ -2985,7 +2988,7 @@ def graph_valuation_over_time(valuation_over_time_dict, date_picked, df_formatte
                     # letter=5,
                 ),
                 opacity=0.3  # Set the opacity
-            )
+            ),
         ],
     )
 

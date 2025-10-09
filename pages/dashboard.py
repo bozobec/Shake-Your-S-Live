@@ -899,7 +899,7 @@ tabs_graph = dmc.Tabs(
     value="1",
     variant="pills",
     color='violet',
-    #id='graph-card-content',
+    id='tabs-component',
     #style={'display': 'none'}
 )
 
