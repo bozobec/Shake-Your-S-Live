@@ -792,6 +792,7 @@ def check_auth():
 @app.callback(
     Output('all-companies-information', 'data'),
     Output(component_id='hyped-ranking-graph', component_property='figure'),  # Update graph 1
+    Output(component_id='hyped-table-industry', component_property='data'),  # Update graph 1
     Input('url', 'pathname') # Triggered once when the page is loaded
 )
 def initialize_data(href):
@@ -800,6 +801,19 @@ def initialize_data(href):
     df_all_companies_information = dataAPI.get_hyped_companies_data()
     all_companies_information_store = df_all_companies_information.to_dict('records')
 
+    # Create the list of industries for the ranking dropdown
+    # Initialize label_list
+    df_list = df_all_companies_information.copy()
+    df_list.drop_duplicates(subset='Industry', inplace=True)
+    industry_list = []
+    for index, row in df_list.iterrows():
+        industry = row['Industry']
+        industry_list.append({
+            "value": industry,
+            "label": f"{industry}",
+        })
+    print("List of industries")
+    print(industry_list)
     # Creates the graph mapping companies
     # Example company data
     #companies = ["Company A", "Company B", "Company C", "Company D"]
@@ -896,7 +910,7 @@ def initialize_data(href):
         #width=700, height=600
     )
 
-    return all_companies_information_store, fig
+    return all_companies_information_store, fig, industry_list
 
 # Callback to enable the slider if "Custom" is selected
 @app.callback(
@@ -936,17 +950,7 @@ def update_url(data_selection, current_pathname):
         return dash.no_update
     # Update the pathname with the selected dataset
 
-    """
-    Posthog event
-    """
-    posthog.capture(
-        distinct_id='user_or_session_id',  # replace with real user/session ID
-        event='dash_select_changed',
-        properties={
-            'location': 'dash_app',
-            'selected_value': data_selection
-        }
-    )
+
     return f"/?company={urllib.parse.quote(data_selection)}"
 
 # Callback to update the dropdown selection based on the URL.
@@ -1019,7 +1023,7 @@ def select_value(value):
     # Adds a mark to the slider if the profit margin > 0
     #Output(component_id='range-profit-margin', component_property='value'),
     # Sets the value to the current profit margin
-    Output(component_id='total-assets', component_property='data'),  # Stores the current arpu
+    Output(component_id='total-assets', component_property='data'),  # Stores the current assets
     Output(component_id='users-revenue-correlation', component_property='data'),  # Stores the correlation between
     #Output(component_id='range-discount-rate', component_property='value'),
     Output(component_id='initial-sliders-values', component_property='data'),  # Stores the default slider values
@@ -1042,6 +1046,17 @@ def select_value(value):
 )
 def set_history_size(dropdown_value, imported_df, df_all_companies):
     t1 = time.perf_counter(), time.process_time()
+    """
+    Posthog event
+    """
+    posthog.capture(
+        distinct_id='user_or_session_id',  # replace with real user/session ID
+        event='dash_select_changed',
+        properties={
+            'location': 'dash_app',
+            'selected_value': dropdown_value
+        }
+    )
     try:
         # Fetch dataset from API
         df = dataAPI.get_airtable_data(dropdown_value)
@@ -1116,7 +1131,11 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
             show_company_functionalities = {'display': ''}  # Style component showing the fin. function.
             tab_selected = "1"  # show the first tab i.e. the valuation one
             try:
-                yearly_revenue, total_assets = dataAPI.get_previous_quarter_revenue(symbol_company)  # Getting with API
+                # Ugly if to create exceptions for companies that have weird assets
+                if dropdown_value == "Centene Corporation":
+                    total_assets = 0
+                else:
+                    yearly_revenue, total_assets = dataAPI.get_previous_quarter_revenue(symbol_company)  # Getting with API
                 print("Latest yearly revenue & total assets fetched")
             except Exception as e:
                 print("Error fetching revenue & total assets, standard value assigned")
@@ -2475,6 +2494,8 @@ def show_cards(data, launch_counter):
 )
 def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, current_market_cap, current_arpu):
     # The entire callback is skipped if the current market cap = 0, i.e. if it is not a public company
+    t1 = time.perf_counter(), time.process_time()
+
     if current_market_cap == 0:
         raise PreventUpdate
     k_selected = df_sorted[row_index]['K']
@@ -2489,6 +2510,12 @@ def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, current_m
     arpu_needed = 0
     arpu_difference = arpu_needed / current_arpu
     printed_arpu = f"{arpu_needed:.0f} $. The current arpu " + f"({current_arpu:.0f} $)" + " should be multiplied by " + f"{arpu_difference:.2f}!"  # formatting
+
+    t2 = time.perf_counter(), time.process_time()
+    print(f" Performance of the valuation over time")
+    print(f" Real time: {t2[0] - t1[0]:.2f} seconds")
+    print(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
+
     return printed_arpu
 
 
@@ -2524,6 +2551,7 @@ def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, current_m
 )
 def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, arpu_growth, current_market_cap, latest_market_cap, current_arpu,
                    total_assets, df_dataset_dict):
+    t1 = time.perf_counter(), time.process_time()
     # The entire callback is skipped if the current market cap = 0, i.e. if it is not a public company
     if current_market_cap == 0:
         raise PreventUpdate
@@ -2592,6 +2620,10 @@ def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, arpu_grow
     hype_tooltip = f"Hype: ${hype_total / 1e9:.2f} B.  It reflects the current overvaluation of the company in terms " \
                    f"of market capitalization versus actual value."
     hype_indicator_color, hype_indicator_text = main.hype_meter_indicator_values(hype_ratio / 100)
+    t2 = time.perf_counter(), time.process_time()
+    print(f" Performance of the valuation over time")
+    print(f" Real time: {t2[0] - t1[0]:.2f} seconds")
+    print(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
 
     return non_operating_assets_ratio, noa_tooltip, customer_equity_ratio, customer_equity_tooltip, intrinsic_value_ratio_rest, \
         hype_tooltip, hype_indicator_color, hype_indicator_text, current_valuation, hype_ratio_progress, hype_indicator_color, hype_ratio_rest, \
@@ -3051,6 +3083,10 @@ def graph_valuation_over_time(valuation_over_time_dict, date_picked, df_formatte
         valuation_icon_color = DashIconify(icon="radix-icons:rocket", color=dmc.theme.DEFAULT_COLORS["yellow"][6],
                                            width=20)
     print("Valuation graph printed")
+    t2 = time.perf_counter(), time.process_time()
+    print(f" Performance of the valuation graph over time")
+    print(f" Real time: {t2[0] - t1[0]:.2f} seconds")
+    print(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
     return fig_valuation, valuation_graph_message, valuation_graph_color, valuation_graph_title, valuation_accordion_title, \
         valuation_accordion_message, valuation_graph_color, valuation_icon_color, hype_score, hype_score_text
 
@@ -3095,50 +3131,79 @@ def home_page_example(slider_value, non_op_assets):
 # Callback to update table based on selection
 @app.callback(
     Output("top_25_companies", "children"),
-    Input('hyped-table-select', 'value')
+    Input('all-companies-information', 'data'), # Table of companies
+    Input('hyped-table-select', 'value'), # more or least hyped
+    Input('hyped-table-industry', 'value') # industry
 )
-def update_table(hype_choice):
-
+def update_table(df_all_companies, hype_choice, industries):
+    t1 = time.perf_counter(), time.process_time()
     # If dropdown hasn't been used yet, set a default
     if hype_choice is None:
         hype_choice = "least-hyped"  # default setting
 
-    # Logic of changing it depending on what is chosen
-    if hype_choice == 'most-hyped':
-        df_sorted = dataAPI.get_hyped_companies(True)
+    # --- 1. Filter by industry ---
+    if industries:
+        filtered_data = [d for d in df_all_companies if d["Industry"] in industries]
     else:
-        df_sorted = dataAPI.get_hyped_companies(False)
+        filtered_data = df_all_companies
+
+    # --- 2. Determine sorting order based on hype_choice ---
+    reverse = True if hype_choice == "most-hyped" else False
+
+    # --- 3. Sort by Hype Score ---
+    sorted_data = sorted(filtered_data, key=lambda x: x["Hype Score"], reverse=reverse)
+
+    # --- 4. Keep only selected columns ---
+    reduced_data = [
+        {
+            "Industry": d["Industry"],
+            "Company Name": d["Company Name"],
+            "Hype Score": d["Hype Score"],
+            "Growth Score": d["Growth Score"]
+        }
+        for d in sorted_data
+    ]
+    df_sorted = pd.DataFrame(sorted_data)
+    # Logic of changing it depending on what is chosen
+    #if hype_choice == 'most-hyped':
+    #    df_sorted = dataAPI.get_hyped_companies(True)
+    #else:
+    #    df_sorted = dataAPI.get_hyped_companies(False)
     header = [html.Thead(html.Tr([
+    html.Th('Industry', style={"width": "15%"}),
     html.Th('Company', style={"width": "30%"}),
     html.Th(dmc.Group([
         'Hype Score',
         dmc.Tooltip(
             DashIconify(icon="feather:info", width=15),
             label="The hype score indicates how hyped companies are. A hype score between 0 & 1 means that the company "
-                  "is fairly priced. A negative hype score indicates an undevaluation.",
+                  "is fairly priced. A negative hype score indicates an undervaluation.",
             transition="slide-down",
             transitionDuration=300,
             multiline=True,
         )
-    ]), style={"width": "35%"}
+    ]), style={"width": "22.5%"}
     ),
     html.Th(dmc.Group([
         'Growth Score',
         dmc.Tooltip(
             DashIconify(icon="feather:info", width=15),
-            label="The growth score indicates the growth potential of the company. A growth score of zero means limited "
-                  "growth potential",
+            label="The growth score represents how much growth potential a company has relative to its current state. "
+                  "A score of zero implies stagnation, whereas a high score suggests strong momentum and the "
+                  "possibility of staying overvalued for an extended period.",
             transition="slide-down",
             transitionDuration=300,
             multiline=True,
         )
-    ]), style={"width": "35%"}
+    ]), style={"width": "32.5%"}
     )
     ])
     )]
     rows = []
 
     for i in range(len(df_sorted)):
+        industry_type = df_sorted.iloc[i]['Industry'],
+        industry_type_icon = main.get_industry_icon(df_sorted.iloc[i]['Industry'])  # function mapping the industry to an icon
         company_name = df_sorted.iloc[i]['Company Name']
         hype_score = df_sorted.iloc[i]['Hype Score']
         growth_score = df_sorted.iloc[i]['Growth Score']
@@ -3164,18 +3229,29 @@ def update_table(hype_choice):
         # Determine growth badge color and label -> To-do: apply the function in .main to this
         if growth_score > 0.5:
             badge_color_growth = "teal"
-            badge_label_growth = "Massive potential"
+            badge_label_growth = "Massive growth"
         elif growth_score > 0.3:
             badge_color_growth = "green"
-            badge_label_growth = "Significant potential"
+            badge_label_growth = "Strong growth"
         elif hype_score > 0.1:
             badge_color_growth = "yellow"
-            badge_label_growth = "Limited potential"
+            badge_label_growth = "Limited growth"
         else:
             badge_color_growth = "red"
-            badge_label_growth = "Poor potential"
+            badge_label_growth = "Poor growth"
 
         row = html.Tr([
+            html.Td(
+                dmc.Tooltip(
+                    DashIconify(icon=industry_type_icon, width=15),
+                    label=industry_type,
+                    #transition="slide-down",
+                    #transitionDuration=300,
+                    #multiline=True,
+                ),
+                #ta="center",
+                style={"ta": "center"}
+            ),
             html.Td(
                 dcc.Link(
                     company_name,
@@ -3203,6 +3279,10 @@ def update_table(hype_choice):
     body = [html.Tbody(rows)]
     #print("Hyped table is")
     #print(df_sorted)
+    t2 = time.perf_counter(), time.process_time()
+    print(f" Performance of the table update")
+    print(f" Real time: {t2[0] - t1[0]:.2f} seconds")
+    print(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
     return header + body
 
 

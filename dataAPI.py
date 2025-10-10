@@ -10,58 +10,6 @@ from datetime import datetime
 # This tool was used to generate the right url to be used: https://codepen.io/airtable/pen/MeXqOg
 
 # This function fetches all the unique categories in the airtable database
-def get_airtable_labels_old():
-    print("Fetching the dataset labels")
-    offset = None
-    try:
-        url = "https://api.airtable.com/v0/appm3ffcu38jyqhi3/tbl7LiTDpXk9DeRUB?fields%5B%5D=Company&fields%5B%5D=Category"
-        auth_token = "patUQKc4meIVaiLIw.efa35a957210ca18edc4fc00ae1b599a6a49851b8b7c59994e4384c19c20fcd1"
-        headers = {
-            "Authorization": f"Bearer {auth_token}"
-        }
-
-        response = requests.get(url, headers=headers)  # Call the Airtable data with the specified filter
-        data = response.json()  # Transforms it into a dictionary
-
-        # Format the data into a dataframe including only the Date and the Users
-        records = data['records']
-        formatted_data = []
-        for record in records:
-            formatted_data.append({
-                'Company': record['fields']['Company'],
-                'Category': record['fields']['Category'],
-            })
-        df = pd.DataFrame(formatted_data)  # Create a DataFrame from the sample data
-
-        # Keep only unique companies
-        df.drop_duplicates(subset='Company', inplace=True)
-
-        # Initialize label_list
-        label_list = []
-
-        # Sort DataFrame by Category and Company
-        df.sort_values(by=['Category', 'Company'], inplace=True)
-
-        # Iterate through the sorted DataFrame to create label_list
-        # Here is what a list with two groups should look like:
-        #   data = [
-        #       {"group": 'Frontend', "value": 'React', "label": 'React'},
-        #       {"group": 'Frontend', "value": 'Angular', "label": 'Angular'},
-        #       {"group": 'Backend', "value": 'Express', "label": 'Express'},
-        #   ],
-        current_category = None
-        for index, row in df.iterrows():
-            category = row['Category']
-            company = row['Company']
-            label_list.append({"group": category, "value": company, "label": f" {company}", "disabled": False})
-
-        #print(label_list)
-        return label_list
-
-    except Exception as e:
-        print(f"Error fetching dataset labels: {str(e)}")
-        return None
-
 def get_airtable_labels():
     print("Fetching the dataset labels")
     url = "https://api.airtable.com/v0/appm3ffcu38jyqhi3/tbl7LiTDpXk9DeRUB?fields%5B%5D=Company&fields%5B%5D=Category&fields%5B%5D=Symbol"
@@ -331,7 +279,7 @@ def get_hyped_companies_data():
 
     base_url = "https://api.airtable.com/v0/appm3ffcu38jyqhi3/Companies"
     params = {
-        "fields[]": ["Company_Name", "Hype_meter_value", "Growth_score", "Max_Net_Margin", "Company_logo"],
+        "fields[]": ["Company_Name", "Hype_meter_value", "Growth_score", "Max_Net_Margin", "Company_logo", "Industry"],
         "view": "Most hyped companies"
     }
 
@@ -358,7 +306,8 @@ def get_hyped_companies_data():
                     "Hype Score": fields.get("Hype_meter_value"),
                     "Max Net Margin": fields.get("Max_Net_Margin"),
                     "Growth Score": fields.get("Growth_score"),
-                    "Company Logo": fields.get("Company_logo")
+                    "Company Logo": fields.get("Company_logo"),
+                    "Industry": fields.get("Industry")
                 })
 
             # Check if there’s another page

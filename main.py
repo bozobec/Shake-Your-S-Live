@@ -667,3 +667,26 @@ def parse_file_contents_df(contents, filename, date):
     df = parse_file_contents(contents, filename)
     return df
 
+# Generate an icon per industry
+def get_industry_icon(industry: str) -> str:
+    """
+    Return an Iconify icon name corresponding to a given industry.
+    """
+    mapping = {
+        "E-Commerce & DTC Retail": "mdi:cart-outline",
+        "SaaS & Enterprise Software": "mdi:cloud-outline",
+        "Cybersecurity & Infrastructure": "mdi:shield-lock-outline",
+        "Fintech & Payments": "mdi:credit-card-outline",
+        "Consumer Platforms & Marketplaces": "mdi:account-group-outline",
+        "Media, Streaming & Entertainment": "mdi:television-play",
+        "Automotive & Advanced Manufacturing": "mdi:factory",
+        "Mobility, Delivery & Transportation": "mdi:truck-delivery-outline",
+        "Restaurants & Food Chains": "mdi:food-fork-drink",
+        "Energy": "mdi:leaf",
+        "IT Services & Consulting": "mdi:laptop-account",
+        "Healthcare & Insurance": "mdi:medical-bag",
+    }
+
+    # Return the matching icon or a default
+    return mapping.get(industry, "mdi:briefcase-outline")
+

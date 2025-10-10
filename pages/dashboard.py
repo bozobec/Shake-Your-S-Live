@@ -1222,6 +1222,22 @@ companies = pd.DataFrame({
 table_hype = dmc.Card(children=[
     dmc.Group([
         dmc.Title("RAST Ranking", order=5),
+            dmc.MultiSelect(
+                    #label="Select the companies that you want to see",
+                    placeholder="Industry (3 max)...",
+                    id="hyped-table-industry",
+                    #description="You can select up to 3 industries.",
+                    #value="All",
+                    data=[
+                        {"value": "most-hyped", "label": "Most hyped"},
+                        {"value": "least-hyped", "label": "Least hyped"},
+                    ],
+                    clearable=True,
+                    maxSelectedValues=3,
+                    #w=350,
+                    mb=10,
+                    icon=DashIconify(icon="mdi-light:factory"),
+                ),
         dmc.Select(
                     #label="Select the companies that you want to see",
                     placeholder="Most or least hyped companies",
@@ -1240,7 +1256,12 @@ table_hype = dmc.Card(children=[
         mt="md",
         mb="xs",
     ),
-    dmc.Table(id='top_25_companies'),
+    dmc.ScrollArea(
+        h=400,
+        children=[
+            dmc.Table(id='top_25_companies')
+        ]
+    ),
 ], withBorder=True, shadow='lg', radius='md')
 
 graph_hype = dmc.Card(children=[
