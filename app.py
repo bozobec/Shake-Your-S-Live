@@ -31,6 +31,8 @@ import random
 import jwt
 import requests
 
+t1 = time.perf_counter(), time.process_time()
+
 
 #pd.set_option('display.max_columns', None)
 pd.set_option('display.max_rows', 200)
@@ -786,6 +788,10 @@ def check_auth():
 
     request.user = claims  # attach user info
 
+    # attach plan info for convenience
+    request.user_plan = claims.get("public_metadata", {}).get("plan", "free")
+
+
 # ----------------------------------------------------------------------------------
 # Callback behaviours and interaction
 # Callback loading and storing the company information
@@ -796,7 +802,19 @@ def check_auth():
     Input('url', 'pathname') # Triggered once when the page is loaded
 )
 def initialize_data(href):
+    # ---- Performance assessment
+    t2 = time.perf_counter(), time.process_time()
+    print(f" Time to launch the app (before the first callback")
+    print(f" Real time: {t2[0] - t1[0]:.2f} seconds")
+    print(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
     print("Loading company information")
+
+    # Plan linked to user
+
+    plan = getattr(request, "user_plan", "free")
+    print("plan")
+    print(plan)
+
     # Load or compute data
     df_all_companies_information = dataAPI.get_hyped_companies_data()
     all_companies_information_store = df_all_companies_information.to_dict('records')
@@ -1778,8 +1796,7 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
         growth_slider_value = no_update
 
     t2 = time.perf_counter(), time.process_time()
-    print(f" Scenarios calculation")
-    print(plateau_message_color)
+    print(f" Definition of the messages in analysis and above the graphs")
     print(f" Real time: {t2[0] - t1[0]:.2f} seconds")
     print(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
     return initial_slider_values, \
@@ -2546,11 +2563,12 @@ def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, current_m
         Input(component_id='latest-market-cap', component_property='data'),
         Input(component_id='current-arpu-stored', component_property='data'),
         Input(component_id='total-assets', component_property='data'),
-        Input(component_id='users-dates-formatted', component_property='data')
+        Input(component_id='users-dates-formatted', component_property='data'),
+        State(component_id='graph-unit', component_property='data')
     ], prevent_initial_call=True
 )
 def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, arpu_growth, current_market_cap, latest_market_cap, current_arpu,
-                   total_assets, df_dataset_dict):
+                   total_assets, df_dataset_dict, graph_unit):
     t1 = time.perf_counter(), time.process_time()
     # The entire callback is skipped if the current market cap = 0, i.e. if it is not a public company
     if current_market_cap == 0:
@@ -2564,6 +2582,7 @@ def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, arpu_grow
     discount_rate = discount_rate / 100
     arpu_growth = arpu_growth / 100
     current_market_cap = latest_market_cap * 1000000
+    graph_unit_text = str(graph_unit)
 
     # Equity calculation
     current_customer_equity = users[-1] * current_arpu * profit_margin
@@ -2580,9 +2599,9 @@ def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, arpu_grow
     noa_tooltip = f"Non-Operating Assets: ${total_assets / 1e9:.2f} B. \n They represent additional valuable company " \
                   f"assets, such as Goodwill"
     customer_equity_ratio = total_customer_equity / current_market_cap * 100
-    customer_equity_tooltip = f"Core business value: ${total_customer_equity / 1e9:.2f} B.   The portion of value " \
-                              f"attributable to the company’s main profit-generating operations, " \
-                              f"estimated using a DCF approach."
+    customer_equity_tooltip = f"Intrinsic value: ${total_customer_equity / 1e9:.2f} B. The value attributed to the " \
+                              f"'{graph_unit_text}', " \
+                              f"computed using a DCF approach."
     # 3 Progress bars are displayed
     # Progress 1: hype_ratio & hype_ratio_rest bar
     # -> under_valuation shows hype/overvaluation, under_valuation_rest is the white part on the left

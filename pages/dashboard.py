@@ -23,6 +23,7 @@ from dash.exceptions import PreventUpdate
 import random
 import dash_daq as daq
 #from dash_extensions import DeferScript
+from functools import lru_cache
 
 register_page(
     __name__,
@@ -31,8 +32,10 @@ register_page(
     path='/'
 )
 
+
 # Values for the dropdown (all different companies in the DB)
 labels = dataAPI.get_airtable_labels()
+
 
 
 # Constants for the calculation

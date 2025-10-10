@@ -690,3 +690,5 @@ def get_industry_icon(industry: str) -> str:
     # Return the matching icon or a default
     return mapping.get(industry, "mdi:briefcase-outline")
 
+
+
