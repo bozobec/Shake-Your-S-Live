@@ -1224,7 +1224,7 @@ table_hype = dmc.Card(children=[
         dmc.Title("RAST Ranking", order=5),
             dmc.MultiSelect(
                     #label="Select the companies that you want to see",
-                    placeholder="Industry (3 max)...",
+                    placeholder="Filter by industry",
                     id="hyped-table-industry",
                     #description="You can select up to 3 industries.",
                     #value="All",
