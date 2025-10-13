@@ -30,9 +30,18 @@ from posthog import Posthog
 import random
 import jwt
 import requests
+import os
+from dotenv import load_dotenv
 
 t1 = time.perf_counter(), time.process_time()
 
+# Load environment variables from .env file
+load_dotenv()
+
+
+# Retrieve secrets
+AIRTABLE_API_KEY = os.getenv("AIRTABLE_API_KEY")
+print("Airtable key loaded:", bool(AIRTABLE_API_KEY))
 
 #pd.set_option('display.max_columns', None)
 pd.set_option('display.max_rows', 200)

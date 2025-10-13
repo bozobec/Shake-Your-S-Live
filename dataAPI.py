@@ -4,10 +4,15 @@ import numpy as np
 import pandas as pd
 import main
 from datetime import datetime
+import os
+from dotenv import load_dotenv
 
 # The following code specifies firstly the filter and then fetches the data according to
 # it in the specified airtable database
 # This tool was used to generate the right url to be used: https://codepen.io/airtable/pen/MeXqOg
+
+load_dotenv()
+AIRTABLE_API_KEY = os.getenv("AIRTABLE_API_KEY")
 
 # This function fetches all the unique categories in the airtable database
 def get_airtable_labels():
@@ -15,7 +20,7 @@ def get_airtable_labels():
     url = "https://api.airtable.com/v0/appm3ffcu38jyqhi3/tbl7LiTDpXk9DeRUB?fields%5B%5D=Company&fields%5B%5D=Category&fields%5B%5D=Symbol"
     auth_token = "patUQKc4meIVaiLIw.efa35a957210ca18edc4fc00ae1b599a6a49851b8b7c59994e4384c19c20fcd1"
     headers = {
-        "Authorization": f"Bearer {auth_token}"
+        "Authorization": f"Bearer {AIRTABLE_API_KEY}"
     }
 
     # Initialize variables
@@ -102,9 +107,8 @@ def get_airtable_data(filter):
               "&filterByFormula=Company%3D%22{}%22" \
               "&sort%5B0%5D%5Bfield%5D=Date" \
               "&sort%5B0%5D%5Bdirection%5D=asc".format(filter)
-        auth_token = "patUQKc4meIVaiLIw.efa35a957210ca18edc4fc00ae1b599a6a49851b8b7c59994e4384c19c20fcd1"
         headers = {
-            "Authorization": f"Bearer {auth_token}"
+            "Authorization": f"Bearer {AIRTABLE_API_KEY}"
         }
         response = requests.get(url, headers=headers)  # Call the Airtable data with the specified filter
         data = response.json()  # Transforms it into a dictionary
@@ -223,9 +227,8 @@ def get_profit_margin(symbol_input):
 # hyped is a boolean -> True for hyped companies; False for not hyped
 def get_hyped_companies(hyped):
     print("Fetching the hyped/not hyped data list")
-    auth_token = "patUQKc4meIVaiLIw.efa35a957210ca18edc4fc00ae1b599a6a49851b8b7c59994e4384c19c20fcd1"
     headers = {
-        "Authorization": f"Bearer {auth_token}"
+        "Authorization": f"Bearer {AIRTABLE_API_KEY}"
     }
     if hyped: # If hyped is set as "true"
         try:
@@ -272,9 +275,8 @@ def get_hyped_companies(hyped):
 # (max net margin, other info, etc.)
 def get_hyped_companies_data():
     print("Fetching the dataset data...")
-    auth_token = "patUQKc4meIVaiLIw.efa35a957210ca18edc4fc00ae1b599a6a49851b8b7c59994e4384c19c20fcd1"
     headers = {
-        "Authorization": f"Bearer {auth_token}"
+        "Authorization": f"Bearer {AIRTABLE_API_KEY}"
     }
 
     base_url = "https://api.airtable.com/v0/appm3ffcu38jyqhi3/Companies"
