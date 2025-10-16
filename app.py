@@ -55,8 +55,6 @@ pd.set_option('display.max_rows', 200)
 APP_TITLE = "RAST"
 
 IS_PRODUCTION = os.getenv("IS_PRODUCTION") == "true"  # Setup in heroku 'heroku config:set IS_PRODUCTION=true'
-print("Is it prod?")
-print(IS_PRODUCTION)
 clerk_script_ignored = r"clerk\.dev\.js" if IS_PRODUCTION else r"clerk\.prod\.js" # if production, ignores clerk.dev.js
 
 app = dash.Dash(__name__,
@@ -547,11 +545,13 @@ def select_value(value):
 )
 def set_history_size(dropdown_value, imported_df, df_all_companies):
     t1 = time.perf_counter(), time.process_time()
+    print("Is it prod?")
+    print(IS_PRODUCTION)
     """
     Posthog event
     """
     # skipping it if no dropdown value is selected to avoid firing it when starting
-    if dropdown_value is not None:
+    if dropdown_value is not None and IS_PRODUCTION:
         posthog.capture(
             distinct_id='user_or_session_id',  # replace with real user/session ID
             event='dash_select_changed',
