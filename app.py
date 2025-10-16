@@ -54,12 +54,18 @@ print("Stripe key loaded:", bool(stripe.api_key))
 pd.set_option('display.max_rows', 200)
 APP_TITLE = "RAST"
 
+IS_PRODUCTION = os.getenv("IS_PRODUCTION") == "true"  # Setup in heroku 'heroku config:set IS_PRODUCTION=true'
+print("Is it prod?")
+print(IS_PRODUCTION)
+clerk_script_ignored = r"clerk\.dev\.js" if IS_PRODUCTION else r"clerk\.prod\.js" # if production, ignores clerk.dev.js
+
 app = dash.Dash(__name__,
                 external_stylesheets=[dbc.themes.LUX],
                 #external_stylesheets=[dbc.themes.MORPH], Nice stylesheet
                 title=APP_TITLE,
                 use_pages=True,
-                url_base_pathname="/"
+                url_base_pathname="/",
+                assets_ignore=clerk_script_ignored,
                 )
 
 # Posthog settings

@@ -28,7 +28,7 @@ navbar = dbc.NavbarSimple(
         dbc.NavItem(offcanvas),
         #Login
         dbc.NavItem([
-            html.Script(src=clerk_script),
+            #html.Script(src=clerk_script),
             html.Div(id="clerk-header"),  # placeholder for the user button
         ])
     ],
