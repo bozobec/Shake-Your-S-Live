@@ -13,7 +13,7 @@ app_button_link = html.Div(
 )
 
 # Loads the right login script depending on the environment
-IS_PRODUCTION = os.getenv("FLASK_ENV") == "production"
+IS_PRODUCTION = os.getenv("IS_PRODUCTION") == "true"  # Setup in heroku 'heroku config:set IS_PRODUCTION=true'
 clerk_script = "/assets/clerk.prod.js" if IS_PRODUCTION else "/assets/clerk.dev.js"
 print("Environment:", IS_PRODUCTION)
 print("Clerk script loaded:", clerk_script)
