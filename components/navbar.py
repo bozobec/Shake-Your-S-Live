@@ -29,7 +29,7 @@ navbar = dbc.NavbarSimple(
         #Login
         dbc.NavItem([
             html.Div(id="clerk-header"),  # placeholder for the user button
-            html.Script(src=main.get_clerk_script()),
+            html.Script(src=clerk_script),
         ])
     ],
     brand=[html.Img(
