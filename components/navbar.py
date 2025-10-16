@@ -4,6 +4,7 @@ from components.base_card import base_card
 from dash import html
 from components.offcanvas import offcanvas
 import os
+import main
 
 # App button for the Navbar
 app_button_link = html.Div(
@@ -28,7 +29,7 @@ navbar = dbc.NavbarSimple(
         #Login
         dbc.NavItem([
             html.Div(id="clerk-header"),  # placeholder for the user button
-            html.Script(src=clerk_script),
+            html.Script(src=main.get_clerk_script()),
         ])
     ],
     brand=[html.Img(

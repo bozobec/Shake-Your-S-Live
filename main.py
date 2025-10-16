@@ -18,6 +18,7 @@ import base64
 import io
 from dash import Dash, dcc, html, dash_table, Input, Output, State, callback
 import jwt
+import os
 
 
 # ---------------------------- Importing Data for testing purpose
@@ -698,4 +699,9 @@ def verify_token(token):
         return claims
     except Exception:
         return None
+
+# Checking what environment the system is
+def get_clerk_script():
+    is_prod = os.getenv("IS_PRODUCTION") == "true"
+    return "/assets/clerk.prod.js" if is_prod else "/assets/clerk.dev.js"
 
