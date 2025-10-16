@@ -153,7 +153,9 @@ theme={
 # Clerk domain (e.g., "your-app.clerk.accounts.dev")
 
 # Pick the right url depending on the environment (first one is prod, stored on heroku, second is dev)
-CLERK_JWKS_URL = os.getenv("CLERK_JWKS_URL", "https://happy-skylark-73.clerk.accounts.dev/.well-known/jwks.json")
+CLERK_JWKS_URL = os.getenv("https://clerk.rast.guru/.well-known/jwks.json", "https://happy-skylark-73.clerk.accounts.dev/.well-known/jwks.json")
+print("clerk jwks")
+print(CLERK_JWKS_URL)
 jwks = requests.get(CLERK_JWKS_URL).json()
 
 server = app.server
