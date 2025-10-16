@@ -27,7 +27,7 @@ from functools import lru_cache
 
 register_page(
     __name__,
-    name='RAST | APP Dashboard for user-based companies valuation',
+    name='Valuation made simple - RAST',
     top_nav=True,
     path='/'
 )
@@ -175,33 +175,6 @@ hype_meter_bootstrap_price = dbc.Progress(
     #style={"height": "30px", "borderRadius": "30px"},
     style={"height": "30px", "borderRadius": "0px"},
 )
-
-hype_meter_example = dbc.Progress(
-    children=
-        [
-            dbc.Progress(value=30, color="#953AF6", bar=True, label="N-O Assets", id="hype-meter-noa-ex"),
-            dbc.Progress(value=40, color="#F963F1", bar=True, label="Customer Equity", id="hype-meter-users-ex"),
-            dbc.Progress(value=30, color="#FFD000", bar=True, animated=True, striped=True, label="Hype", id="hype-meter-hype-ex"),
-            dbc.Tooltip("Non-Operating Assets: $3.0B", target="hype-meter-noa-ex", placement="top"),
-            dbc.Tooltip("Customer Equity: $3.0B", target="hype-meter-users-ex", placement="top"),
-            #dbc.Tooltip("Delta depending on the chosen scenario", target="hype-meter-delta", id="tooltip-equity-text", placement="top"),
-            dbc.Tooltip("Hype: $4.0B", target="hype-meter-hype-ex", placement="top"),
-        ],
-    style={"height": "30px", "borderRadius": "30px"},
-)
-
-
-
-app_button = dmc.Button(
-    id="app-button",
-    children="APP",
-    leftIcon=DashIconify(icon="fluent:app-title-24-regular"),
-    size="xs",
-    variant="gradient",
-    gradient={"from": "cyan", "to": "blue"},
-    #color="white",
-    #color.title(white).
-        ),
 
 
 
@@ -434,7 +407,7 @@ accordion = dmc.AccordionMultiple(
 graph_message = dmc.Alert(
     dmc.Text("About the graph"),
     id="graph-message",
-    title="About the Growth Forecast",
+    title="Is there more growth ahead?",
     color="primaryPurple",
     #hide="False",
     withCloseButton="True")
@@ -450,9 +423,9 @@ valuation_graph_message = dmc.Alert(
 
 # Graph message
 revenue_graph_message = dmc.Alert(
-    dmc.Text("About the Average Revenue per User"),
+    dmc.Text("About the Average Revenue per Unit"),
     id="revenue-graph-message",
-    title="About the Current Market Cap",
+    title="Are they generating more revenue per unit?",
     color="blue",
     #hide="False",
     withCloseButton="True")
@@ -461,7 +434,7 @@ revenue_graph_message = dmc.Alert(
 growth_rate_graph_message = dmc.Alert(
     dmc.Text("About the Discrete Growth Rate"),
     id="growth-rate-graph-message",
-    title="About the Discrete Growth Rate",
+    title="When will the growth stop?",
     color="blue",
     #hide="False",
     withCloseButton="True")
@@ -470,7 +443,7 @@ growth_rate_graph_message = dmc.Alert(
 product_maturity_graph_message = dmc.Alert(
     dmc.Text("About the Product Maturity"),
     id="product-maturity-graph-message",
-    title="About the Product Maturity",
+    title="Is the product still improving?",
     color="blue",
     #hide="False",
     withCloseButton="True")
@@ -1199,20 +1172,6 @@ aside_column = dmc.Aside(
     ],
 )
 
-navbar_column = dmc.Navbar(
-    p="md",
-    width={"base": 400},
-    withBorder=False,
-    hidden=True,
-    hiddenBreakpoint='md',
-    #height=500,
-    fixed=True,
-    #position={"right": 0, "top": 400},
-    children=[
-        selector_card,
-    ],
-)
-
 # Table
 
 # Sample DataFrame
@@ -1220,6 +1179,56 @@ companies = pd.DataFrame({
     "Company Name": ["Company A", "Company B", "Company C", "Company D", "Company E"],
     "Hype Score": [90, 20, 60, 95, 85]  # Higher score means more hype
 })
+
+# Overlay that hides/doesn't hide content based on whether the user is logged in or not
+
+login_overlay_table = html.Div(
+    id="login-overlay-table",
+    children=[
+    dmc.Space(h=60),
+    dmc.Text(
+        "Log in to view the RAST table of the most undervalued companies.",
+        weight=700,
+        size="m",
+        color="white",
+        align="center",
+    )],
+    style={
+        "display": "none",  # Hidden by default
+        "position": "absolute",  # Sit on top
+        "top": 0,
+        "left": 0,
+        "width": "100%",
+        "height": "100%",
+        "backgroundColor": "rgba(0, 0, 0, 0.6)",
+        "zIndex": 5,
+        "backdropFilter": "blur(2px)",
+    }
+)
+
+login_overlay_chart = html.Div(
+    id="login-overlay-chart",
+    children=[
+    dmc.Space(h=60),
+    dmc.Text(
+        "Log in to view the RAST quadrant of the most undervalued companies.",
+        weight=700,
+        size="m",
+        color="white",
+        align="center",
+    )],
+    style={
+        "display": "none",  # Hidden by default
+        "position": "absolute",  # Sit on top
+        "top": 0,
+        "left": 0,
+        "width": "100%",
+        "height": "100%",
+        "backgroundColor": "rgba(0, 0, 0, 0.6)",
+        "zIndex": 5,
+        "backdropFilter": "blur(2px)",
+    }
+)
 
 
 table_hype = dmc.Card(children=[
@@ -1265,6 +1274,7 @@ table_hype = dmc.Card(children=[
             dmc.Table(id='top_25_companies')
         ]
     ),
+    login_overlay_table,
 ], withBorder=True, shadow='lg', radius='md')
 
 graph_hype = dmc.Card(children=[
@@ -1276,7 +1286,9 @@ graph_hype = dmc.Card(children=[
         mb="xs",
     ),
     dcc.Graph(id='hyped-ranking-graph', config=config_graph),
-], withBorder=True, shadow='lg', radius='md')
+    login_overlay_chart,
+    ],
+    withBorder=True, shadow='lg', radius='md')
 
 
 
@@ -1288,7 +1300,6 @@ def layout(company=None, **other_unknown_query_strings):
                 dmc.Grid([
                     # dmc.Col(span=0.5, lg=0), # Empty left column
                     dmc.Col(selector_card, span="auto", orderXs=1, orderSm=1, orderLg=1),
-                    #dmc.Col(navbar_column, span="auto", order=1),
                     dmc.Col([
                         dmc.LoadingOverlay(graph_card), dmc.Space(h=20), dmc.LoadingOverlay(table_hype), dmc.Space(h=20),
                         dmc.LoadingOverlay(graph_hype)
@@ -1343,7 +1354,9 @@ def layout(company=None, **other_unknown_query_strings):
                 dcc.Store(id='max-net-margin'),  # stores the max theoretical net margin for the selected company
                 dcc.Store(id='hype-score'),  # calculates the company's hype level that is used in the ranking
                 html.Div(id='page-load-trigger'),  # Dummy trigger to launch a callback once the page loads
-                dcc.Location(id='url', refresh=False)
+                dcc.Location(id='url', refresh=False),
+                dcc.Store(id="user-store"),  # storing user information
+                dcc.Store(id="user-token", storage_type="session")
             ], fluid=True),
         ]),
 

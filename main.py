@@ -17,6 +17,7 @@ import base64
 #import datetime
 import io
 from dash import Dash, dcc, html, dash_table, Input, Output, State, callback
+import jwt
 
 
 # ---------------------------- Importing Data for testing purpose
@@ -690,5 +691,11 @@ def get_industry_icon(industry: str) -> str:
     # Return the matching icon or a default
     return mapping.get(industry, "mdi:briefcase-outline")
 
-
+# Verify JWT (simplified, replace with proper signature verification in production)
+def verify_token(token):
+    try:
+        claims = jwt.decode(token, options={"verify_signature": False})
+        return claims
+    except Exception:
+        return None
 

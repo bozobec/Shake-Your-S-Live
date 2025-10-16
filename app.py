@@ -32,6 +32,11 @@ import jwt
 import requests
 import os
 from dotenv import load_dotenv
+import stripe
+import json
+from components.navbar import navbar
+from components.graph_layouts import layout_main_graph, layout_revenue_graph, layout_growth_rate_graph, \
+    layout_product_maturity_graph
 
 t1 = time.perf_counter(), time.process_time()
 
@@ -39,16 +44,16 @@ t1 = time.perf_counter(), time.process_time()
 load_dotenv()
 
 
+
 # Retrieve secrets
 AIRTABLE_API_KEY = os.getenv("AIRTABLE_API_KEY")
 print("Airtable key loaded:", bool(AIRTABLE_API_KEY))
+stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
+print("Stripe key loaded:", bool(stripe.api_key))
 
-#pd.set_option('display.max_columns', None)
 pd.set_option('display.max_rows', 200)
-#external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 APP_TITLE = "RAST"
 
-# app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 app = dash.Dash(__name__,
                 external_stylesheets=[dbc.themes.LUX],
                 #external_stylesheets=[dbc.themes.MORPH], Nice stylesheet
@@ -57,53 +62,15 @@ app = dash.Dash(__name__,
                 url_base_pathname="/"
                 )
 
+# Posthog settings
 posthog = Posthog(
   project_api_key='phc_b1l76bi8dgph2LI23vhWTdSNkiL34y2dkholjYEC7gw',
   host='https://eu.i.posthog.com'
 )
 
-app.index_string = """<!DOCTYPE html>
-<html>
-    <head>
-        <!-- Google tag (gtag.js) -->
-        <script async src="https://www.googletagmanager.com/gtag/js?id=G-DE44VVN8LR"></script>
-        <script>
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          gtag('js', new Date());
-          gtag('config', 'G-DE44VVN8LR');
-        </script>
-        
-        <!-- PostHog -->
-        <script src="https://eu.i.posthog.com/static/array.js"></script>
-        <script>
-          posthog.init('phc_b1l76bi8dgph2LI23vhWTdSNkiL34y2dkholjYEC7gw', {
-            api_host: 'https://eu.i.posthog.com',
-            person_profiles: 'always'
-          });
-        </script>
-        
-        <meta name="RAST | Customer-based companies valuation" content="RAST is a tool for valuating customer-based or
-        user-based publicly traded companies">
-        <title>Tech Valuation tool - RAST</title>
-        <meta content="Make confident investment decisions on user-based companies such as Netflix with our unique fundamental analysis and in-depth visual 
-        tool. Understand the users' growth and valuation." name="description">
-        <link rel="shortcut icon" type="image/x-icon" href="/assets/favicon.ico">
-        <meta name="RAST is a Company valuation tool">
-        <meta name="With RAST, perform User-based valuation, calculate customer equity, Customer lifetime value (CLV) 
-        calculation and valuation">
-        <meta name="viewport" content="width=device-width">
-        {%css%}
-    </head>
-    <body>
-        {%app_entry%}
-        <footer>
-            {%config%}
-            {%scripts%}
-            {%renderer%}
-        </footer>
-    </body>
-</html>"""
+# Load index template from external file
+with open("index_template.html") as f:
+    app.index_string = f.read()
 
 # ---------------------------------------------------------------------------
 
@@ -112,591 +79,19 @@ YEAR_OFFSET = 1970  # The year "zero" for all the calculations
 MIN_DATE_INDEX = 5  # Defines the minimum year below which no date can be picked in the datepicker
 YEARS_DCF = 15  # Amount of years taken into account for DCF calculation
 
-# Hype meter indicator
-hype_meter_indicator_progress = dbc.Progress(
-    children=
-    [
-        dbc.Progress(value=5, color="#D3F9D8", bar=True, id="marginally-hyped"),
-        dbc.Progress(value=5, color="#FFF3BF", bar=True, id="moderately-hyped"),
-        dbc.Progress(value=5, color="#FFE8CC", bar=True, id="strongly-hyped"),
-        dbc.Progress(value=85, color="#C92A2A", bar=True, animated=True, striped=True, id="super-hyped"),
-        dbc.Tooltip("Customer Equity: $3.0B", target="marginally-hyped", placement="top"),
-        dbc.Tooltip("Delta depending on the chosen scenario", target="moderately-hyped", placement="top"),
-        dbc.Tooltip("Hype: $4.0B", target="strongly-hyped", placement="top"),
-        dbc.Tooltip("Super Hyped", target="super-hyped", placement="top"),
-    ],
-    style={"height": "5px", "borderRadius": "0px"},
-)
-
-
-# Hype meter
-hype_meter_bootstrap = dbc.Progress(
-    children=
-    [
-        dbc.Progress(value=10, color="#228BE6", bar=True, label="N-O Assets", id="hype-meter-noa"),
-        dbc.Progress(value=10, color="#74C0FC", bar=True, label="Customer Equity", id="hype-meter-users"),
-        # dbc.Progress(value=20, color="#D1D1D1", bar=True, animated=True, striped=True, id="hype-meter-delta"),
-        dbc.Progress(value=10, color="#D1D1D1", bar=True, animated=True, striped=True, label="Hype",
-                     id="hype-meter-hype"),
-        dbc.Tooltip("Non-Operating Assets: $3.0B", target="hype-meter-noa", id='hype-tooltip-noa', placement="top"),
-        dbc.Tooltip("Customer Equity: $3.0B", target="hype-meter-users", id='hype-tooltip-users', placement="top"),
-        # dbc.Tooltip("Delta depending on the chosen scenario", target="hype-meter-delta", id="tooltip-equity-text", placement="top"),
-        dbc.Tooltip("Hype: $4.0B", target="hype-meter-hype", id='hype-tooltip-hype', placement="top"),
-    ],
-    style={"height": "30px", "borderRadius": "30px"},
-)
-
-hype_meter_example = dbc.Progress(
-    children=
-    [
-        dbc.Progress(value=30, color="#953AF6", bar=True, label="N-O Assets", id="hype-meter-noa-ex"),
-        dbc.Progress(value=40, color="#F963F1", bar=True, label="Customer Equity", id="hype-meter-users-ex"),
-        dbc.Progress(value=30, color="#FFD000", bar=True, animated=True, striped=True, label="Hype",
-                     id="hype-meter-hype-ex"),
-        dbc.Tooltip("Non-Operating Assets: $3.0B", target="hype-meter-noa-ex", placement="top"),
-        dbc.Tooltip("Customer Equity: $3.0B", target="hype-meter-users-ex", placement="top"),
-        # dbc.Tooltip("Delta depending on the chosen scenario", target="hype-meter-delta", id="tooltip-equity-text", placement="top"),
-        dbc.Tooltip("Hype: $4.0B", target="hype-meter-hype-ex", placement="top"),
-    ],
-    style={"height": "30px", "borderRadius": "30px"},
-)
-offcanvas_card_growth_analysis = dmc.Card(
-    children=[
-        dmc.Group(
-            [
-                dmc.Title("Valuation in 3 steps", order=6),
-                #dmc.Text("For all datasets", size="xs", color="dimmed")
-            ],
-            position="apart",
-            mt="md",
-            # mb="xs",
-        ),
-        dmc.Space(h=20),
-        dmc.Text(
-            # id="hype-meter-text",
-            children=[dmc.List([
-                dmc.ListItem([dmc.Text("Select your dataset", weight=500),
-                              "Pick one of the available publicly-traded companies. Only companies with a relevant "
-                              "metric are shown here (such as Netflix's subscribers). "]),
-                dmc.ListItem([dmc.Text("Understand the company's hype", weight=500),
-                              "With the Hypemeter, you immediately see how 'hyped' the company is. In other words, how "
-                              "much its current market cap differs from its actual value."]),
-                dmc.ListItem([dmc.Text("Use your own parameters", weight=500),
-                              "You don't trust us? Good, we also don't trust financial indicators. Play "
-                              "with the parameters and see by yourself what conditions should be met so that the "
-                              "hype decreases and that the valuation is justified."]),
-            ], size="sm", listStyleType="decimal")]
-            ,
-            size="xs",
-            color="Black",
-            # style={'display':'inline-block'}
-        ),
-    ],
-    # id="hype-meter-card",
-    # style={'display': 'none'},
-    withBorder=True,
-    shadow="sm",
-    radius="md",
-)
-
-app_button = dmc.Button(
-    id="app-button",
-    children="APP",
-    leftIcon=DashIconify(icon="fluent:app-title-24-regular"),
-    size="xs",
-    variant="gradient",
-    gradient={"from": "cyan", "to": "blue"},
-    # color="white",
-    # color.title(white).
-),
-
-
-offcanvas_card_valuation_analysis = dmc.Card(
-    children=[
-        dmc.Group(
-            [
-                dmc.Title("Methodology & Parameters", order=6),
-            ],
-            position="apart",
-            mt="md",
-            # mb="xs",
-        ),
-        dmc.Space(h=20),
-        dmc.Text("Hypemeter", size="sm", weight=700),
-        dmc.Space(h=5),
-        dmc.Text("Get a quick read on a company's hype level. A company is considered Super Hyped when "
-                              "the hype exceeds 20% of the total value.", size="sm"),
-        dmc.Space(h=5),
-        dmc.Group(children =[
-                           dmc.Badge("", variant="outline", color="green"),  dmc.Badge("", variant="outline", color="yellow"), dmc.Badge("", variant="outline", color="orange"),
-                           dmc.Badge("Super Hyped!", variant="filled", color="red")]),
-        dmc.Space(h=10),
-        dmc.Text("The value of user-dependant companies is tied to the number of users and the revenue each "
-                 "user generates. The total worth, known as 'Customer Equity', combines current and future "
-                 "value. To calculate the overall company value, add non-operating assets and subtract debt: ", size="sm"),
-        dmc.Space(h=5),
-        dmc.Text("Company Value = Non-Operating Assets + Customer Equity - Debt", align="center", size="sm",
-                 weight=500),
-        dmc.Space(h=5),
-        dmc.Text("Comparing this value to the "
-                 "market cap reveals investor sentiments, showing how much 'hope' or 'hype' surrounds "
-                 "the company. In the example below, we observe that the hype accounts for 30% of the company's "
-                 "current valuation. This suggests that unless there's a notable enhancement in its business "
-                 "model, there's a high likelihood that the value may decrease."
-                 , size="sm"),
-        dmc.Space(h=10),
-        hype_meter_example,
-        dmc.Space(h=15),
-        dmc.Text("Parameters", size="sm", weight=700),
-        dmc.Space(h=5),
-        dmc.Text(children=[
-            dmc.List([
-                dmc.ListItem([dmc.Text("Hypemeter", weight=500),
-                              "Get a quick read on a company's hype level. A company is considered Super Hyped when "
-                              "the hype exceeds 20% of the total value.", dmc.Group(children =[
-                           dmc.Badge("", variant="outline", color="green"),  dmc.Badge("", variant="outline", color="yellow"), dmc.Badge("", variant="outline", color="orange"),
-                           dmc.Badge("Super Hyped!", variant="filled", color="red")], spacing=2)]),
-                dmc.ListItem([dmc.Text("Growth Forecast", weight=500),
-                              "Slide through different growth scenarios, correlating stronger growth with higher "
-                              "future value and current valuation."]),
-                dmc.ListItem([dmc.Text("Profit Margin", weight=500),
-                              "Evaluate a company's value by considering its profit margin. A positive margin "
-                              "indicates revenue generation, and the higher the margin, the higher the current value."]),
-                dmc.ListItem([dmc.Text("Discount Rate", weight=500),
-                              "Factor in future uncertainties with the discount rate. The higher the rate, "
-                              "the more uncertainty about the future, leading to a lower current valuation."]),
-                dmc.ListItem([dmc.Text("Revenue (ARPU) Yearly Growth", weight=500),
-                              "Influence the customer equity by changing the growth of the annual average revenue generated per user "
-                              "(ARPU)."]),
-            ], size="sm", listStyleType="decimal")],
-            size="xs",
-            color="Black",
-        ),
-    ],
-    # style={'display':'inline-block'}
-    # id="hype-meter-card",
-    # style={'display': 'none'},
-    withBorder=True,
-    shadow="sm",
-    radius="md",
-)
-
-footer_section1 = dmc.Group([
-    dmc.Group(
-        [
-            dmc.Title("ABOUT", order=6),
-        ],
-        position="apart",
-        mt="md",
-        # mb="xs",
-    ),
-    dmc.Text(["RAST is a bootstrapped company developed in Switzerland. RAST's objective is to offer more clarity "
-              "regarding company valuation. If you want to support us, collaborate or contact us for any other reasons,"
-              "please leave us a message at rastapp@proton.me"
-              ]),
-    dmc.Text("Copyright © 2024 All Rights Reserved by RAST Switzerland")
-    ])
-
-footer_section2 = dmc.Stack([
-    dmc.Group(
-        [
-            dmc.Title("QUICK LINKS", order=6),
-        ],
-        position="apart",
-        mt="md",
-        # mb="xs",
-    ),
-    html.A(dmc.Button("Try RAST",
-                      color="gray",
-                      variant="subtle",
-                      compact=True), href="/app"),
-])
-
-footer = dmc.Footer(
-    height="flex",
-    withBorder=True,
-    fixed=False,
-    children=[
-        #dmc.Container(html.Img(src="/assets/Vector_White_Full.svg", style={'height': '20px'}), ml=60),
-        dmc.Grid(children=[
-            dmc.Col(footer_section1, span=12, lg=6),
-            dmc.Col(footer_section2, span=12, lg=6),
-        ], gutter="xl", mx=60, my=30),
-        dmc.Space(h=42)
-    ],
-    style={"backgroundColor": "#1c1c1c"},
-)
-
-# OffCanvas (side panel that opens to give more information)
-offcanvas = html.Div(
-    [
-        dbc.Button("How it works", id="open-offcanvas", n_clicks=0),
-        dbc.Offcanvas([
-            dmc.Container(children=[
-                dmc.Text(
-                    "Are you a Tech investor, journalist or simply curious about tech valuation? We got you."
-                    " Meet RAST, your go-to tool for determining the intrinsic"
-                    "value of publicly traded Tech companies.", size="sm"),
-                dmc.Space(h=15),
-                offcanvas_card_growth_analysis,
-                dmc.Space(h=15),
-                offcanvas_card_valuation_analysis,
-                dmc.Space(h=15),
-                dmc.Text(
-                    "We're continually adding new datasets & functionalities. Interested in specific datasets or have "
-                    "a feature request? Drop us a line! 🚀 rastapp@proton.me.", size="sm"),
-                # dmc.Group(hype_meter_indicator_progress),
-            ]
-            ),
-        ],
-            id="offcanvas",
-            title="Welcome to RAST",
-            is_open=False,
-        ),
-    ]
-)
-
-# App button for the Navbar
-app_button_link = html.Div(
-    [
-        dbc.Button("APP", id="app-button-link", n_clicks=0, href="/"),
-    ]
-)
-
-
-navbar7 = dbc.NavbarSimple(
-    children=[
-        dbc.NavItem(children=[
-            app_button_link
-        ]
-        ),
-        dbc.NavItem(offcanvas),
-        #Login
-        #dbc.NavItem([
-        #    html.Div(id="clerk-header"),  # placeholder for the user button
-        #    html.Script(src="/assets/clerk.js"),  # include the Clerk script
-        #])
-    ],
-    #brand=['R A ', html.Img(src="/assets/favicon.ico", height="21px"), ' T'],
-    brand=[html.Img(#src="/assets/Vector_White_Full.svg",
-                    src="/assets/RAST_Vector_Logo.svg",
-                    alt="RAST Logo, user-based company valuation & prediction tool",
-                    height="36px"
-    )],
-    brand_href="https://www.rast.guru",
-    sticky="top",  # Uncomment if you want the navbar to always appear at the top on scroll.
-    color="primary",  # Change this to change color of the navbar e.g. "primary", "secondary" etc.
-    dark=True,  # Change this to change color of text within the navbar (False for dark text)
-)
-
-
-
-
-
-# Main plot definition
-main_plot = go.Figure()
-hovertemplate_maingraph = "%{text}"
-
-# Definition of the different traces
-# Main bars
-main_plot.add_trace(go.Bar(name="dataset-bars", x=[], y=[],
-                           marker_color='Black', hoverinfo='none'))
-# Continuous legend for the historical data set
-main_plot.add_trace(go.Scatter(name="dataset-line", x=[],
-                               y=[], mode='lines', opacity=1,
-                               marker_color="Black", showlegend=False, hovertemplate=hovertemplate_maingraph))
-
-# Ignored bars (ignored data for scenario)
-main_plot.add_trace(go.Bar(name="ignored-bars", x=[], y=[],
-                           marker_color='Grey', hoverinfo='none'))
-# Future bars (if past the date picked by the user)
-main_plot.add_trace(go.Bar(name="future-bars", x=[], y=[],
-                           marker_color='Grey', hoverinfo='none'))
-# Prediction line
-main_plot.add_trace(go.Scatter(name="prediction-line", x=[], y=[],
-                               mode="lines", line=dict(color='#4dabf7', width=2), opacity=0.8,
-                               hovertemplate=hovertemplate_maingraph))
-# Vertical line for current date
-main_plot.add_vline(name="current-date", line_width=1, line_dash="dot",
-                    opacity=0.5, x=2023, annotation_text="   Forecast")
-
-
-# Graph layout
-
-# Build main graph
-layout_main_graph = go.Layout(
-    # title="User Evolution",
-    plot_bgcolor="White",
-    dragmode=False,
-    clickmode=None,
-    #config = {'scrollZoom': False},
-    margin=go.layout.Margin(
-        l=0,  # left margin
-        r=0,  # right margin
-        b=0,  # bottom margin
-        t=20,  # top margin
-    ),
-    legend=dict(
-        # Adjust click behavior
-        itemclick="toggleothers",
-        itemdoubleclick="toggle",
-        # orientation="h",
-        # x=0.5,
-        # y=-0.1,
-        yanchor="top",
-        y=0.96,
-        xanchor="left",
-        x=0.01,
-        font=dict(
-            family="Basel",
-            size=10,
-            # color="black"
-        ),
-    ),
-    xaxis=dict(
-        # title="Timeline",
-        linecolor="#46052A",
-        # hoverformat=".0f",
-    ),
-    yaxis=dict(
-        title="Users",
-        linecolor="#46052A",
-        gridwidth=1,
-        gridcolor='rgba(255, 168, 251, 0.3)',
-        # hoverformat='{y/1e6:.0f} M'
-    ),
-    showlegend=True,
-    font=dict(
-        family="Basel",
-        #size=10,
-        # color="black"
-    ),
-)
-
-# Layout of the growth rate graph
-layout_growth_rate_graph = go.Layout(
-    # title="User Evolution",
-    plot_bgcolor="White",
-    dragmode=False,
-    margin=go.layout.Margin(
-        l=0,  # left margin
-        r=0,  # right margin
-        b=0,  # bottom margin
-        t=20,  # top margin
-    ),
-    legend=dict(
-        # Adjust click behavior
-        itemclick="toggleothers",
-        itemdoubleclick="toggle",
-        # orientation="h",
-        # x=0.5,
-        # y=-0.1,
-        yanchor="top",
-        y=0.96,
-        xanchor="left",
-        x=0.01,
-        font=dict(
-            # family="Courier",
-            size=10,
-            # color="black"
-        ),
-    ),
-    xaxis=dict(
-        title="Users or Units",
-        linecolor="Grey",
-        fixedrange=True,
-        # hoverformat=".0f",
-    ),
-    yaxis=dict(
-        title="Discrete Growth Rate",
-        linecolor="Grey",
-        gridwidth=1,
-        gridcolor='rgba(255, 168, 251, 0.3)',
-        fixedrange=True,
-        # hoverformat='{y/1e6:.0f} M'
-    ),
-    showlegend=True,
-    font=dict(
-        family="Basel",
-        # size=16,
-        # color="Black"
-    ),
-)
-
-# Layout of the revenue graph
-layout_revenue_graph = go.Layout(
-    # title="User Evolution",
-    plot_bgcolor="White",
-    dragmode=False,
-    margin=go.layout.Margin(
-        l=0,  # left margin
-        r=0,  # right margin
-        b=0,  # bottom margin
-        t=20,  # top margin
-    ),
-    legend=dict(
-        # Adjust click behavior
-        itemclick="toggleothers",
-        itemdoubleclick="toggle",
-        # orientation="h",
-        # x=0.5,
-        # y=-0.1,
-        yanchor="top",
-        y=0.96,
-        xanchor="left",
-        x=0.01,
-        font=dict(
-            family="Basel",
-            #size=10,
-            # color="black"
-        ),
-    ),
-    xaxis=dict(
-        #title="Time",
-        linecolor="Grey",
-        fixedrange=True,
-        # hoverformat=".0f",
-    ),
-    yaxis=dict(
-        title="Average Revenue Per User Per Month",
-        linecolor="Grey",
-        gridwidth=1,
-        gridcolor='rgba(255, 168, 251, 0.3)',
-        fixedrange=True,
-        # hoverformat='{y/1e6:.0f} M'
-    ),
-    showlegend=True,
-    font=dict(
-        family="Basel",
-        # size=10,
-        # color="black"
-    ),
-)
-
-# Layout of the product maturity graph
-layout_product_maturity_graph = go.Layout(
-    # title="User Evolution",
-    #plot_bgcolor="White",
-    margin=go.layout.Margin(
-        l=0,  # left margin
-        r=0,  # right margin
-        b=0,  # bottom margin
-        t=20,  # top margin
-    ),
-    dragmode=False,
-    legend=dict(
-        # Adjust click behavior
-        itemclick="toggleothers",
-        itemdoubleclick="toggle",
-        # orientation="h",
-        # x=0.5,
-        # y=-0.1,
-        yanchor="top",
-        y=0.96,
-        xanchor="left",
-        x=0.01,
-        font=dict(
-            # family="Courier",
-            size=10,
-            # color="black"
-        ),
-    ),
-    xaxis=dict(
-        #title="Timeline",
-        linecolor="Grey",
-        showgrid=False,
-        fixedrange=True,
-        # hoverformat=".0f",
-    ),
-    yaxis=dict(
-        title="R&D Share of Revenue [%]",
-        linecolor="Grey",
-        showgrid=False,
-        fixedrange=True,
-        #gridwidth=1,
-        #gridcolor='#e3e1e1',
-        # hoverformat='{y/1e6:.0f} M'
-    ),
-    showlegend=True,
-    font=dict(
-        family="Basel",
-        # size=16,
-        # color="Black"
-    ),
-)
-
-# Build second graph
-layout_second_graph = go.Layout(
-    # title="User Evolution",
-    plot_bgcolor="White",
-    legend=dict(
-        # Adjust click behavior
-        itemclick="toggleothers",
-        itemdoubleclick="toggle",
-    ),
-    xaxis=dict(
-        title="Users",
-        linecolor="Grey",
-        fixedrange=True,
-    ),
-    yaxis=dict(
-        title="Discrete Growth Rate",
-        linecolor="Grey",
-        gridwidth=1,
-        gridcolor='rgba(255, 168, 251, 0.3)',
-        fixedrange=True,
-    ),
-    showlegend=False,
-    font=dict(
-        family="Basel",
-        # size=16,
-        # color="Black"
-    ),
-)
-# Build third graph
-layout_third_graph = go.Layout(
-    # title="User Evolution",
-    plot_bgcolor="White",
-    legend=dict(
-        # Adjust click behavior
-        itemclick="toggleothers",
-        itemdoubleclick="toggle",
-    ),
-    xaxis=dict(
-        title="# of Data ignored",
-        linecolor="Grey",
-    ),
-    yaxis=dict(
-        title="R^2",
-        linecolor="Grey",
-        gridwidth=1,
-        gridcolor='rgba(255, 168, 251, 0.3)',
-    ),
-    showlegend=False,
-    font=dict(
-        family="Basel",
-        # size=16,
-        # color="Black"
-    ),
-)
-
-main_plot.update(
-    layout=layout_main_graph
-)
-
-# loading = dcc.Loading(id="loading-component", children=[html.Div([html.Div(id="loading-output")])], type="circle",),
-
 # ----------------------------------------------------------------------------------
 # App Layout
 
 layout_page_standard = dmc.AppShell(
     zIndex=100,
-    header=navbar7,
-    #footer=footer,
+    header=navbar,
     children=[
             #dcc.Location(id='url', refresh=False),
         dcc.Location(id='url-input', refresh=False),
         dcc.Location(id='url-output', refresh=False),
+        dcc.Store(id="login-state", storage_type="session"),
+        dcc.Store(id="user-id", storage_type="session"),
+        html.Div(id="login-state-bridge", children="", style={"display": "none"}),
         dcc.Download(id="download-chart"),  # Component to handle file download
 
             dmc.Container(fluid=True, children=[
@@ -714,7 +109,6 @@ layout_page_standard = dmc.AppShell(
             ]),
             dash.page_container
     ],
-    #footer=footer
 )
 
 app.layout = dmc.MantineProvider(
@@ -757,7 +151,9 @@ theme={
     children=layout_page_standard)
 
 # Clerk domain (e.g., "your-app.clerk.accounts.dev")
-CLERK_JWKS_URL = "https://happy-skylark-73.clerk.accounts.dev/.well-known/jwks.json"
+
+# Pick the right url depending on the environment (first one is prod, stored on heroku, second is dev)
+CLERK_JWKS_URL = os.getenv("CLERK_JWKS_URL", "https://happy-skylark-73.clerk.accounts.dev/.well-known/jwks.json")
 jwks = requests.get(CLERK_JWKS_URL).json()
 
 server = app.server
@@ -767,12 +163,32 @@ server = app.server
 
 # --- Verify Clerk JWT ---
 def verify_token(token):
-    # NOTE: For production, use Clerk’s JWKS public keys properly.
-    try:
-        claims = jwt.decode(token, options={"verify_signature": False})
-        return claims
-    except Exception:
-        return None
+    jwks = requests.get(CLERK_JWKS_URL).json()
+    unverified_header = jwt.get_unverified_header(token)
+    rsa_key = next(
+        (
+            {
+                "kty": key["kty"],
+                "kid": key["kid"],
+                "use": key["use"],
+                "n": key["n"],
+                "e": key["e"],
+            }
+            for key in jwks["keys"]
+            if key["kid"] == unverified_header["kid"]
+        ),
+        None,
+    )
+    if rsa_key:
+        payload = jwt.decode(
+            token,
+            rsa_key,
+            algorithms=["RS256"],
+            audience="app.rast.guru",
+            issuer="https://clerk.rast.guru",
+        )
+        return payload
+    return None
 
 
 @server.before_request
@@ -800,6 +216,62 @@ def check_auth():
     # attach plan info for convenience
     request.user_plan = claims.get("public_metadata", {}).get("plan", "free")
 
+# Stores login state & user data and avoids update if login state has not changed
+@app.callback(
+    Output('login-state', 'data'),
+    Output('user-id', 'data'),
+    Input("login-state-bridge", "children"),
+    prevent_initial_call=True,  # optional: avoid firing on page load if empty
+)
+def update_login_state(bridge_content):
+    if not bridge_content:
+        return no_update  # nothing to do
+
+    try:
+        state = json.loads(bridge_content)
+    except json.JSONDecodeError:
+        print("Failed to parse login-state-bridge content:", bridge_content)
+        return no_update
+
+    # Extract logged_in and user_id
+    logged_in = state.get("logged_in", False)
+    user_id = state.get("user_id", None)
+
+    # Store the new state as a dict
+    new_data = {"logged_in": logged_in, "user_id": user_id}
+
+    # Access previous value if available to avoid unnecessary updates
+    triggered = callback_context.triggered
+    if triggered:
+        # check previous value
+        ctx = callback_context
+        prev_value = ctx.states.get("login-state.data")
+        if prev_value == new_data:
+            return no_update
+
+    print("Updating login-state to:", logged_in, user_id)
+    return logged_in, user_id
+
+@app.callback(
+    Output("login-overlay-table", "style"),
+    Output("login-overlay-chart", "style"),
+    Input("login-state", "data"),
+)
+def toggle_overlay(logged_in):
+    if not logged_in:  # False or None:
+        style = {"display": "block",
+                "position": "absolute",
+                "top": 0,
+                "left": 0,
+                "width": "100%",
+                "height": "100%",
+                "backgroundColor": "rgba(0,0,0,0.6)",
+                "zIndex": 5,
+                "backdropFilter": "blur(2px)"}
+        return style, style
+    return {"display": "none"}, {"display": "none"}
+
+
 
 # ----------------------------------------------------------------------------------
 # Callback behaviours and interaction
@@ -808,7 +280,7 @@ def check_auth():
     Output('all-companies-information', 'data'),
     Output(component_id='hyped-ranking-graph', component_property='figure'),  # Update graph 1
     Output(component_id='hyped-table-industry', component_property='data'),  # Update graph 1
-    Input('url', 'pathname') # Triggered once when the page is loaded
+    Input('url', 'pathname'), # Triggered once when the page is loaded
 )
 def initialize_data(href):
     # ---- Performance assessment
@@ -818,11 +290,6 @@ def initialize_data(href):
     print(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
     print("Loading company information")
 
-    # Plan linked to user
-
-    plan = getattr(request, "user_plan", "free")
-    print("plan")
-    print(plan)
 
     # Load or compute data
     df_all_companies_information = dataAPI.get_hyped_companies_data()
@@ -914,13 +381,12 @@ def initialize_data(href):
     ))
 
     # Layout tweaks
-    #fig.update_layout(layout_main_graph)
     fig.update_layout(
         #title="Hype-Growth quadrant",
-        xaxis=dict(title="Growth potential", range=[0, 1]),
+        xaxis=dict(title="Growth potential", range=[0, 1], fixedrange=True),
         yaxis=dict(
             title="Hype level",
-            #range=[-2, 12],
+            fixedrange=True,
             #type="log",  # 🔹 log scale
             #autorange=True  # auto-fit the range
         ),
@@ -1243,7 +709,6 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
         value_discount_rate_slider = 5
 
         # Graph creation
-        # fig_main = go.Figure(layout=layout_main_graph)
         hovertemplate_maingraph = "%{text}"
         y_legend_title = key_unit
 
@@ -1421,20 +886,30 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
 
     # Growth Rate Graph message
     if average_rd < 0.1:
-        growth_rate_graph_message1 = "The annual average discrete growth rate is approaching 0 (" + f"{average_rd:.3f}"+ \
+        growth_rate_graph_message1 = "The discrete growth rate indicates where " + dropdown_value + " is along its S-curve. " \
+                                     "When it reaches 0, growth of its " + key_unit + " ends. The flatter the regression line (purple) " \
+                                     "the longer the growth phase.\n" \
+                                      "For " + dropdown_value + ", the average annual discrete " \
+                                     "growth rate is approaching 0 (" + f"{average_rd:.1f}"+ \
                                      "), indicating an approaching end of the growth."
         growth_rate_graph_color= "yellow"
         if any(r < 0 for r in r_full[-5:]):
             growth_rate_graph_message1 = growth_rate_graph_message1 + " However, the latest growth rates vary substantially," \
                                                                       "  which could lead to a prolonged growth."
     else:
-        growth_rate_graph_message1 = "The annual average discrete growth rate is larger than 0.1, (" + f"{average_rd:.3f}"+ \
-                                     ") indicating a substantial growth."
+        growth_rate_graph_message1 = "The discrete growth rate indicates where " + dropdown_value + " is along its S-curve. " \
+                                     "When it reaches 0, growth of its " + key_unit + " has ended. The flatter the regression line (purple) " \
+                                     "the longer the growth phase.\n" \
+                                      "For " + dropdown_value + ", the line is still far away from zero, " \
+                                                                "indicating a substantial growth ahead."
+
         growth_rate_graph_color = "green"
 
     # Revenue Graph Message
-    revenue_graph_message = "Revenue insights are coming soon, come back to us soon!"
-    revenue_graph_message_color = "gray"
+    revenue_graph_message = "The graph shows revenue per " + key_unit + " (purple bars) and profit margin (pink line).\n" \
+                            " The dotted line represents projected revenue growth, adjustable with the Revenue slider.\n" \
+                            " The max net margin indicates the theoretical maximum margin for " + dropdown_value + "."
+    revenue_graph_message_color = "primaryPurple"
 
     # Product Maturity Graph Message
     if np.all(share_research_and_development == 0):
@@ -1447,28 +922,29 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
                                                             color=dmc.theme.DEFAULT_COLORS["gray"][6],
                                                             width=20)
     elif share_research_and_development[-1] > 30:
-        product_maturity_graph_message = "At the moment, " + str(dropdown_value) + \
-                                         " is heavily investing in its product, indicating " \
-                                         "that the profit margin may strongly grow in the future."
+        product_maturity_graph_message = "Tech companies often invest a large share of their revenue in R&D, " \
+                                         "and decrease it as their products mature. Currently, " \
+                                         + dropdown_value +" is investing heavily in development: a sign that " \
+                                                           "its revenue & profit margin could grow significantly in the future."
         product_maturity_graph_message_color = "green"
         product_maturity_accordion_title = "The Product is Growing!"
         product_maturity_accordion_body = "At the moment, " + str(dropdown_value) + \
                                          " is heavily investing in its product, indicating " \
-                                         "that the profit margin may strongly grow in the future."
+                                         "that the revenue & profit margin may strongly grow in the future."
         product_maturity_accordion_color = "green"
         product_maturity_accordion_icon_color = DashIconify(icon="fluent-mdl2:product-release", color=dmc.theme.DEFAULT_COLORS["green"][6],
                                              width=20)
 
     elif share_research_and_development[-1] > 10:
-        product_maturity_graph_message = "At the moment, " + str(dropdown_value) + \
-                                         " is limiting its investment in its product, indicating that the product " \
-                                         "is on its way to being mature and limited profit margin improvements should " \
-                                         "be expected."
+        product_maturity_graph_message = "Tech companies often invest a large share of their revenue in R&D. " \
+                                            "Currently, " + str(dropdown_value) + " is limiting its investment in " \
+                                          "its product, indicating that the product is on its way to being mature and " \
+                                                                                  "limited profit margin improvements should be expected."
         product_maturity_graph_message_color = "yellow"
         product_maturity_accordion_title = "The Product is Maturing"
         product_maturity_accordion_body = "At the moment, " + str(dropdown_value) + \
-                                         " is limiting its investment in its product, indicating that the product " \
-                                         "is on its way to being mature and profit margin may not have growth room."
+                                         " is limiting its investment in its product, indicating that the revenue and " \
+                                         "profit margin should stabilize."
         product_maturity_accordion_color = "yellow"
         product_maturity_accordion_icon_color = DashIconify(icon="fluent-mdl2:product-release",
                                                             color=dmc.theme.DEFAULT_COLORS["yellow"][6],
@@ -1649,11 +1125,6 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
                 {"value": data_ignored_array[-1], "label": f"{k_scenarios[-1] / 1000:.0f}K"},
             ]
 
-    # Updating the datepicker graph traces, the high & the low growth scenario
-    main_plot.update_traces(
-        selector=dict(name="current-date"),
-        x=date_picked_formatted,
-    )
 
     # Financial Values Calculation
 
@@ -1842,9 +1313,11 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
         Input(component_id='range-arpu-growth', component_property='value'),
         Input(component_id='current-arpu-stored', component_property='data'),
         State(component_id='symbol-dataset', component_property='data'),
+        State(component_id='dataset-selection', component_property='value'),  # Take dropdown value
+        State(component_id='max-net-margin', component_property='data'),  # Take dropdown value
     ], prevent_initial_call=True)
 def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, df_scenarios_dict, graph_unit, df_raw,
-                 arpu_growth, current_arpu, symbol_dataset):
+                 arpu_growth, current_arpu, symbol_dataset, dropdown_value, max_net_margin):
     # --------- Data Loading
     t1 = time.perf_counter(), time.process_time()
     # Data prepared earlier is fetched here
@@ -1946,9 +1419,13 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
                                                    p0_scenarios[data_slider],
                                                    k_scenarios[data_slider] * 0.9) + 1970
 
-    graph_message = "With the selected growth, the plateau will be approaching as of " + main.string_formatting_to_date(
-        time_selected_growth) + ", projected at " + \
-                    str(plateau_selected_growth) + " " + str(graph_unit)
+    graph_message = "The pink bars show how "+ dropdown_value +"’s " + graph_unit + " (the key revenue driver) have " \
+                   "grown over time. The yellow zone is our forecast range, " \
+                     "showing how this driver should evolve in the future. These drivers follow an S-curve: " \
+                    "fast growth at first, then a gradual slowdown.\n" \
+                    " With the selected growth, the plateau will be approaching as of " \
+                    + main.string_formatting_to_date(time_selected_growth) + ", projected at " \
+                    + str(plateau_selected_growth) + " " + str(graph_unit)
 
     # Build Main Chart
     # ---------------------
@@ -1997,8 +1474,6 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
         )
     )
     # Update layout to customize the annotation
-    #fig_main.update_layout(layout_main_graph)
-    # fig_main.update_yaxes(range=[0, k_scenarios[-1]*1.1])  # Fixing the size of the Y axis
     if k_scenarios[-1] > users_raw[-1]:
         range_y = [0, main.logisticfunction(k_scenarios[-1], r_scenarios[-1], p0_scenarios[-1], [60])[0] * 1.5]
     else:
@@ -2007,37 +1482,21 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     print("range_y", range_y)
     fig_main.update_layout(
         hovermode="x unified",
-        # Styling of the "FORECAST" text
         annotations=[
             dict(
-                x=x_coordinate + relativedelta(months=6),  # adding 0.5 so that "FORECAST" is displayed next to the line
-                y=0.9 * k_scenarios[-1],  # Adjust the y-position as needed
+                x=(x_coordinate + relativedelta(months=9)).strftime("%Y-%m-%d"),
+                y=0.9 * k_scenarios[-1],
                 text="F O R E C A S T",
                 showarrow=False,
-                font=dict(
-                    size=8,  # Adjust the size as needed
-                    color="black",  # Text color
-                    # letter=5,
-                ),
-                opacity=0.3  # Set the opacity
+                font=dict(size=8, color="black"),
+                opacity=0.5,
             )
         ],
         yaxis=dict(
-            range=range_y,
-            fixedrange=True,
             title=graph_unit,
-            minallowed=0,
-            # maxallowed=k_scenarios[-1] * 1.5,
         ),
-        xaxis=dict(
-            fixedrange=True,
-            constrain='domain',
-            minallowed=dates_raw[0],
-
-        ),
-        dragmode=False,
+        margin=dict(t=40, b=10, l=5, r=5),
     )
-    fig_main.update_yaxes(fixedrange=True)
 
     # Prediction, S-Curves
 
@@ -2142,8 +1601,6 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
         )
     )
     print("Userbase Graph printed")
-    #fig_main.write_image("images/fig1.svg")
-    #pio.write_image(fig_main, 'image.svg', scale=6, width=1080, height=1080)
     print("Image created")
 
     x1 = np.linspace(dates[-1] + 0.25, dates[-1] + 10, num=10)
@@ -2156,8 +1613,14 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     fig_second = go.Figure(layout=layout_growth_rate_graph)
     fig_second.update_xaxes(range=[0, users[-1] * 1.1], title=graph_unit)  # Fixing the size of the X axis with users max + 10%
     dates_moved, users_moved = main.moving_average_smoothing(dates, users, moving_average)
-    fig_second.update_yaxes(range=[min(main.discrete_growth_rate(users_moved, dates_moved + 1970)-0.05),
-                                   max(main.discrete_growth_rate(users_moved, dates_moved + 1970)+0.05)])
+
+    #Defining the min as zero or less if the minimum is negative
+    if min(main.discrete_growth_rate(users_moved, dates_moved + 1970)-0.05) > 0:
+        fig_second.update_yaxes(range=[0,
+                                       max(main.discrete_growth_rate(users_moved, dates_moved + 1970)+0.05)])
+    else:
+        fig_second.update_yaxes(range=[min(main.discrete_growth_rate(users_moved, dates_moved + 1970) - 0.05),
+                                       max(main.discrete_growth_rate(users_moved, dates_moved + 1970) + 0.05)])
     fig_second.add_trace(
         go.Scatter(name="Discrete Growth Rate Smoothened by moving average: " + str(moving_average),
                 x = main.discrete_user_interval(users_moved),
@@ -2190,13 +1653,33 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
             xref="paper",  # Reference the image to the plot area
             yref="paper",
             x=0.99,  # Position the image at the bottom-right corner (1.0 means the right edge of the figure)
-            y=0.99,  # Position the image at the bottom (0.0 means the bottom edge of the figure)
+            y=0.9,  # Position the image at the bottom (0.0 means the bottom edge of the figure)
             xanchor="right",  # Align the image to the right
             yanchor="bottom",  # Align the image to the bottom
             sizex=0.1,  # Adjust the width of the image
             sizey=0.1,  # Adjust the height of the image
             layer="above"  # Place the image above the plot elements
         )
+    )
+    fig_second.add_shape(
+        type="line",
+        x0=0,
+        x1=users[-1]*1.1,
+        y0=0,
+        y1=0,
+        line=dict(color="black", width=1, dash="dot")
+    )
+    fig_second.update_layout(
+        annotations=[
+            dict(
+                x=users[0],
+                y=0.01,
+                text="G R O W T H  E N D",
+                showarrow=True,
+                font=dict(size=8, color="black"),
+                opacity=0.5,
+            )
+        ]
     )
 
     # Carrying capacity to be printed
@@ -2235,9 +1718,8 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
         future_arpu_dates = [datetime.strptime(date_picked_formatted_original, '%Y-%m-%d') + timedelta(days=365 * year)
                              for
                              year in range(years)]
-        #fig_revenue = go.Figure(layout=layout_revenue_graph)
         fig_revenue = make_subplots(specs=[[{"secondary_y": True}]])
-        fig_revenue.update_layout(layout_revenue_graph)
+
 
         # Filter rows based on valid indices
         dates_revenue = dates_raw[valid_indices]
@@ -2307,12 +1789,39 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
             ),
                 secondary_y=True,
             )
+            # adding max net margin horizontal line
+            fig_revenue.add_shape(
+                type="line",
+                x0=x_revenue[0],
+                x1=future_arpu_dates[-1],
+                y0=max_net_margin,
+                y1=max_net_margin,
+                xref="x",  # link to x-axis
+                yref="y2",  # link to secondary y-axis
+                line=dict(color="pink", width=1, dash="dot"),
+            )
+            fig_revenue.update_layout(
+                layout_revenue_graph,
+                annotations=[
+                    dict(
+                        x=future_arpu_dates[3],
+                        y=max_net_margin,
+                        text="M A X  N E T  M A R G I N",
+                        showarrow=False,
+                        font=dict(size=8, color="#46052A"),
+                        opacity=0.5,
+                        yref="y2"
+                    )
+                ]
+            )
 
             fig_revenue.update_yaxes(range=[min(profit_margin_array)-abs(min(profit_margin_array)) * 0.1,
-                                            max(profit_margin_array) + abs(max(profit_margin_array)) * 0.5],
+                                            max_net_margin*1.2],
                                   title_text="Profit Margin [%]",
                                   color="#F963F1",
-                                  secondary_y=True)
+                                  secondary_y=True,
+                                fixedrange=True,
+                                     )
             print("Fig Revenue Printed")
 
             # Adding RAST logo
@@ -2965,9 +2474,15 @@ def graph_valuation_over_time(valuation_over_time_dict, date_picked, df_formatte
         f"${y:.0f}" if y < 1e6 else f"${y / 1e6:.1f} M" if y < 1e9 else f"${y / 1e9:.2f} B"
         for y in low_scenario_valuation
     ]
-    fig_valuation.add_trace(go.Scatter(name="Low Valuation", x=dates_until_today, y=low_scenario_valuation,
-                                       mode="lines", line=dict(color='#C58400', width=1, dash="dash"),
-                                       text=formatted_y_values, hovertemplate=hovertemplate_maingraph))
+    fig_valuation.add_trace(go.Scatter(name="Low Valuation",
+                                       x=dates_until_today,
+                                       y=low_scenario_valuation,
+                                       mode="lines",
+                                       line=dict(color='#C58400', width=1, dash="dash"),
+                                       text=formatted_y_values,
+                                       hovertemplate=hovertemplate_maingraph)
+                            )
+
     # High Valuation
     formatted_y_values = [
         f"${y:.0f}" if y < 1e6 else f"${y / 1e6:.1f} M" if y < 1e9 else f"${y / 1e9:.2f} B"
@@ -3017,25 +2532,17 @@ def graph_valuation_over_time(valuation_over_time_dict, date_picked, df_formatte
             opacity=0.6
         )
     )
-
+    mid_id_valuation = len(dates_until_today) // 2
+    mid_id_marketcap = len(market_cap_array) // 2
     # Update Layout
     fig_valuation.update_layout(
         hovermode="x unified",
         yaxis=dict(
             # range=[0, k_scenarios[-1] * 1.1],
-            fixedrange=True,
             title="Valuation & Market Cap [$B]",
-            minallowed=0,
+            #minallowed=0,
             # maxallowed=k_scenarios[-1] * 1.5,
         ),
-        xaxis=dict(
-            # fixedrange=True,
-            constrain='domain',
-            minallowed=dates_valuation_graph[0],
-
-        ),
-        #dragmode="pan",
-        # Adding "Selected date"
         annotations=[
             dict(
                 x=date_picked,
@@ -3048,6 +2555,45 @@ def graph_valuation_over_time(valuation_over_time_dict, date_picked, df_formatte
                     # letter=5,
                 ),
                 opacity=0.3  # Set the opacity
+            ),
+            # Low valuation arrow
+            dict(
+                x=dates_until_today[mid_id_valuation-1],
+                y=low_scenario_valuation[mid_id_valuation-1],
+                text="Worst scenario",
+                showarrow=True,
+                arrowhead=2,
+                arrowcolor="#433001",
+                ax=0,  # offset of arrow tail
+                ay=40,  # offset of arrow tail
+                font=dict(size=8, color="#433001"),
+                opacity=0.5,
+            ),
+            # High valuation arrow
+            dict(
+                x=dates_until_today[mid_id_valuation+1],
+                y=high_scenario_valuation[mid_id_valuation+1],
+                text="Best scenario",
+                showarrow=True,
+                arrowhead=2,
+                arrowcolor="#433001",
+                ax=0,  # offset of arrow tail
+                ay=-40,  # offset of arrow tail
+                font=dict(size=8, color="#433001"),
+                opacity=0.5,
+            ),
+            # Market cap arrow
+            dict(
+                x=dates_raw_market_cap[-3],
+                y=market_cap_array[-3],
+                text="Market cap",
+                showarrow=True,
+                arrowhead=2,
+                arrowcolor="#300541",
+                ax=0,  # offset of arrow tail
+                ay=-60,  # offset of arrow tail
+                font=dict(size=8, color="#300541"),
+                opacity=0.5,
             ),
         ],
     )
@@ -3084,12 +2630,13 @@ def graph_valuation_over_time(valuation_over_time_dict, date_picked, df_formatte
         valuation_accordion_message = company_symbol + "’s current price is below our top estimate. " \
                                                        "If you see long-term potential, it might be a good buy."
         # Messages right above the graph
-        valuation_graph_title = "Interesting Opportunity?"
-        valuation_graph_message = "The Current Market Cap is lower than the most optimistic valuation (" + \
-                                  f"{high_scenario_valuation[-1] / 1e9:.2f} B$): this stock may be undervalued.\n" + \
-                                  "Note that the most optimistic valuation is calculated by considering the best " \
-                                  "growth scenario and " + company_symbol + "'s max theoretical profit margin of " + \
-                                  f"{max_profit_margin:.1f}%."
+        valuation_graph_title = "How well did our model perform over time?"
+        valuation_graph_message = "The purple line shows " + company_symbol + "s price (market cap) over time. The yellow zone is our confidence " \
+                                  "range, calculated over time (without readjustment, obviously). " \
+                                  "We believe the market cap tends to fall, sooner or later, within this range. " \
+                                  "The dot moves to show the valuation under your chosen scenario.\n" \
+                                    " The market cap is currently lower than the most optimistic valuation (" + \
+                                  f"{high_scenario_valuation[-1] / 1e9:.2f} B$) meaning that this stock may be fairly or even undervalued!"
         valuation_graph_color = "green"
         valuation_icon_color = DashIconify(icon="radix-icons:rocket", color=dmc.theme.DEFAULT_COLORS["green"][6],
                                            width=20)
@@ -3102,11 +2649,13 @@ def graph_valuation_over_time(valuation_over_time_dict, date_picked, df_formatte
                                       "profit margin, even though they could theoretically aim at best at " + f"~{max_profit_margin:.0f}%... " \
                                                                                          f"So yeah, a bit of a stretch."
         # Messages right above the graph
-        valuation_graph_title = "Mmmh maybe not..."
-        valuation_graph_message = "The Current Market Cap is higher than the most optimistic valuation (" + \
-                                  f"{high_scenario_valuation[-1] / 1e9:.2f} B$): this stock seems overvalued.\n"+ \
-                                  "Note that the most optimistic valuation is calculated by considering the best " \
-                                "growth scenario and the best profit margin ever recorded, to which 5% were added."
+        valuation_graph_title = "How well did our model perform over time?"
+        valuation_graph_message = "The purple line shows " + company_symbol + "s price (market cap) over time. The yellow zone is our confidence " \
+                                  "range, calculated over time (without readjustment, obviously). " \
+                                  "We believe the market cap tends to fall, sooner or later, within this range. " \
+                                  "The dot moves to show the valuation under your chosen scenario.\n" \
+                                  "The Market cap is currently higher than the most optimistic valuation (" + \
+                                  f"{high_scenario_valuation[-1] / 1e9:.2f} B$), meaning that this stock seems overvalued."
         valuation_graph_color = "yellow"
         valuation_icon_color = DashIconify(icon="radix-icons:rocket", color=dmc.theme.DEFAULT_COLORS["yellow"][6],
                                            width=20)
@@ -3161,10 +2710,12 @@ def home_page_example(slider_value, non_op_assets):
     Output("top_25_companies", "children"),
     Input('all-companies-information', 'data'), # Table of companies
     Input('hyped-table-select', 'value'), # more or least hyped
-    Input('hyped-table-industry', 'value') # industry
+    Input('hyped-table-industry', 'value'), # industry
+    Input("login-state", "data"),
 )
-def update_table(df_all_companies, hype_choice, industries):
+def update_table(df_all_companies, hype_choice, industries, logged_in):
     t1 = time.perf_counter(), time.process_time()
+
     # If dropdown hasn't been used yet, set a default
     if hype_choice is None:
         hype_choice = "least-hyped"  # default setting
