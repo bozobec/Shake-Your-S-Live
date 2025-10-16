@@ -703,5 +703,6 @@ def verify_token(token):
 # Checking what environment the system is
 def get_clerk_script():
     is_prod = os.getenv("IS_PRODUCTION") == "true"
+    print("Environment:", is_prod)
     return "/assets/clerk.prod.js" if is_prod else "/assets/clerk.dev.js"
 
