@@ -550,14 +550,16 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
     """
     Posthog event
     """
-    posthog.capture(
-        distinct_id='user_or_session_id',  # replace with real user/session ID
-        event='dash_select_changed',
-        properties={
-            'location': 'dash_app',
-            'selected_value': dropdown_value
-        }
-    )
+    # skipping it if no dropdown value is selected to avoid firing it when starting
+    if dropdown_value is not None:
+        posthog.capture(
+            distinct_id='user_or_session_id',  # replace with real user/session ID
+            event='dash_select_changed',
+            properties={
+                'location': 'dash_app',
+                'selected_value': dropdown_value
+            }
+        )
     try:
         # Fetch dataset from API
         df = dataAPI.get_airtable_data(dropdown_value)

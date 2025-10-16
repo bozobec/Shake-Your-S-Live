@@ -13,11 +13,6 @@ app_button_link = html.Div(
     ]
 )
 
-# Loads the right login script depending on the environment
-IS_PRODUCTION = os.getenv("IS_PRODUCTION") == "true"  # Setup in heroku 'heroku config:set IS_PRODUCTION=true'
-clerk_script = "/assets/clerk.prod.js" if IS_PRODUCTION else "/assets/clerk.dev.js"
-print("Environment:", IS_PRODUCTION)
-print("Clerk script loaded:", clerk_script)
 
 navbar = dbc.NavbarSimple(
     children=[
@@ -28,7 +23,6 @@ navbar = dbc.NavbarSimple(
         dbc.NavItem(offcanvas),
         #Login
         dbc.NavItem([
-            #html.Script(src=clerk_script),
             html.Div(id="clerk-header"),  # placeholder for the user button
         ])
     ],
