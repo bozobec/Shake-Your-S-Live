@@ -81,7 +81,7 @@ layout_revenue_graph = go.Layout(
         # hoverformat=".0f",
     ),
     yaxis=dict(
-        title="Average Revenue Per User Per Month",
+        #title="Average Revenue Per User Per Month",
         linecolor="Grey",
         gridwidth=1,
         gridcolor='rgba(255, 168, 251, 0.3)',
