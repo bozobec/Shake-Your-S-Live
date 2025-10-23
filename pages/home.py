@@ -36,7 +36,7 @@ first_card = dmc.Card(
             "Choose your favorite tech company from our list of 25+ contenders. We've handpicked the most relevant usage "
             "metrics for you, straight from their quarterly reports!",
             size="sm",
-            color="dimmed",
+            c="dimmed",
         ),
         dmc.Space(h=21),
         dmc.CardSection(
@@ -90,7 +90,7 @@ second_card = dmc.Card(
             "Let RAST's engine do the crystal ball work. Predict how the company's user base will flourish in the "
             "upcoming years. Remember, Mo' users, mo' money.",
             size="sm",
-            color="dimmed",
+            c="dimmed",
         ),
         dmc.Space(h=21),
         dmc.CardSection(
@@ -275,9 +275,10 @@ graph_example_card = dmc.Card(
             [
                 dmc.Image(src="/assets/Netflix_2014_logo.svg",
                           alt="Netflix Logo for RAST, the user-based company valuation & prediction tool",
-                          width=100),
+                          #width=100
+                          ),
             ],
-            position="apart",
+            #position="apart",
             mt="md",
             mb="xs",
         ),
@@ -310,14 +311,14 @@ fourth_card = dmc.Card(
             "Skeptical about our methodology? Dive into the past with RAST's confidence interval magic. See how the market danced to the company's "
             "tune over time. And nope, we don't adjust our method to make old data fit.",
             size="sm",
-            color="dimmed",
+            c="dimmed",
         ),
         dmc.Space(h=21),
         dmc.CardSection(
             dmc.Image(
                 src="/assets/past_performance.png",
                 alt="Use RAST to visualize past publicly traded tech companies valuation",
-                height=240,
+                #height=240,
             ), style={'marginBottom': 10, 'marginLeft': 10, 'marginRight': 10}
         ),
     ],
@@ -332,7 +333,7 @@ reset_parameters_button_home = dcc.Link(
     children=dmc.Button(
         id="reset-parameters-home",
         children="Show me the Netflix Data",
-        leftIcon=DashIconify(icon="fluent:arrow-reset-24-filled"),
+        #leftIcon=DashIconify(icon="fluent:arrow-reset-24-filled"),
         size="xs",
         variant="outline",
         #disabled="False",
@@ -363,16 +364,17 @@ hype_meter_card_home = dmc.Card(
             [
                 dmc.Image(src="/assets/Netflix_2014_logo.svg",
                           alt="Use RAST to calculate Netflix's or Dropbox's valuation and compare it to the market cap.",
-                          width=100),
+                          #width=100
+                          ),
                 hype_meter_indicator_home,
             ],
-            position="apart",
+            #position="apart",
             mt="md",
             mb="xs",
         ),
         #hype_meter,
         dmc.Stack([
-                dmc.Text("Netflix Market Cap: $210.2B", size="xs", weight=500, align="center", id="hype-market-cap"),
+                dmc.Text("Netflix Market Cap: $210.2B", size="xs", fw=500, ta="center", id="hype-market-cap"),
                 hype_meter_bootstrap_home,
             ],
             align="stretch"
@@ -391,7 +393,7 @@ hype_meter_card_home = dmc.Card(
                         ]
                       ,
             size="xs",
-            color="Black",
+            c="Black",
             style={'display':'inline-block'}
         ),
         dmc.Space(h=10),
@@ -424,7 +426,7 @@ third_card = dmc.Card(
             "situation. Tweak the knobs, play around, and see just how far the company's price "
             "is floating away from reality.",
             size="sm",
-            color="dimmed",
+            c="dimmed",
         ),
         dmc.Space(h=21),
         dmc.CardSection([
@@ -432,17 +434,18 @@ third_card = dmc.Card(
             [
                 dmc.Image(src="/assets/dropbox-logo.png",
                           alt="Use RAST to calculate user-based company valuation such as Dropbox",
-                          width=80),
+                          #width=80
+                          ),
                 hype_meter_indicator_home,
             ],
-            position="apart",
+            #position="apart",
             mt="md",
             mb="xs",
-            noWrap=True,
+            #noWrap=True,
         ),
             #hype_meter,
             dmc.Stack([
-                    dmc.Text("Dropbox Market Cap: $11.25B", size="xs", weight=500, align="center", id="hype-market-cap"),
+                    dmc.Text("Dropbox Market Cap: $11.25B", size="xs", fw=500, ta="center", id="hype-market-cap"),
                     hype_meter_bootstrap_home,
                 ],
                 align="stretch"
@@ -460,46 +463,51 @@ third_card = dmc.Card(
 section_conclusion = dmc.Stack([
                             dmc.Title("THE COMPANY VALUE CALCULATOR",
                                       order=1,
-                                      color="black",
-                                      align="left"),
+                                      c="black",
+                                      ta="left"),
                             dmc.Text("RAST predicts user growth to calculate the company's valuation. "
                                      "Does the market agree? Not always—human psychology, or what we call Hype, "
                                      "plays a role. Hype can persist, but we focus on the cold, hard facts.",
                                      size="xl",
-                                     color="dimmed",
-                                     align="left"),
+                                     c="dimmed",
+                                     ta="left"),
                             html.A(dmc.Button("Try RAST - It's Free",
-                                              leftIcon=html.Img(src="/assets/Vector_white.svg",
-                                                                alt="RAST Logo, user-based company valuation & prediction tool",
-                                                                height="15px")),
+                                              #leftIcon=html.Img(src="/assets/Vector_white.svg",
+                                              #                  alt="RAST Logo, user-based company valuation & prediction tool",
+                                              #                  height="15px")
+                                                                ),
                                    href="/app"),
     ], align="flex-start")
 
 section_introduction = dmc.Stack([
-                        dmc.Title("WE CALCULATE COMPANIES VALUATION BY IDENTIFYING ONE CORE METRIC", order=1, color="black",
-                                  align="left"),
+                        dmc.Title("WE CALCULATE COMPANIES VALUATION BY IDENTIFYING ONE CORE METRIC", order=1, c="black",
+                                  ta="left"),
                         dmc.Text("Starting with the company's core business model (e.g., Netflix's subscribers), "
                                      "we predict future cash flow to determine the current valuation",
                                  size="xl",
-                                 color="dimmed", align="left"),
-                        html.A(dmc.Button("Try RAST for free", leftIcon=html.Img(src="/assets/Vector_white.svg", alt="RAST Logo, user-based company valuation & prediction tool",
-                                                                                     height="15px")), href="/app"),
+                                 c="dimmed", ta="left"),
+                        html.A(dmc.Button("Try RAST for free",
+                                          #leftIcon=html.Img(
+                                          #    src="/assets/Vector_white.svg", alt="RAST Logo, user-based company valuation & prediction tool",
+                                          #                                           height="15px")
+                                          ), href="/app"),
                     ], align="flex-start")
 
 section_ranking = dmc.Stack([
                             dmc.Title("THE HYPE CHART",
                                       order=1,
-                                      color="black",
-                                      align="left"),
+                                      c="black",
+                                      ta="left"),
                             dmc.Text("These are the companies everyone’s buzzing about. "
                                      "Updated regularly, because hype never sleeps.",
                                      size="xl",
-                                     color="dimmed",
-                                     align="left"),
+                                     c="dimmed",
+                                     ta="left"),
                             html.A(dmc.Button("Try RAST - It's Free",
-                                              leftIcon=html.Img(src="/assets/Vector_white.svg",
-                                                                alt="RAST Logo, user-based company valuation & prediction tool",
-                                                                height="15px")),
+                                              #leftIcon=html.Img(src="/assets/Vector_white.svg",
+                                              #                  alt="RAST Logo, user-based company valuation & prediction tool",
+                                              #                  height="15px")
+                                              ),
                                    href="/app"),
     ], align="flex-start")
 
@@ -510,28 +518,28 @@ def layout():
                 dmc.Space(h=150),
                 dmc.Grid(
                     children=[
-                        dmc.Col(span=2),
-                        dmc.Col(section_conclusion, span=12, sm=4),
-                        dmc.Col(span=1),
-                        dmc.Col(hype_meter_card_home, span=12, sm=4),
-                        dmc.Col(span="auto"),
+                        dmc.GridCol(span=2),
+                        dmc.GridCol(section_conclusion, span=12, sm=4),
+                        dmc.GridCol(span=1),
+                        dmc.GridCol(hype_meter_card_home, span=12, sm=4),
+                        dmc.GridCol(span="auto"),
                     ],
                     ),
                 dmc.Space(h=150),
-                dmc.Title("How does it work?", order=1, align="center", color="black"),
-                dmc.Title("Valuation in 4 Steps", order=1, align="center",
-                          color="black"),
+                dmc.Title("How does it work?", order=1, ta="center", c="black"),
+                dmc.Title("Valuation in 4 Steps", order=1, ta="center",
+                          c="black"),
                 dmc.Space(h=60),
                 dmc.Grid(
                     #cols=4,
                     #spacing="xl",
                     children=[
-                        dmc.Col(span=1, sm=1),
-                        dmc.Col(first_card, span=12, sm=2.5),
-                        dmc.Col(second_card, span=12, sm=2.5),
-                        dmc.Col(third_card, span=12, sm=2.5),
-                        dmc.Col(fourth_card, span=12, sm=2.5),
-                        dmc.Col(span=1, sm=1),
+                        dmc.GridCol(span=1, sm=1),
+                        dmc.GridCol(first_card, span=12, sm=2.5),
+                        dmc.GridCol(second_card, span=12, sm=2.5),
+                        dmc.GridCol(third_card, span=12, sm=2.5),
+                        dmc.GridCol(fourth_card, span=12, sm=2.5),
+                        dmc.GridCol(span=1, sm=1),
                     ],
                 )
                 ],
@@ -541,22 +549,22 @@ def layout():
             dmc.Grid(
                 # cols=5,
                 children=[
-                    dmc.Col(span=2),
-                    dmc.Col(graph_example_card, span=12, sm=4),
-                    dmc.Col(span=1),
-                    dmc.Col(section_introduction, span=12, sm=4),
-                    dmc.Col(span="auto"),
+                    dmc.GridCol(span=2),
+                    dmc.GridCol(graph_example_card, span=12, sm=4),
+                    dmc.GridCol(span=1),
+                    dmc.GridCol(section_introduction, span=12, sm=4),
+                    dmc.GridCol(span="auto"),
                     # dmc.Col(),
                 ],
             ),
             dmc.Space(h=60),
             dmc.Grid(
                 children=[
-                    dmc.Col(span=2),
-                    dmc.Col(section_ranking, span=12, sm=4),
-                    dmc.Col(span=1),
-                    dmc.Col(table_hype, span=12, sm=4),
-                    dmc.Col(span="auto"),
+                    dmc.GridCol(span=2),
+                    dmc.GridCol(section_ranking, span=12, sm=4),
+                    dmc.GridCol(span=1),
+                    dmc.GridCol(table_hype, span=12, sm=4),
+                    dmc.GridCol(span="auto"),
                 ],
             ),
             #dmc.Space(h=300),

@@ -26,19 +26,19 @@ offcanvas_card_growth_analysis = base_card(
                 dmc.List(
                     [
                         dmc.ListItem([
-                            dmc.Text("Select your company", weight=500),
+                            dmc.Text("Select your company", fw=500),
                             "Pick one of the available publicly-traded companies. For each company, a key revenue driver "
                             "has been selected (such as Subscribers for Spotify). In cases where no clear revenue driver exists (e.g. Amazon), "
                             "the headcount is used as a proxy.",
                         ]),
                         dmc.ListItem([
-                            dmc.Text("The calculation", weight=500),
+                            dmc.Text("The calculation", fw=500),
                             "We predict the key revenue driver's future growth (it follows most of the time a S-curve). "
                             "The cashflow is then obtained by multiplying the key revenue driver by the revenue per user/unit (see tab 'Revenue'). "
                             "Once we have the current and future cashflow, we apply a simple DCF to calculate the company's current value.",
                         ]),
                         dmc.ListItem([
-                            dmc.Text("Analyze", weight=500),
+                            dmc.Text("Analyze", fw=500),
                             "The valuation tab shows how we predicted the company's value over time (using always "
                             "the same method, not knowing what happens in the future). You can observe that the market "
                             "cap ends up most of the timecoming back to our confidence interval.",
@@ -49,7 +49,7 @@ offcanvas_card_growth_analysis = base_card(
                 )
             ],
             size="xs",
-            color="Black",
+            c="Black",
         ),
     ],
 )
@@ -57,7 +57,7 @@ offcanvas_card_growth_analysis = base_card(
 offcanvas_card_valuation_analysis = base_card(
     title="Methodology & Parameters",
     children=[
-        dmc.Text("Hypemeter", size="sm", weight=700),
+        dmc.Text("Hypemeter", size="sm", fw=700),
         dmc.Space(h=5),
         dmc.Text(
             "Get a quick read on a company's hype level. A company is considered Super Hyped when "
@@ -72,7 +72,7 @@ offcanvas_card_valuation_analysis = base_card(
                 dmc.Badge("", variant="outline", color="orange"),
                 dmc.Badge("Super Hyped!", variant="filled", color="red"),
             ],
-            spacing=2,
+            gap="sm",
         ),
         dmc.Space(h=10),
         dmc.Text(
@@ -84,9 +84,9 @@ offcanvas_card_valuation_analysis = base_card(
         dmc.Space(h=5),
         dmc.Text(
             "Company Value = Non-Operating Assets + Customer Equity - Debt",
-            align="center",
+            ta="center",
             size="sm",
-            weight=500,
+            fw=500,
         ),
         dmc.Space(h=5),
         dmc.Text(
@@ -100,7 +100,7 @@ offcanvas_card_valuation_analysis = base_card(
         dmc.Space(h=10),
         hype_meter_example,
         dmc.Space(h=15),
-        dmc.Text("Parameters", size="sm", weight=700),
+        dmc.Text("Parameters", size="sm", fw=700),
         dmc.Space(h=5),
         dmc.Text(
             children=[
@@ -108,7 +108,7 @@ offcanvas_card_valuation_analysis = base_card(
                     [
                         dmc.ListItem(
                             [
-                                dmc.Text("Hypemeter", weight=500),
+                                dmc.Text("Hypemeter", fw=500),
                                 "Get a quick read on a company's hype level...",
                                 dmc.Group(
                                     [
@@ -117,32 +117,32 @@ offcanvas_card_valuation_analysis = base_card(
                                         dmc.Badge("", variant="outline", color="orange"),
                                         dmc.Badge("Super Hyped!", variant="filled", color="red"),
                                     ],
-                                    spacing=2,
+                                    gap="sm",
                                 ),
                             ]
                         ),
                         dmc.ListItem(
                             [
-                                dmc.Text("Growth Forecast", weight=500),
+                                dmc.Text("Growth Forecast", fw=500),
                                 "Slide through different growth scenarios correlating stronger growth "
                                 "with higher future value and current valuation.",
                             ]
                         ),
                         dmc.ListItem(
                             [
-                                dmc.Text("Profit Margin", weight=500),
+                                dmc.Text("Profit Margin", fw=500),
                                 "Evaluate a company's value by considering its profit margin...",
                             ]
                         ),
                         dmc.ListItem(
                             [
-                                dmc.Text("Discount Rate", weight=500),
+                                dmc.Text("Discount Rate", fw=500),
                                 "Factor in future uncertainties with the discount rate...",
                             ]
                         ),
                         dmc.ListItem(
                             [
-                                dmc.Text("Revenue (ARPU) Yearly Growth", weight=500),
+                                dmc.Text("Revenue (ARPU) Yearly Growth", fw=500),
                                 "Influence the customer equity by changing the growth of the annual "
                                 "average revenue generated per user (ARPU).",
                             ]
@@ -153,7 +153,7 @@ offcanvas_card_valuation_analysis = base_card(
                 )
             ],
             size="xs",
-            color="Black",
+            c="Black",
         ),
     ],
 )
@@ -161,7 +161,8 @@ offcanvas_card_valuation_analysis = base_card(
 # OffCanvas (side panel that opens to give more information)
 offcanvas = html.Div(
     [
-        dbc.Button("How it works", id="open-offcanvas", n_clicks=0),
+        #dbc.Button("How it works", id="open-offcanvas", n_clicks=0, color="dark"),
+        dmc.Button("How it works", id="open-offcanvas", n_clicks=0, variant="transparent"),
         dbc.Offcanvas([
             dmc.Container(children=[
                 dmc.Text(

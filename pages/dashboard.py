@@ -24,6 +24,7 @@ import random
 import dash_daq as daq
 #from dash_extensions import DeferScript
 from functools import lru_cache
+from components.analysis_card import analysis_card
 
 register_page(
     __name__,
@@ -34,7 +35,7 @@ register_page(
 
 
 # Values for the dropdown (all different companies in the DB)
-labels = dataAPI.get_airtable_labels()
+labels = dataAPI.get_airtable_labels() or []
 
 
 
@@ -47,29 +48,22 @@ YEARS_DCF = 15 # Amount of years taken into account for DCF calculation
 # Components definition
 # Dropdown - Taking data from "Labels"
 
-dropdown6 = html.Div(
-    [
-        dmc.Select(
+dropdown6 = dmc.Select(
             # label="Select framework",
             placeholder="Company (and other)...",
             id="dataset-selection",
             data=labels,
             style={"marginBottom": 10},
-            styles={"disabled": {
-                "root": {
-                "fontWeight": 800
-                    }
-                }
+            styles={
+                    "option": {
+                        "color": "black",  # Text color for options
+                    },
             },
-            nothingFound="We don't have this company yet!",
-            dropdownPosition="bottom",
+            nothingFoundMessage="We don't have this company yet!",
             searchable=True,
-            selectOnBlur=True,
-            transition="pop",
-            transitionDuration=200,
+            #comboboxProps={"transitionProps": {"transition": "pop", "duration": 200}},
         )
-    ]
-)
+
 # Upload field
 upload_field = html.Div([dcc.Upload(
         id='upload-data',
@@ -80,9 +74,9 @@ upload_field = html.Div([dcc.Upload(
     ])
 
 upload_modal = dmc.Modal(
-            title="Uploaded data",
+            #title="Uploaded data",
             id="upload-modal",
-            overflow="inside",
+            #overflow="inside",
             zIndex=10000,
             children=[
                 dmc.Text("Verify that your data has been correctly uploaded"),
@@ -98,7 +92,7 @@ upload_modal = dmc.Modal(
                             id="modal-close-button",
                         ),
                     ],
-                    position="right",
+                    #position="right",
                 ),
             ],
         )
@@ -286,11 +280,13 @@ slider_arpu_growth = dmc.Slider(
             )
 
 # Date picker
+today = date.today().isoformat()  # 'YYYY-MM-DD'
 
 datepicker = html.Div(
                 [
-                    dmc.DatePicker(
+                    dmc.DatePickerInput(
                         id="date-picker",
+                        value=today,
                         #minDate=date(2020, 8, 5),
                         #inputFormat="MMMM,YY",
                         #dropdownType="modal",
@@ -338,10 +334,9 @@ product_maturity_message = dmc.Alert(
     color="gray"),
 
 # Accordion
-accordion = dmc.AccordionMultiple(
+accordion = dmc.Accordion(
     id="accordion-main",
-    #value=["growth"],
-    #variant="separated",
+    multiple=True,
     radius="xl",
     children=[
         dmc.AccordionItem(
@@ -489,30 +484,38 @@ main_plot.add_vline(name="current-date", line_width=1, line_dash="dot",
 
 # Card where dataset is selected and analysis shown
 
-selector_card = dmc.Card(
+selecting_card = dmc.Card(
     children=[
         dmc.Group(
             [
                 dmc.Title("Browse", order=5),
             ],
-            position="apart",
+            justify="left",
             mt="md",
             mb="xs",
         ),
         dmc.Text(
             "Select a company (or other dataset) to visualize its historical data and forecast its future growth.",
             size="xs",
-            color="dimmed",
+            c="dimmed",
         ),
         dmc.Space(h=10),
         dropdown6,
-        #upload_field,
-        upload_modal,
+    ],
+    withBorder=True,
+    shadow="sm",
+    radius="md",
+)
+
+# Card where dataset is selected and analysis shown
+
+selector_card = dmc.Card(
+    children=[
         dmc.Group(
                             [
                                 dmc.Title("Analysis", order=5),
                             ],
-                            position="apart",
+                            #justify="space-around",
                             mt="md",
                             mb="xs",
                 ),
@@ -531,7 +534,7 @@ functionalities_card = dmc.Card(
             [
                 dmc.Title("Scenarios analysis", order=5),
             ],
-            position="apart",
+            #justify="space-around",
             mt="md",
             mb="xs",
         ),
@@ -552,14 +555,16 @@ functionalities_card = dmc.Card(
                     dmc.Text(
                         "Growth Forecast",
                         size="sm",
-                        weight=700,
+                        fw=700,
                         ),
                     dmc.Tooltip(
-                        DashIconify(icon="feather:info", width=15),
+                        children=DashIconify(icon="feather:info", width=15),
                         label="Select 'Custom' to move the blue curve and see how well it fits the dataset. "
                               "The star indicates RAST's best prediction",
-                        transition="slide-down",
-                        transitionDuration=300,
+                        transitionProps={
+                                "transition": "slide-down",
+                                "duration": 300,
+                            },
                         multiline=True,
                     ),
                     dmc.RingProgress(
@@ -572,7 +577,7 @@ functionalities_card = dmc.Card(
                             ]
                         ),
                 ],
-                    spacing=5),
+                    gap="md"),
             ]),
         dmc.Space(h=10),
         html.Div(slider_k, style={"marginLeft":15, "marginRight": 15}),
@@ -590,16 +595,18 @@ functionalities_card = dmc.Card(
                         dmc.Text(
                             "Profit margin",
                             size="sm",
-                            weight=700,
+                            fw=700,
                             ),
                         dmc.Tooltip(
-                            DashIconify(icon="feather:info", width=15),
+                            children=DashIconify(icon="feather:info", width=15),
                             label="Adjust the profit margin using the slider to observe the impact on the company's "
                                   "annual average revenue per user. Increasing the profit margin increases the company's"
                                   " profit and therefore the company's value. MAX indicates the maximum theoretical"
                                   " net profit margin for this company given its current business model",
-                            transition="slide-down",
-                            transitionDuration=300,
+                            transitionProps={
+                                    "transition": "slide-down",
+                                    "duration": 300,
+                                },
                             multiline=True,
                         ),
                     ]),
@@ -610,13 +617,13 @@ functionalities_card = dmc.Card(
                     "Latest annual profit margin: 45%",
                     id="profit-margin-container",
                     size="sm",
-                    color="dimmed",
+                    c="dimmed",
                     ),
                 dmc.Text(
                     "Best annual profit margin ever: 45%",
                     id="best-profit-margin-container",
                     size="sm",
-                    color="dimmed",
+                    c="dimmed",
                     ),
         ]),
         dmc.Space(h=20),
@@ -633,17 +640,19 @@ functionalities_card = dmc.Card(
                         dmc.Text(
                             "Discount Rate",
                             size="sm",
-                            weight=700,
+                            fw=700,
                         ),
                         dmc.Tooltip(
-                            DashIconify(icon="feather:info", width=15),
+                            children=DashIconify(icon="feather:info", width=15),
                             label="Adjust the discount rate with the slider to match the risks in the company and its "
                                   "industry. Kroll research shows that, on average, the discount rate for consumer "
                                   "staples companies was 8.4% in June 2023, and for information technology companies, "
                                   "it was 11.4%. Raising the rate raises future uncertainty and requires a "
                                   "higher average revenue per user.",
-                            transition="slide-down",
-                            transitionDuration=300,
+                            transitionProps={
+                                    "transition": "slide-down",
+                                    "duration": 300,
+                                },
                             multiline=True,
                         ),
                     ]),
@@ -664,14 +673,16 @@ functionalities_card = dmc.Card(
                         dmc.Text(
                             "Revenue (ARPU) Yearly Growth",
                             size="sm",
-                            weight=700,
+                            fw=700,
                         ),
                         dmc.Tooltip(
-                            DashIconify(icon="feather:info", width=15),
+                            children=DashIconify(icon="feather:info", width=15),
                             label="Adjust the yearly growth of the Average Revenue Per User for the next years. This"
                                   " changes the projected ARPU and therefore the value of future users",
-                            transition="slide-down",
-                            transitionDuration=300,
+                            transitionProps={
+                                    "transition": "slide-down",
+                                    "duration": 300,
+                                },
                             multiline=True,
                         ),
                     ]),
@@ -692,23 +703,25 @@ functionalities_card = dmc.Card(
                         dmc.Text(
                             "Revenue per User needed",
                             size="sm",
-                            weight=700,
+                            fw=700,
                         ),
                         dmc.Tooltip(
-                            DashIconify(icon="feather:info", width=15),
+                            children=DashIconify(icon="feather:info", width=15),
                             label="Depending on the profit margin & discount rate you choose, the required Average "
                                   "Annual Revenue per user (ARPU) is displayed below to justify the current valuation."
                                   "Comparing this to the actual current ARPU gives you a clear indication of whether the"
                                   " stock is over or undervalued.",
-                            transition="slide-down",
-                            transitionDuration=300,
+                            transitionProps={
+                                    "transition": "slide-down",
+                                    "duration": 300,
+                                },
                             multiline=True,
                         ),
                         dmc.Text(
                             id="arpu-needed",
                             children="456$",
                             size="sm",
-                            color="Black",
+                            c="Black",
                         ),
                     ],),
                 dmc.Space(h=10),
@@ -718,18 +731,20 @@ functionalities_card = dmc.Card(
         html.Div(
             children=[
                 dmc.Tooltip(
-                    dmc.Group([
+                    children=dmc.Group([
                         dmc.Text(
                             "Retrospective Growth",
                             size="sm",
-                            weight=700,
+                            fw=700,
                             ),
                         DashIconify(icon="feather:info", width=15)
                         ],
-                        spacing=5),
+                        gap="md"),
                     label="Pick a date in the past to see how well the current state would have been predicted back then",
-                    transition="slide-down",
-                    transitionDuration=300,
+                    transitionProps={
+                                    "transition": "slide-down",
+                                    "duration": 300,
+                                },
                     multiline=True,
                 ),
                 dmc.Space(h=10),
@@ -756,14 +771,14 @@ welcome_timeline = html.Div([
             title="Choose a company",
             bullet=DashIconify(icon="teenyicons:add-solid", width=12),
             #lineVariant="dashed",
-            color="dimmed",
+            c="dimmed",
             children=[
                 dmc.Text(
                     [
                         "Use the dropdown menu on the side to select a company. Visualize its valuation and growth.",
                         dmc.Anchor("", href="#", size="sm"),
                     ],
-                    color="dimmed",
+                    c="dimmed",
                     size="sm",
                 ),
             ],
@@ -783,7 +798,7 @@ welcome_timeline = html.Div([
                             size="sm",
                         ),
                     ],
-                    color="dimmed",
+                    c="dimmed",
                     size="sm",
                 ),
             ],
@@ -803,7 +818,7 @@ welcome_timeline = html.Div([
                             size="sm",
                         ),
                     ],
-                    color="dimmed",
+                    c="dimmed",
                     size="sm",
                 ),
             ],
@@ -842,22 +857,47 @@ tabs_graph = dmc.Tabs(
             #grow=True,
             children=
                 [
-                    dmc.LoadingOverlay(dmc.Tab("Valuation",
-                                        icon=DashIconify(icon="radix-icons:rocket"),
+                    dmc.LoadingOverlay(
+                                        visible=False,
+                                        id="loading-overlay",
+                                        overlayProps={"radius": "sm", "blur": 2},
+                                        zIndex=10,
+                                    ),
+                    dmc.TabsTab("Valuation",
+                                        leftSection=DashIconify(icon="radix-icons:rocket"),
                                         id="market-cap-tab",
                                         value="1",
                                         #disabled=True
                                         style={'display': ''},
-                                        )),
-                    dmc.Tab("Growth", icon=DashIconify(icon="simple-icons:futurelearn"), value="2"),
-                    dmc.Tab("Revenue", icon=DashIconify(icon="lineicons:target-revenue"), value="5"),
-                    dmc.Tab("Growth Rate",
-                            icon=DashIconify(icon="radix-icons:bar-chart"),
+                                        ),
+                    dmc.TabsTab(
+                        "Growth",
+                        leftSection=DashIconify(icon="simple-icons:futurelearn"),
+                        value="2"
+                    ),
+                    dmc.TabsTab(
+                        "Revenue",
+                        leftSection=DashIconify(icon="lineicons:target-revenue"),
+                        value="5"
+                    ),
+                    dmc.TabsTab("Growth Rate",
+                            leftSection=DashIconify(icon="radix-icons:bar-chart"),
                             value="3",
-                            #disabled=True
                             ),
-                    dmc.Tab("Product Maturity", icon=DashIconify(icon="fluent-mdl2:product-release"), value="4"),
+                    dmc.TabsTab(
+                        "Product Maturity",
+                        leftSection=DashIconify(icon="fluent-mdl2:product-release"),
+                        value="4"
+                    ),
                 ],
+            style={
+                "display": "flex",
+                "flexWrap": "nowrap",     # 👈 prevents wrapping
+                "overflowX": "auto",      # 👈 allows horizontal scroll
+                "whiteSpace": "nowrap",   # 👈 ensures text doesn’t wrap
+                "gap": "0.5rem",          # optional: spacing between tabs
+                "scrollbarWidth": "thin", # optional: thin scrollbar on Firefox
+            },
         ),
         # Valuation graph
         dmc.TabsPanel(html.Div(children=[valuation_graph_message, valuation_over_time]), id="tab-two", value="1"),
@@ -880,14 +920,20 @@ tabs_graph = dmc.Tabs(
 )
 
 source = dmc.Text(
-        id= "data-source",
+        id="data-source",
         children="Source",
         size="xs",
-        color="dimmed",)
+        c="dimmed",)
 
 graph_card = dmc.Card(
     children=[
         # Card Title
+        dmc.LoadingOverlay(
+                    visible=False,
+                    id="loading-overlay",
+                    overlayProps={"radius": "sm", "blur": 2},
+                    zIndex=10,
+                ),
         dmc.Group(
                     [
                         dmc.Title("Welcome to RAST", id="graph-title", order=5),
@@ -903,7 +949,7 @@ graph_card = dmc.Card(
                                  }
                                  )
                     ],
-                    position="apart",
+                    justify="space-between",
                     mt="md",
                     mb="xs",
                 ),
@@ -912,7 +958,7 @@ graph_card = dmc.Card(
         dmc.Text(
                     "Select a dataset first",
                     size="xs",
-                    color="dimmed",
+                    c="dimmed",
                     id='graph-subtitle',
                 ),
         dmc.Space(h=10),
@@ -940,18 +986,17 @@ graph_card = dmc.Card(
 
 
 
-hype_meter = dmc.Progress(
+hype_meter = dmc.ProgressRoot(
+    [
+        dmc.ProgressSection(dmc.ProgressLabel("Users value"), value=50, color="#74C0FC"),
+        dmc.ProgressSection(dmc.ProgressLabel(""), value=6, color="Gray"),
+        dmc.ProgressSection(dmc.ProgressLabel("NO Assets"), value=11, color="#228BE6", animated=True, striped=True),
+    ],
     size=40,
     radius="xl",
     styles={"label": {"font-size": "15px", "font-weight": 600}},
     #striped=True,
     #animate=True,
-    sections=[
-        {"value": 50, "color": "#74C0FC", "label": "Users value", "tooltip": "Users value - $5.0B"},
-        {"value": 6, "color": "Gray", "tooltip": "Users value delta - $0.6B"},
-        {"value": 11, "color": "#228BE6", "label": "NO Assets", "tooltip": "Non-Operating Assets - $1.1B",
-         "animate": True, "striped":True},
-    ],
 )
 data = [
         {"value": "Low", "label": "React", "color":"red"},
@@ -1003,25 +1048,25 @@ hype_meter_card = dmc.Card(
                 dmc.Title("Hype Meter", order=5),
                 hype_meter_indicator,
             ],
-            position="apart",
+            #justify="space-around",
             mt="md",
             mb="xs",
-            noWrap=True,
+            wrap=True,
         ),
         #hype_meter,
         dmc.Stack([
-                dmc.Text("Hype score, base case = 0.98", size="xs", weight=500, align="left", id="hype-score-text", m=0),
-                dmc.Text("Overvaluation", size="xs", weight=500, align="right", id="hype-overvaluation-label", m=0),
+                dmc.Text("Hype score, base case = 0.98", size="xs", fw=500, ta="left", id="hype-score-text", m=0),
+                dmc.Text("Overvaluation", size="xs", fw=500, ta="right", id="hype-overvaluation-label", m=0),
                 line,
                 hype_meter_bootstrap_undervaluation,
                 hype_meter_bootstrap,
                 hype_meter_bootstrap_price,
                 line_middle,
-                dmc.Text("Market cap = $10.1B", size="xs", weight=500, align="left", id="hype-market-cap"),
+                dmc.Text("Market cap = $10.1B", size="xs", fw=500, ta="left", id="hype-market-cap"),
                 #hype_score_gauge,
             ],
             align="stretch",
-            spacing="xs"
+            gap="xs"
         ),
         dmc.Space(h=20),
         dmc.Text(
@@ -1036,7 +1081,7 @@ hype_meter_card = dmc.Card(
                         ]
                       ,
             size="xs",
-            color="Black",
+            c="Black",
             style={'display':'inline-block'}
         ),
         dmc.Space(h=10),
@@ -1157,21 +1202,6 @@ main_plot.update(
             layout=layout_main_graph
         )
 
-aside_column = dmc.Aside(
-    p="md",
-    width={"base": 400},
-    withBorder=False,
-    hidden=True,
-    hiddenBreakpoint='md',
-    #height=500,
-    fixed=True,
-    #position={"right": 0, "top": 400},
-    children=[
-        hype_meter_card,
-        functionalities_card,
-    ],
-)
-
 # Table
 
 # Sample DataFrame
@@ -1188,10 +1218,10 @@ login_overlay_table = html.Div(
     dmc.Space(h=60),
     dmc.Text(
         "Log in to view the RAST table of the most undervalued companies.",
-        weight=700,
+        fw=700,
         size="m",
-        color="white",
-        align="center",
+        c="white",
+        ta="center",
     )],
     style={
         "display": "none",  # Hidden by default
@@ -1212,10 +1242,10 @@ login_overlay_chart = html.Div(
     dmc.Space(h=60),
     dmc.Text(
         "Log in to view the RAST quadrant of the most undervalued companies.",
-        weight=700,
+        fw=700,
         size="m",
-        color="white",
-        align="center",
+        c="white",
+        ta="center",
     )],
     style={
         "display": "none",  # Hidden by default
@@ -1233,7 +1263,7 @@ login_overlay_chart = html.Div(
 
 table_hype = dmc.Card(children=[
     dmc.Group([
-        dmc.Title("RAST Ranking", order=5),
+            dmc.Title("RAST Ranking", order=5),
             dmc.MultiSelect(
                     #label="Select the companies that you want to see",
                     placeholder="Filter by industry",
@@ -1245,10 +1275,9 @@ table_hype = dmc.Card(children=[
                         {"value": "least-hyped", "label": "Least hyped"},
                     ],
                     clearable=True,
-                    maxSelectedValues=3,
-                    #w=350,
+                    limit=3,
                     mb=10,
-                    icon=DashIconify(icon="mdi-light:factory"),
+                    leftSection=DashIconify(icon="mdi-light:factory"),
                 ),
         dmc.Select(
                     #label="Select the companies that you want to see",
@@ -1264,13 +1293,20 @@ table_hype = dmc.Card(children=[
                     allowDeselect=False,
                 ),
         ],
-        position="apart",
+        justify="space-around",
         mt="md",
         mb="xs",
+        wrap="nowrap",
     ),
     dmc.ScrollArea(
         h=400,
         children=[
+            dmc.LoadingOverlay(
+                visible=False,
+                id="loading-overlay",
+                overlayProps={"radius": "sm", "blur": 2},
+                zIndex=10,
+            ),
             dmc.Table(id='top_25_companies')
         ]
     ),
@@ -1281,9 +1317,15 @@ graph_hype = dmc.Card(children=[
     dmc.Group([
         dmc.Title("RAST Quadrant", order=5),
         ],
-        position="apart",
+        justify="left",
         mt="md",
         mb="xs",
+    ),
+    dmc.LoadingOverlay(
+        visible=False,
+        id="loading-overlay",
+        overlayProps={"radius": "sm", "blur": 2},
+        zIndex=10,
     ),
     dcc.Graph(id='hyped-ranking-graph', config=config_graph),
     login_overlay_chart,
@@ -1295,31 +1337,27 @@ graph_hype = dmc.Card(children=[
 
 
 def layout(company=None, **other_unknown_query_strings):
-    layout =html.Div([
-            dmc.Container(fluid=True, children=[
-                dmc.Grid([
-                    # dmc.Col(span=0.5, lg=0), # Empty left column
-                    dmc.Col(selector_card, span="auto", orderXs=1, orderSm=1, orderLg=1),
-                    dmc.Col([
-                        dmc.LoadingOverlay(graph_card), dmc.Space(h=20), dmc.LoadingOverlay(table_hype), dmc.Space(h=20),
-                        dmc.LoadingOverlay(graph_hype)
-                        # valuation_over_time_card  # Comment this line to remove the analysis graphs
-                    ], span=12, lg=6, orderXs=2, orderSm=2, orderLg=2),
-                    dmc.Col([hype_meter_card, dmc.Space(h=20), functionalities_card], span=12, lg=3, orderXs=3, orderSm=3,
-                            orderLg=3),
-                    #dmc.Col([aside_column], span=12, lg=3, orderXs=2, orderSm=2,
-                    #               orderLg=3),
-                    # dmc.Col(span="auto", lg=0), # Empty right column
-                ],
-                    gutter="xl",
-                    justify="space-around",
-                    # align="center",
+    layout =html.Div(
+            [
+                dmc.Grid(
+                    [
+                        # dmc.Col(span=0.5, lg=0), # Empty left column
+                        #dmc.GridCol([
+                            #selecting_card,
+                            #dmc.Space(h=20), selector_card
+                        #], span={'base': 12,'lg': 3}, order={"xs": 1, "sm": 1, "lg": 1}),
+                        dmc.GridCol(
+                            [
+                            graph_card, dmc.Space(h=20), table_hype, dmc.Space(h=20),
+                            graph_hype
+                            # valuation_over_time_card  # Comment this line to remove the analysis graphs
+                            ], span={'base': 12,'lg': 6}, order={"xs": 2, "sm": 2, "lg": 2}),
+                        dmc.GridCol([hype_meter_card, dmc.Space(h=20), functionalities_card],
+                                    span={'base': 12,'lg': 6}, order={"xs": 1, "sm": 3, "lg": 3}),
+                    ],
                 ),
                 dmc.Space(h=20),
                 #bottom_card,
-
-            ],
-                          ),
 
             dbc.Container(children=[
                 # Storing the key dataframe with all parameters
@@ -1333,7 +1371,6 @@ def layout(company=None, **other_unknown_query_strings):
                 dcc.Store(id='latest-market-cap'),  # Market cap of the company at the absolute current time (now)
                 dcc.Store(id='graph-unit'),  # Graph unit (MAU, Population, etc.)
                 dcc.Store(id='symbol-dataset'),  # Symbol of the Public company (N/A if not)
-                dcc.Store(id='launch-counter', data={'flag': False}),
                 # Counter that shows 0 if no dataset has been selected, or 1 otherwise
                 dcc.Store(id='revenue-dates'),  # DF Containing the quarterly revenue and the dates
                 dcc.Store(id='current-arpu-stored'),  # DF Containing the current ARPU
@@ -1342,7 +1379,7 @@ def layout(company=None, **other_unknown_query_strings):
                 # used and the revenue
                 # dcc.Store(id='data-source'),  # sources of the data
                 dcc.Store(id='data-selection-counter', data={'flag': False}),
-                dcc.Store(id='dataset-selected-url', data=str(company)), # stores the dataset given through the url through ?company={company}
+                #dcc.Store(id='dataset-selected-url', data=str(company)), # stores the dataset given through the url through ?company={company}
                 dcc.Store(id='dataset-selected'),  # stores the dataset selected either through the dropdown or the URL
                 # Counter that shows if a new dataset has been selected
                 dcc.Store(id='initial-sliders-values'),

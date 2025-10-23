@@ -37,6 +37,9 @@ import json
 from components.navbar import navbar
 from components.graph_layouts import layout_main_graph, layout_revenue_graph, layout_growth_rate_graph, \
     layout_product_maturity_graph
+from components.offcanvas import offcanvas
+from components.analysis_card import analysis_card
+from components.selecting_card import selecting_card
 
 t1 = time.perf_counter(), time.process_time()
 
@@ -52,15 +55,17 @@ stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 print("Stripe key loaded:", bool(stripe.api_key))
 
 pd.set_option('display.max_rows', 200)
-APP_TITLE = "RAST"
+#APP_TITLE = "RAST"
 
 IS_PRODUCTION = os.getenv("IS_PRODUCTION") == "true"  # Setup in heroku 'heroku config:set IS_PRODUCTION=true'
 clerk_script_ignored = r"clerk\.dev\.js" if IS_PRODUCTION else r"clerk\.prod\.js" # if production, ignores clerk.dev.js
 
+dash._dash_renderer._set_react_version('18.2.0')
+
 app = dash.Dash(__name__,
                 external_stylesheets=[dbc.themes.LUX],
                 #external_stylesheets=[dbc.themes.MORPH], Nice stylesheet
-                title=APP_TITLE,
+                #title=APP_TITLE,
                 use_pages=True,
                 url_base_pathname="/",
                 assets_ignore=clerk_script_ignored,
@@ -87,32 +92,87 @@ YEARS_DCF = 15  # Amount of years taken into account for DCF calculation
 # App Layout
 
 layout_page_standard = dmc.AppShell(
-    zIndex=100,
-    header=navbar,
-    children=[
-            #dcc.Location(id='url', refresh=False),
-        dcc.Location(id='url-input', refresh=False),
-        dcc.Location(id='url-output', refresh=False),
-        dcc.Store(id="login-state", storage_type="session"),
-        dcc.Store(id="user-id", storage_type="session"),
-        html.Div(id="login-state-bridge", children="", style={"display": "none"}),
-        dcc.Download(id="download-chart"),  # Component to handle file download
-
-            dmc.Container(fluid=True, children=[
-                dmc.Grid([
-                    dmc.Col([
-                        dmc.LoadingOverlay(
-                            # graph_card
-                        ),
-                        # valuation_over_time_card  # Comment this line to remove the analysis graphs
-                    ], span=12, lg=6, orderXs=3, orderSm=3, orderLg=2),
+    [
+        dmc.AppShellHeader(
+            dmc.Group(
+                [
+                    dmc.Group(
+                        [
+                            dmc.Burger(
+                                id="burger",
+                                size="sm",
+                                hiddenFrom="sm",
+                                opened=True,
+                                color="white",
+                            ),
+                            dcc.Link(
+                                children=dmc.Image(
+                                    src="/assets/RAST_Vector_Logo.svg",
+                                    h={"base": 30, "sm": 35, "lg": 40},  # Responsive height
+                                    alt="RAST app guru, valuation made simple"
+                                ),
+                                href="https://www.rast.guru",
+                            ),
+                        ],
+                        gap="md",
+                        wrap="nowrap",
+                    ),
+                    dmc.Group(
+                        [
+                            offcanvas,
+                            html.Div(id="clerk-header"),  # Clerk user button
+                        ],
+                        gap="sm",
+                        wrap="nowrap",
+                    ),
                 ],
-                    gutter="xl",
-                    justify="space-around",
-                ),
-            ]),
-            dash.page_container
+                h="100%",
+                px="xl",  # Increased padding (or use a number like px=40)
+                justify="space-between",  # This pushes items to left and right
+                align="center",
+                wrap="nowrap",
+            ),
+            bg="black",
+        ),
+        dmc.AppShellNavbar(
+            id="navbar",
+            children=dmc.ScrollArea(
+                [
+                    *[
+                        selecting_card,
+                        dmc.Space(h=20),
+                        analysis_card
+                    ],
+                ]
+            ),
+            p="md",
+        ),
+        dmc.AppShellMain(
+            children=[
+                dash.page_container,
+                dcc.Location(id='url-input', refresh=False),
+                dcc.Location(id='url-output', refresh=False),
+                dcc.Store(id="login-state", storage_type="session"),
+                dcc.Store(id="user-id", storage_type="session"),
+                html.Div(id="login-state-bridge", children="", style={"display": "none"}),
+                dcc.Download(id="download-chart"),  # Component to handle file download
+                dcc.Store(id='dataset-selected-url', data=None),
+                dcc.Store(id='launch-counter', data={'flag': False}),
+            ],
+        ),
+        #dmc.AppShellAside("Aside", p="md"),
+        #dmc.AppShellFooter("Footer", p="md"),
     ],
+    header={"height": {"base": 48, "sm": 60, "lg": 76}},
+    navbar={
+        "width": {"base": 200, "sm": 400},  # 👈 200 on mobile, 400 on ≥ sm breakpoint
+        "breakpoint": "sm",
+        "collapsed": {"mobile": False},
+        "withOverlay": False,  # 👈 disables full-screen overlay
+    },
+    withBorder=False,
+    padding="md",
+    id="appshell",
 )
 
 app.layout = dmc.MantineProvider(
@@ -147,9 +207,9 @@ theme={
                 ]
             },
         "primaryColor": "primaryPurple",
-        "fontFamily": "'Basel', sans-serif",
+        "fontFamily": "Basel, Arial, sans-serif",
         "headings": {
-            "fontFamily": "'ABCGravityVariable-Trial', sans-serif",
+            "fontFamily": "ABCGravityVariable-Trial, sans-serif",
         },
     },
     children=layout_page_standard)
@@ -221,6 +281,15 @@ def check_auth():
 
     # attach plan info for convenience
     request.user_plan = claims.get("public_metadata", {}).get("plan", "free")
+
+@app.callback(
+    Output("appshell", "navbar"),
+    Input("burger", "opened"),
+    State("appshell", "navbar"),
+)
+def toggle_navbar(opened, navbar):
+    navbar["collapsed"] = {"mobile": not opened}
+    return navbar
 
 # Stores login state & user data and avoids update if login state has not changed
 @app.callback(
@@ -583,7 +652,7 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
             title = dropdown_value
 
         title_image = dmc.Group([dropdown_value, dmc.Image(
-            src="https://upload.wikimedia.org/wikipedia/commons/6/69/Airbnb_Logo_B%C3%A9lo.svg", height=10)])
+            src="https://upload.wikimedia.org/wikipedia/commons/6/69/Airbnb_Logo_B%C3%A9lo.svg", h=10)])
         subtitle = "Explore " + str(dropdown_value) + "'s Historical " + key_unit + " data (Bars) used to calculate the valuation and future growth " \
                                                                                     "projections. Customize " \
                                                                                     "predictions with the slider in the 'Valuation Drivers' section and adjust " \
@@ -709,8 +778,8 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
             days=6)  # Adding one day to the max, to include all dates
         #max_history_datepicker = max_history_datepicker_date.strftime("%Y-%m-%d")
         current_date = datetime.now()
-        max_history_datepicker = current_date.date()
-        date_value_datepicker = max_history_datepicker  # Sets the value of the datepicker as the max date
+        max_history_datepicker = current_date.date().isoformat()
+        date_value_datepicker = max_history_datepicker # Sets the value of the datepicker as the max date
         # current_date = dates_formatted[-1]
         print("Other data", min_history_datepicker, max_dataset_date, max_history_datepicker_date,
               max_history_datepicker, date_value_datepicker)
@@ -929,7 +998,7 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
         product_maturity_accordion_body = "At the moment no data is available for " + str(dropdown_value) + " 🫣"
         product_maturity_accordion_color = "gray"
         product_maturity_accordion_icon_color = DashIconify(icon="fluent-mdl2:product-release",
-                                                            color=dmc.theme.DEFAULT_COLORS["gray"][6],
+                                                            color=dmc.DEFAULT_THEME["colors"]["gray"][6],
                                                             width=20)
     elif share_research_and_development[-1] > 30:
         product_maturity_graph_message = "Tech companies often invest a large share of their revenue in R&D, " \
@@ -942,7 +1011,7 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
                                          " is heavily investing in its product, indicating " \
                                          "that the revenue & profit margin may strongly grow in the future."
         product_maturity_accordion_color = "green"
-        product_maturity_accordion_icon_color = DashIconify(icon="fluent-mdl2:product-release", color=dmc.theme.DEFAULT_COLORS["green"][6],
+        product_maturity_accordion_icon_color = DashIconify(icon="fluent-mdl2:product-release", color=dmc.DEFAULT_THEME["colors"]["green"][6],
                                              width=20)
 
     elif share_research_and_development[-1] > 10:
@@ -957,7 +1026,7 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
                                          "profit margin should stabilize."
         product_maturity_accordion_color = "yellow"
         product_maturity_accordion_icon_color = DashIconify(icon="fluent-mdl2:product-release",
-                                                            color=dmc.theme.DEFAULT_COLORS["yellow"][6],
+                                                            color=dmc.DEFAULT_THEME["colors"]["yellow"][6],
                                                             width=20)
     else:
         product_maturity_graph_message = "At the moment, " + str(
@@ -970,7 +1039,7 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
                                           "limited improvement on the profit margin is to be expected"
         product_maturity_accordion_color = "red"
         product_maturity_accordion_icon_color = DashIconify(icon="fluent-mdl2:product-release",
-                                                            color=dmc.theme.DEFAULT_COLORS["red"][6],
+                                                            color=dmc.DEFAULT_THEME["colors"]["red"][6],
                                                             width=20)
 
     # Growth Accordion
@@ -980,7 +1049,7 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
         growth_message_body = "Rast's model predicts a strong likelihood of exponential growth in the foreseeable " \
                               "future, surpassing the best-case scenario displayed."
         growth_message_color = "green"
-        growth_icon_color = DashIconify(icon="uit:chart-growth", color=dmc.theme.DEFAULT_COLORS["green"][6], width=20)
+        growth_icon_color = DashIconify(icon="uit:chart-growth", color=dmc.DEFAULT_THEME["colors"]["green"][6], width=20)
 
     # Stable Growth
     else:
@@ -988,7 +1057,7 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
         growth_message_body = "Rast's model suggests a high probability that the dataset has transitioned into a " \
                               "stable growth pattern, aligning closely with our best-case scenario."
         growth_message_color = "yellow"
-        growth_icon_color = DashIconify(icon="uit:chart-growth", color=dmc.theme.DEFAULT_COLORS["yellow"][6], width=20)
+        growth_icon_color = DashIconify(icon="uit:chart-growth", color=dmc.DEFAULT_THEME["colors"]["yellow"][6], width=20)
 
     # High Growth
     if k_scenarios[-1] < 1e9:
@@ -1033,10 +1102,10 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
     # Plateau message color
     if time_best_growth < date_picked_formatted:
         plateau_message_color = "red"
-        plateau_icon_color = DashIconify(icon="simple-icons:futurelearn", color=dmc.theme.DEFAULT_COLORS["red"][6], width=20)
+        plateau_icon_color = DashIconify(icon="simple-icons:futurelearn", color=dmc.DEFAULT_THEME["colors"]["red"][6], width=20)
     else:
         plateau_message_color = "green"
-        plateau_icon_color = DashIconify(icon="simple-icons:futurelearn", color=dmc.theme.DEFAULT_COLORS["green"][6], width=20)
+        plateau_icon_color = DashIconify(icon="simple-icons:futurelearn", color=dmc.DEFAULT_THEME["colors"]["green"][6], width=20)
 
 
     # Formatting of the displayed correlation message
@@ -1048,7 +1117,7 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
                                                             " to estimate the valuation, because " + str(key_unit) + \
                                    " account for " + str(formatted_correlation) + "% of the revenue variability."
         correlation_message_color = "primaryGreen"
-        correlation_icon_color = DashIconify(icon="lineicons:target-revenue", color=dmc.theme.DEFAULT_COLORS["green"][6],
+        correlation_icon_color = DashIconify(icon="lineicons:target-revenue", color=dmc.DEFAULT_THEME["colors"]["green"][6],
                                          width=20)
     elif users_revenue_correlation > 0:
         correlation_message_title = "Take it with a grain of salt"
@@ -1057,14 +1126,14 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
                                                    "company's valuation, since only " + str(formatted_correlation) + \
                                    "% of the revenue variability is explained by this metric."
         correlation_message_color = "yellow"
-        correlation_icon_color = DashIconify(icon="lineicons:target-revenue", color=dmc.theme.DEFAULT_COLORS["yellow"][6],
+        correlation_icon_color = DashIconify(icon="lineicons:target-revenue", color=dmc.DEFAULT_THEME["colors"]["yellow"][6],
                                              width=20)
 
     else:
         correlation_message_title = "Correlation not applicable"
         correlation_message_body = "The correlation information is only relevant for companies"
         correlation_message_color = "gray"
-        correlation_icon_color = DashIconify(icon="lineicons:target-revenue", color=dmc.theme.DEFAULT_COLORS["gray"][6],
+        correlation_icon_color = DashIconify(icon="lineicons:target-revenue", color=dmc.DEFAULT_THEME["colors"]["gray"][6],
                                              width=20)
 
     # Slider definition
@@ -1215,13 +1284,13 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
                                                                                                            " and have a " + f"{current_annual_profit_margin:.1f} % " + "" \
                                                                                                                                                                        "net profit margin."
         valuation_message_color = "green"
-        valuation_icon_color = DashIconify(icon="radix-icons:rocket", color=dmc.theme.DEFAULT_COLORS["green"][6],
+        valuation_icon_color = DashIconify(icon="radix-icons:rocket", color=dmc.DEFAULT_THEME["colors"]["green"][6],
                                          width=20)
     else:
         valuation_message_title = "Valuation not applicable"
         valuation_message_body = "The valuation information is only relevant for companies"
         valuation_message_color = "gray"
-        valuation_icon_color = DashIconify(icon="radix-icons:rocket", color=dmc.theme.DEFAULT_COLORS["gray"][6],
+        valuation_icon_color = DashIconify(icon="radix-icons:rocket", color=dmc.DEFAULT_THEME["colors"]["gray"][6],
                                            width=20)
 
 
@@ -2648,7 +2717,7 @@ def graph_valuation_over_time(valuation_over_time_dict, date_picked, df_formatte
                                     " The market cap is currently lower than the most optimistic valuation (" + \
                                   f"{high_scenario_valuation[-1] / 1e9:.2f} B$) meaning that this stock may be fairly or even undervalued!"
         valuation_graph_color = "green"
-        valuation_icon_color = DashIconify(icon="radix-icons:rocket", color=dmc.theme.DEFAULT_COLORS["green"][6],
+        valuation_icon_color = DashIconify(icon="radix-icons:rocket", color=dmc.DEFAULT_THEME["colors"]["green"][6],
                                            width=20)
     else:
         # Messages in the accordion
@@ -2667,7 +2736,7 @@ def graph_valuation_over_time(valuation_over_time_dict, date_picked, df_formatte
                                   "The Market cap is currently higher than the most optimistic valuation (" + \
                                   f"{high_scenario_valuation[-1] / 1e9:.2f} B$), meaning that this stock seems overvalued."
         valuation_graph_color = "yellow"
-        valuation_icon_color = DashIconify(icon="radix-icons:rocket", color=dmc.theme.DEFAULT_COLORS["yellow"][6],
+        valuation_icon_color = DashIconify(icon="radix-icons:rocket", color=dmc.DEFAULT_THEME["colors"]["yellow"][6],
                                            width=20)
     print("Valuation graph printed")
     t2 = time.perf_counter(), time.process_time()
@@ -2767,8 +2836,8 @@ def update_table(df_all_companies, hype_choice, industries, logged_in):
             DashIconify(icon="feather:info", width=15),
             label="The hype score indicates how hyped companies are. A hype score between 0 & 1 means that the company "
                   "is fairly priced. A negative hype score indicates an undervaluation.",
-            transition="slide-down",
-            transitionDuration=300,
+            #transition="slide-down",
+            #transitionDuration=300,
             multiline=True,
         )
     ]), style={"width": "22.5%"}
@@ -2780,8 +2849,8 @@ def update_table(df_all_companies, hype_choice, industries, logged_in):
             label="The growth score represents how much growth potential a company has relative to its current state. "
                   "A score of zero implies stagnation, whereas a high score suggests strong momentum and the "
                   "possibility of staying overvalued for an extended period.",
-            transition="slide-down",
-            transitionDuration=300,
+            #transition="slide-down",
+            #transitionDuration=300,
             multiline=True,
         )
     ]), style={"width": "32.5%"}
@@ -2853,14 +2922,14 @@ def update_table(df_all_companies, hype_choice, industries, logged_in):
                 dmc.Group([
                     f"{hype_score:.2f}",
                     dmc.Badge(badge_label, size="xs", variant="outline", color=badge_color)
-                ], spacing="md"),
+                ], gap="md"),
                 style={"width": "30%"}
             ),
             html.Td(
                 dmc.Group([
                     f"{growth_score:.2f}",
                     dmc.Badge(badge_label_growth, size="xs", variant="outline", color=badge_color_growth)
-                ], spacing="md"),
+                ], gap="md"),
                 style={"width": "40%"}
             ),
         ])

@@ -6,6 +6,7 @@ import main
 from datetime import datetime
 import os
 from dotenv import load_dotenv
+from collections import defaultdict
 
 # The following code specifies firstly the filter and then fetches the data according to
 # it in the specified airtable database
@@ -71,19 +72,16 @@ def get_airtable_labels():
 
         # Iterate through the sorted DataFrame to create label_list
         current_category = None
-        for index, row in df.iterrows():
-            category = row['Category']
-            company = row['Company']
-            symbol = row['Symbol']
-            label_list.append({
-                "group": category,
-                "value": company,
-                "label": f"{company} ({symbol})",
+        grouped = defaultdict(list)
+        for _, row in df.iterrows():
+            grouped[row['Category']].append({
+                "value": row['Company'],
+                "label": f"{row['Company']} ({row['Symbol']})",
                 "disabled": False
             })
 
         # Return the label list
-        return label_list
+        return [{"group": g, "items": items} for g, items in grouped.items()]
 
     except Exception as e:
         print(f"Error fetching dataset labels: {str(e)}")

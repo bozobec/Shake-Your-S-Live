@@ -10,7 +10,7 @@ def base_card(title: str, children=None):
                 [
                     dmc.Title(title, order=6),
                 ],
-                position="apart",
+                justify="space-around",
                 mt="md",
             ),
             dmc.Space(h=20),

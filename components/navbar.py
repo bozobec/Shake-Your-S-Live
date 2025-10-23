@@ -29,7 +29,7 @@ navbar = dbc.NavbarSimple(
     brand=[html.Img(
                     src="/assets/RAST_Vector_Logo.svg",
                     alt="RAST Logo, user-based company valuation & prediction tool",
-                    height="36px"
+                    height="30px"
     )],
     brand_href="https://www.rast.guru",
     sticky="top",  # Uncomment if you want the navbar to always appear at the top on scroll.
