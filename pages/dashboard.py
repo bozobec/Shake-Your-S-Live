@@ -1351,9 +1351,9 @@ def layout(company=None, **other_unknown_query_strings):
                             graph_card, dmc.Space(h=20), table_hype, dmc.Space(h=20),
                             graph_hype
                             # valuation_over_time_card  # Comment this line to remove the analysis graphs
-                            ], span={'base': 12,'lg': 6}, order={"xs": 2, "sm": 2, "lg": 2}),
+                            ], span={'base': 12,'lg': 8}, order={"xs": 2, "sm": 2, "lg": 2}),
                         dmc.GridCol([hype_meter_card, dmc.Space(h=20), functionalities_card],
-                                    span={'base': 12,'lg': 6}, order={"xs": 1, "sm": 3, "lg": 3}),
+                                    span={'base': 12,'lg': 4}, order={"xs": 1, "sm": 3, "lg": 3}),
                     ],
                 ),
                 dmc.Space(h=20),
@@ -1391,7 +1391,6 @@ def layout(company=None, **other_unknown_query_strings):
                 dcc.Store(id='max-net-margin'),  # stores the max theoretical net margin for the selected company
                 dcc.Store(id='hype-score'),  # calculates the company's hype level that is used in the ranking
                 html.Div(id='page-load-trigger'),  # Dummy trigger to launch a callback once the page loads
-                dcc.Location(id='url', refresh=False),
                 dcc.Store(id="user-store"),  # storing user information
                 dcc.Store(id="user-token", storage_type="session")
             ], fluid=True),

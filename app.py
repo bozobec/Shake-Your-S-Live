@@ -158,6 +158,7 @@ layout_page_standard = dmc.AppShell(
                 dcc.Download(id="download-chart"),  # Component to handle file download
                 dcc.Store(id='dataset-selected-url', data=None),
                 dcc.Store(id='launch-counter', data={'flag': False}),
+                dcc.Location(id='url', refresh=False),
             ],
         ),
         #dmc.AppShellAside("Aside", p="md"),
@@ -497,7 +498,7 @@ def enable_slider(selection, scenario_value):
 
 # Callback to update the URL based on the dropdown selection and track the dataset selected via posthog
 @app.callback(
-    Output('url-input', 'pathname'),
+    Output('url-input', 'search'),
     Input("dataset-selection", "value"),
     State("url-input", "search")
 )
@@ -519,7 +520,7 @@ def update_url(data_selection, current_pathname):
     # Update the pathname with the selected dataset
 
 
-    return f"/?company={urllib.parse.quote(data_selection)}"
+    return f"?company={urllib.parse.quote(data_selection)}"
 
 # Callback to update the dropdown selection based on the URL.
 @app.callback(
