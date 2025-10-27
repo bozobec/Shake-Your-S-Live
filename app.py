@@ -289,6 +289,7 @@ def check_auth():
 def send_sitemap():
     return send_from_directory("assets", "sitemap.xml")
 
+
 @app.callback(
     Output("appshell", "navbar"),
     Input("burger", "opened"),
@@ -556,12 +557,12 @@ def update_select_based_on_url(url_search, current_selected_dataset):
     return dataset_url, None
 # Callback to change the Graph's title, enable the analysis buttons
 @app.callback([
-    #Output("accordion-growth", "disabled"),
     Output("accordion-plateau", "disabled"),
     Output("accordion-valuation", "disabled"),
     Output("accordion-correlation", "disabled"),
     Output("accordion-product-maturity", "disabled"),
     Output("loader-general", "style"),
+    Output("loading-overlay", "visible"),
 
     Input("dataset-selection", "value"),
 ], prevent_initial_call=True)
@@ -573,7 +574,7 @@ def select_value(value):
                  "the Forecast Start Date Using the Datepicker. Use the 'Past performance' section " \
                  "to see RAST's calculated hype over time."
     show_loader = {'display': 'block'}
-    return False, False, False, False, show_loader
+    return False, False, False, False, show_loader, True
 
 
 # Callback defining the minimum and the maximum date of the datepicker and loading the dataset
@@ -606,6 +607,7 @@ def select_value(value):
     Output(component_id='data-source', component_property='children'),  # Stores the source of the data shown
     Output(component_id='data-selection-counter', component_property='data'),  # Flags that the data has changed
     Output("loader-general", "style", allow_duplicate=True),
+    Output("loading-overlay", "visible", allow_duplicate=True),
     Output(component_id='market-cap-tab', component_property='style'),  # Hides Market cap tab if other data is selected
     Output(component_id='symbol-dataset', component_property='data'),  # Hides Market cap tab if other data is selected
     Output(component_id='max-net-margin', component_property='data'),  # Stores the max net margin opf the selected company
@@ -708,6 +710,7 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
         # discount rate and arpu for Companies
         if symbol_company != "N/A":
             hide_loader = {'display': ''} # keep on showing the loader
+            display_loading_overlay = True # keep on showing the loading overlay
             show_company_functionalities = {'display': ''}  # Style component showing the fin. function.
             tab_selected = "1"  # show the first tab i.e. the valuation one
             try:
@@ -759,6 +762,7 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
 
         else:
             hide_loader = {'display': 'none'}
+            display_loading_overlay = False  # keep on showing the loading overlay
             total_assets = 0
             show_company_functionalities = {'display': 'none'}
             tab_selected = "2" # show the second tab i.e. the Growth one
@@ -812,7 +816,7 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
             show_company_functionalities, show_company_functionalities, show_company_functionalities, \
             show_company_functionalities, text_profit_margin, text_best_profit_margin, marks_profit_margin_slider, \
             total_assets, users_revenue_regression, \
-            initial_sliders_values, source_string, True, hide_loader, show_company_functionalities, symbol_company, max_net_margin, company_logo_link_src, tab_selected
+            initial_sliders_values, source_string, True, hide_loader, display_loading_overlay, show_company_functionalities, symbol_company, max_net_margin, company_logo_link_src, tab_selected
     except Exception as e:
         print(f"Error fetching or processing dataset: {str(e)}")
         raise PreventUpdate
@@ -2259,6 +2263,7 @@ def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, arpu_grow
     Output(component_id='data-selection-counter', component_property='data', allow_duplicate=True),
     Output(component_id='valuation-over-time', component_property='data'),
     Output("loader-general", "style", allow_duplicate=True),
+    Output("loading-overlay", "visible", allow_duplicate=True),
     # Input(component_id='date-picker', component_property='value'),  # Take date-picker date
     Input(component_id='users-dates-formatted', component_property='data'),
     Input(component_id='total-assets', component_property='data'),
@@ -2419,6 +2424,7 @@ def historical_valuation_calculation(df_formatted, total_assets, df_raw, latest_
     print("DF Valuation over time")
     print(df_valuation_over_time)
     hide_loader = {'display': 'none'}
+    display_loading_overlay = False
 
     print("DF Valuation over time")
     print(df_valuation_over_time)
@@ -2427,7 +2433,7 @@ def historical_valuation_calculation(df_formatted, total_assets, df_raw, latest_
     print(f" Performance of the valuation over time")
     print(f" Real time: {t2[0] - t1[0]:.2f} seconds")
     print(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
-    return False, df_valuation_over_time_dict, hide_loader
+    return False, df_valuation_over_time_dict, hide_loader, display_loading_overlay
 
 
 @app.callback(

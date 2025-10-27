@@ -928,12 +928,6 @@ source = dmc.Text(
 graph_card = dmc.Card(
     children=[
         # Card Title
-        dmc.LoadingOverlay(
-                    visible=False,
-                    id="loading-overlay",
-                    overlayProps={"radius": "sm", "blur": 2},
-                    zIndex=10,
-                ),
         dmc.Group(
                     [
                         dmc.Title("Welcome to RAST", id="graph-title", order=5),
@@ -1301,12 +1295,6 @@ table_hype = dmc.Card(children=[
     dmc.ScrollArea(
         h=400,
         children=[
-            dmc.LoadingOverlay(
-                visible=False,
-                id="loading-overlay",
-                overlayProps={"radius": "sm", "blur": 2},
-                zIndex=10,
-            ),
             dmc.Table(id='top_25_companies')
         ]
     ),
@@ -1320,12 +1308,6 @@ graph_hype = dmc.Card(children=[
         justify="left",
         mt="md",
         mb="xs",
-    ),
-    dmc.LoadingOverlay(
-        visible=False,
-        id="loading-overlay",
-        overlayProps={"radius": "sm", "blur": 2},
-        zIndex=10,
     ),
     dcc.Graph(id='hyped-ranking-graph', config=config_graph),
     login_overlay_chart,
