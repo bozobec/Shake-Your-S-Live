@@ -22,7 +22,7 @@ from dash.exceptions import PreventUpdate
 import urllib.parse
 import plotly.io as pio
 import io
-from flask import send_file, request, jsonify
+from flask import send_file, request, jsonify, send_from_directory, Flask
 import base64
 from dateutil.relativedelta import relativedelta
 from scipy.stats import mstats
@@ -39,7 +39,7 @@ from components.graph_layouts import layout_main_graph, layout_revenue_graph, la
     layout_product_maturity_graph
 from components.offcanvas import offcanvas
 from components.analysis_card import analysis_card
-from components.selecting_card import selecting_card
+from components.selecting_card import selecting_card, labels
 
 t1 = time.perf_counter(), time.process_time()
 
@@ -61,6 +61,7 @@ IS_PRODUCTION = os.getenv("IS_PRODUCTION") == "true"  # Setup in heroku 'heroku 
 clerk_script_ignored = r"clerk\.dev\.js" if IS_PRODUCTION else r"clerk\.prod\.js" # if production, ignores clerk.dev.js
 
 dash._dash_renderer._set_react_version('18.2.0')
+
 
 app = dash.Dash(__name__,
                 external_stylesheets=[dbc.themes.LUX],
@@ -90,6 +91,9 @@ YEARS_DCF = 15  # Amount of years taken into account for DCF calculation
 
 # ----------------------------------------------------------------------------------
 # App Layout
+
+server = app.server
+
 
 layout_page_standard = dmc.AppShell(
     [
@@ -223,7 +227,6 @@ print("clerk jwks")
 print(CLERK_JWKS_URL)
 jwks = requests.get(CLERK_JWKS_URL).json()
 
-server = app.server
 
 # ----------------------------------------------------------------------------------
 # Login flow
@@ -257,7 +260,6 @@ def verify_token(token):
         return payload
     return None
 
-
 @server.before_request
 def check_auth():
     # Let static files and assets load
@@ -282,6 +284,10 @@ def check_auth():
 
     # attach plan info for convenience
     request.user_plan = claims.get("public_metadata", {}).get("plan", "free")
+
+@app.server.route("/sitemap.xml")
+def send_sitemap():
+    return send_from_directory("assets", "sitemap.xml")
 
 @app.callback(
     Output("appshell", "navbar"),
@@ -480,6 +486,7 @@ def initialize_data(href):
     )
 
     return all_companies_information_store, fig, industry_list
+
 
 # Callback to enable the slider if "Custom" is selected
 @app.callback(
