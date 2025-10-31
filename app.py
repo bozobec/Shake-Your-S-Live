@@ -518,7 +518,7 @@ def update_url(data_selection, current_pathname):
     """
     if not data_selection:
         # No update if no data selection is made
-        return dash.no_update, True, True
+        return dash.no_update,
 
         # Parse the current pathname and extract query parameters
     parsed_url = urllib.parse.urlparse(current_pathname)
