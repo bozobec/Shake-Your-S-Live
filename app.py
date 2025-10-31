@@ -507,6 +507,8 @@ def enable_slider(selection, scenario_value):
 # Callback to update the URL based on the dropdown selection and track the dataset selected via posthog
 @app.callback(
     Output('url-input', 'search'),
+    Output("loading-overlay", "visible"),
+    Output("loading-overlay2", "visible"),
     Input("dataset-selection", "value"),
     State("url-input", "search")
 )
@@ -516,7 +518,7 @@ def update_url(data_selection, current_pathname):
     """
     if not data_selection:
         # No update if no data selection is made
-        return dash.no_update
+        return dash.no_update, True, True
 
         # Parse the current pathname and extract query parameters
     parsed_url = urllib.parse.urlparse(current_pathname)
@@ -524,11 +526,11 @@ def update_url(data_selection, current_pathname):
     current_company = current_query_params.get('company', [None])[0]
     # No update if the current company matches the dropdown selection
     if current_company == data_selection:
-        return dash.no_update
+        return dash.no_update, True, True
     # Update the pathname with the selected dataset
 
 
-    return f"?company={urllib.parse.quote(data_selection)}"
+    return f"?company={urllib.parse.quote(data_selection)}", True, True
 
 # Callback to update the dropdown selection based on the URL.
 @app.callback(
@@ -561,8 +563,9 @@ def update_select_based_on_url(url_search, current_selected_dataset):
     Output("accordion-valuation", "disabled"),
     Output("accordion-correlation", "disabled"),
     Output("accordion-product-maturity", "disabled"),
-    Output("loader-general", "style"),
-    Output("loading-overlay", "visible"),
+    Output("loader-general", "style", allow_duplicate=True),
+    Output("loading-overlay", "visible", allow_duplicate=True),
+    Output("loading-overlay2", "visible", allow_duplicate=True),
 
     Input("dataset-selection", "value"),
 ], prevent_initial_call=True)
@@ -574,7 +577,7 @@ def select_value(value):
                  "the Forecast Start Date Using the Datepicker. Use the 'Past performance' section " \
                  "to see RAST's calculated hype over time."
     show_loader = {'display': 'block'}
-    return False, False, False, False, show_loader, True
+    return False, False, False, False, show_loader, True, True
 
 
 # Callback defining the minimum and the maximum date of the datepicker and loading the dataset
@@ -608,6 +611,7 @@ def select_value(value):
     Output(component_id='data-selection-counter', component_property='data'),  # Flags that the data has changed
     Output("loader-general", "style", allow_duplicate=True),
     Output("loading-overlay", "visible", allow_duplicate=True),
+    Output("loading-overlay2", "visible", allow_duplicate=True),
     Output(component_id='market-cap-tab', component_property='style'),  # Hides Market cap tab if other data is selected
     Output(component_id='symbol-dataset', component_property='data'),  # Hides Market cap tab if other data is selected
     Output(component_id='max-net-margin', component_property='data'),  # Stores the max net margin opf the selected company
@@ -816,7 +820,7 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
             show_company_functionalities, show_company_functionalities, show_company_functionalities, \
             show_company_functionalities, text_profit_margin, text_best_profit_margin, marks_profit_margin_slider, \
             total_assets, users_revenue_regression, \
-            initial_sliders_values, source_string, True, hide_loader, display_loading_overlay, show_company_functionalities, symbol_company, max_net_margin, company_logo_link_src, tab_selected
+            initial_sliders_values, source_string, True, True, hide_loader, display_loading_overlay, show_company_functionalities, symbol_company, max_net_margin, company_logo_link_src, tab_selected
     except Exception as e:
         print(f"Error fetching or processing dataset: {str(e)}")
         raise PreventUpdate
@@ -1765,7 +1769,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
             dict(
                 x=users[0],
                 y=0.01,
-                text="G R O W T H  E N D",
+                text="Growth end",
                 showarrow=True,
                 font=dict(size=8, color="black"),
                 opacity=0.5,
@@ -2264,6 +2268,7 @@ def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, arpu_grow
     Output(component_id='valuation-over-time', component_property='data'),
     Output("loader-general", "style", allow_duplicate=True),
     Output("loading-overlay", "visible", allow_duplicate=True),
+    Output("loading-overlay2", "visible", allow_duplicate=True),
     # Input(component_id='date-picker', component_property='value'),  # Take date-picker date
     Input(component_id='users-dates-formatted', component_property='data'),
     Input(component_id='total-assets', component_property='data'),
@@ -2433,7 +2438,7 @@ def historical_valuation_calculation(df_formatted, total_assets, df_raw, latest_
     print(f" Performance of the valuation over time")
     print(f" Real time: {t2[0] - t1[0]:.2f} seconds")
     print(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
-    return False, df_valuation_over_time_dict, hide_loader, display_loading_overlay
+    return False, df_valuation_over_time_dict, hide_loader, display_loading_overlay, display_loading_overlay
 
 
 @app.callback(

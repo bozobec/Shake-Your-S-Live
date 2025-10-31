@@ -107,7 +107,7 @@ analysis_card = dmc.Card(
     children=[
         dmc.LoadingOverlay(
                     visible=False,
-                    id="loading-overlay",
+                    id="loading-overlay2",
                     overlayProps={"radius": "sm", "blur": 2},
                     zIndex=10,
                 ),
