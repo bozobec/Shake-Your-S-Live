@@ -106,7 +106,7 @@ accordion = dmc.Accordion(
 analysis_card = dmc.Card(
     children=[
         dmc.LoadingOverlay(
-                    visible=False,
+                    visible=True,
                     id="loading-overlay2",
                     overlayProps={"radius": "sm", "blur": 2},
                     zIndex=10,

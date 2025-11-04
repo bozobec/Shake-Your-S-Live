@@ -156,6 +156,8 @@ layout_page_standard = dmc.AppShell(
                 dash.page_container,
                 dcc.Location(id='url-input', refresh=False),
                 dcc.Location(id='url-output', refresh=False),
+                # Hidden stores
+                dcc.Store(id="url-state"),  # intermediary to avoid circular dependency
                 dcc.Store(id="login-state", storage_type="session"),
                 dcc.Store(id="user-id", storage_type="session"),
                 html.Div(id="login-state-bridge", children="", style={"display": "none"}),
@@ -495,20 +497,20 @@ def initialize_data(href):
     Output("range-arpu-growth", "disabled"),
     Output("range-discount-rate", "disabled"),
     Output("range-profit-margin", "disabled"),
+    Output("loading-overlay", "visible"),
+    Output("loading-overlay2", "visible"),
 
     [Input("dataset-selection", "value"),
-    Input("scenarios-picker", "value")])
+    Input("scenarios-picker", "value")], prevent_initial_call=True)
 def enable_slider(selection, scenario_value):
     if scenario_value == "Custom":
-        return False, False, False, False
+        return False, False, False, False, True, True
     else:
-        return True, True, True, True
+        return True, True, True, True, True, False
 
 # Callback to update the URL based on the dropdown selection and track the dataset selected via posthog
 @app.callback(
     Output('url-input', 'search'),
-    Output("loading-overlay", "visible"),
-    Output("loading-overlay2", "visible"),
     Input("dataset-selection", "value"),
     State("url-input", "search")
 )
@@ -518,7 +520,7 @@ def update_url(data_selection, current_pathname):
     """
     if not data_selection:
         # No update if no data selection is made
-        return dash.no_update,
+        return dash.no_update
 
         # Parse the current pathname and extract query parameters
     parsed_url = urllib.parse.urlparse(current_pathname)
@@ -526,11 +528,11 @@ def update_url(data_selection, current_pathname):
     current_company = current_query_params.get('company', [None])[0]
     # No update if the current company matches the dropdown selection
     if current_company == data_selection:
-        return dash.no_update, True, True
+        return dash.no_update
     # Update the pathname with the selected dataset
 
 
-    return f"?company={urllib.parse.quote(data_selection)}", True, True
+    return f"?company={urllib.parse.quote(data_selection)}",
 
 # Callback to update the dropdown selection based on the URL.
 @app.callback(
@@ -557,6 +559,8 @@ def update_select_based_on_url(url_search, current_selected_dataset):
 
     # Update the dropdown value and clear the persistent URL dataset data
     return dataset_url, None
+
+
 # Callback to change the Graph's title, enable the analysis buttons
 @app.callback([
     Output("accordion-plateau", "disabled"),
@@ -880,6 +884,8 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
     print("datedate")
     df_dataset = pd.DataFrame(df_dataset_dict)
     print("DF_dataset_first", df_dataset)
+    if dropdown_value is None:
+        raise PreventUpdate
     # Dates array definition from dictionary
     dates_raw = np.array([entry['Date'] for entry in df_raw])
     dates_new = np.array([entry['Date'] for entry in df_dataset_dict])
@@ -2285,7 +2291,6 @@ def historical_valuation_calculation(df_formatted, total_assets, df_raw, latest_
     print(max_net_margin)
     print(type(max_net_margin))
     print(df_rawdataset_counter)
-    max_net_margin = max_net_margin/100
     # The entire callback is skipped if the current market cap = 0, i.e. if it is not a public company OR
     # if it was already calculated
     if latest_market_cap == 0 or df_rawdataset_counter == False:
@@ -2294,6 +2299,7 @@ def historical_valuation_calculation(df_formatted, total_assets, df_raw, latest_
     dates_raw = np.array([entry['Date'] for entry in df_raw])
     dates_new = np.array([entry['Date'] for entry in df_formatted])
     revenue_df = np.array([entry['Revenue'] for entry in df_formatted])
+    max_net_margin = max_net_margin/100
     profit_margin_df = np.array([entry['Profit Margin'] for entry in df_formatted])
     profit_margin_original = profit_margin_df / 100
     market_cap_df = np.array([entry['Market Cap'] for entry in df_formatted])

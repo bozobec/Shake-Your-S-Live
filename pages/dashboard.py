@@ -25,6 +25,7 @@ import dash_daq as daq
 #from dash_extensions import DeferScript
 from functools import lru_cache
 from components.analysis_card import analysis_card
+import os
 
 register_page(
     __name__,
@@ -35,7 +36,8 @@ register_page(
 
 
 # Values for the dropdown (all different companies in the DB)
-labels = dataAPI.get_airtable_labels() or []
+IS_PRODUCTION = os.getenv("IS_PRODUCTION") == "true"  # Setup in heroku 'heroku config:set IS_PRODUCTION=true'
+labels = dataAPI.get_airtable_labels() or [] if IS_PRODUCTION else ["Airbnb", "Affirm", "Spotify"]
 
 
 
@@ -954,6 +956,10 @@ graph_card = dmc.Card(
                     size="xs",
                     c="dimmed",
                     id='graph-subtitle',
+                    style={
+                        # base style (visible normally)
+                        "@media (max-width: 768px)": {"display": "none"},  # hides on small screens
+                    },
                 ),
         dmc.Space(h=10),
         #html.Div(graph_message),
