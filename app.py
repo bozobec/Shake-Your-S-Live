@@ -289,8 +289,7 @@ def check_auth():
 
 @app.server.route("/sitemap.xml")
 def send_sitemap():
-    return send_from_directory("assets", "sitemap.xml")
-
+    return send_from_directory("static", "sitemap.xml")
 
 @app.callback(
     Output("appshell", "navbar"),
@@ -532,7 +531,7 @@ def update_url(data_selection, current_pathname):
     # Update the pathname with the selected dataset
 
 
-    return f"?company={urllib.parse.quote(data_selection)}",
+    return f"?company={urllib.parse.quote(data_selection)}"
 
 # Callback to update the dropdown selection based on the URL.
 @app.callback(
@@ -2783,32 +2782,6 @@ def toggle_offcanvas(n1, is_open):
         return not is_open
     return is_open
 
-
-
-
-
-
-'''
-# Callback changing the example hypemeter on the homepage
-@app.callback(
-    Output(component_id='hype-meter-users-home', component_property='value'),
-    Output(component_id='hype-meter-hype-home', component_property='value'),
-    Output(component_id='hype-indicator-home-example', component_property='children'),
-    Output(component_id='hype-indicator-home-example', component_property='color'),
-    Input(component_id='slider-example', component_property='value'),
-    Input(component_id='hype-meter-noa-home', component_property='value'),
-    prevent_initial_call=True,)
-
-def home_page_example(slider_value, non_op_assets):
-    market_cap_example = 210
-    equity = 110/66 * slider_value
-    hype = market_cap_example - equity - non_op_assets
-    hype_ratio = hype*0.3/market_cap_example
-    print("hyperatio", hype_ratio)
-    hype_indicator_color, hype_indicator_text = main.hype_meter_indicator_values(hype_ratio)
-    return equity, hype, hype_indicator_text, hype_indicator_color
-'''
-
 # Callback to update table based on selection
 @app.callback(
     Output("top_25_companies", "children"),
@@ -2819,6 +2792,11 @@ def home_page_example(slider_value, non_op_assets):
 )
 def update_table(df_all_companies, hype_choice, industries, logged_in):
     t1 = time.perf_counter(), time.process_time()
+
+    # Blocks the process for dev
+    IS_PRODUCTION = os.getenv("IS_PRODUCTION") == "true"  # Setup in heroku 'heroku config:set IS_PRODUCTION=true'
+    if IS_PRODUCTION is False:
+        return no_update  # nothing to do
 
     # If dropdown hasn't been used yet, set a default
     if hype_choice is None:

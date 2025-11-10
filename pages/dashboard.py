@@ -36,8 +36,9 @@ register_page(
 
 
 # Values for the dropdown (all different companies in the DB)
-IS_PRODUCTION = os.getenv("IS_PRODUCTION") == "true"  # Setup in heroku 'heroku config:set IS_PRODUCTION=true'
-labels = dataAPI.get_airtable_labels() or [] if IS_PRODUCTION else ["Airbnb", "Affirm", "Spotify"]
+#IS_PRODUCTION = os.getenv("IS_PRODUCTION") == "true"  # Setup in heroku 'heroku config:set IS_PRODUCTION=true'
+labels = []
+#labels = dataAPI.get_airtable_labels() or [] if IS_PRODUCTION else ["Airbnb", "Affirm", "Spotify"]
 
 
 
@@ -1217,7 +1218,7 @@ login_overlay_table = html.Div(
     children=[
     dmc.Space(h=60),
     dmc.Text(
-        "Log in to view the RAST table of the most undervalued companies.",
+        "Log in to view our most undervalued companies.",
         fw=700,
         size="m",
         c="white",
@@ -1241,7 +1242,7 @@ login_overlay_chart = html.Div(
     children=[
     dmc.Space(h=60),
     dmc.Text(
-        "Log in to view the RAST quadrant of the most undervalued companies.",
+        "Log in to view our most undervalued companies.",
         fw=700,
         size="m",
         c="white",
