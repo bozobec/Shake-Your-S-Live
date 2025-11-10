@@ -2458,6 +2458,8 @@ def historical_valuation_calculation(df_formatted, total_assets, df_raw, latest_
     Output(component_id="accordion-valuation", component_property="icon"),
     Output(component_id="hype-score", component_property="data"), # hype score storage
     Output(component_id="hype-score-text", component_property="children"), #hype score text
+    Output("loading-overlay", "visible", allow_duplicate=True),
+    Output("loading-overlay2", "visible", allow_duplicate=True),
 
     Input(component_id='valuation-over-time', component_property='data'),
     State(component_id='date-picker', component_property='value'),  # Take date-picker date
@@ -2768,7 +2770,7 @@ def graph_valuation_over_time(valuation_over_time_dict, date_picked, df_formatte
     print(f" Real time: {t2[0] - t1[0]:.2f} seconds")
     print(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
     return fig_valuation, valuation_graph_message, valuation_graph_color, valuation_graph_title, valuation_accordion_title, \
-        valuation_accordion_message, valuation_graph_color, valuation_icon_color, hype_score, hype_score_text
+        valuation_accordion_message, valuation_graph_color, valuation_icon_color, hype_score, hype_score_text, False, False,
 
 
 # Callback resetting enabling the reset button
