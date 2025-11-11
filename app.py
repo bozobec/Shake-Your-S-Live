@@ -228,9 +228,26 @@ CLERK_JWKS_URL = os.getenv("https://clerk.rast.guru/.well-known/jwks.json", "htt
 print("clerk jwks")
 print(CLERK_JWKS_URL)
 jwks = requests.get(CLERK_JWKS_URL).json()
+print("Flask routes:", [r.rule for r in app.server.url_map.iter_rules()])
 
 
 # ----------------------------------------------------------------------------------
+
+#Adding sitemap and robots
+@server.route("/sitemap.xml")
+def send_sitemap():
+    print("Sitemap route accessed!")  # Debug line
+    return send_from_directory("static", "sitemap.xml")
+@server.route("/robots.txt")
+def send_robots():
+    print("Robots route accessed!")  # Debug line
+    return send_from_directory("static", "robots.txt")
+@server.route("/test")
+def test_route():
+    print("Test route accessed!")
+    return "Test works!"
+print("Flask routes2:", [r.rule for r in app.server.url_map.iter_rules()])
+
 # Login flow
 
 # --- Verify Clerk JWT ---
@@ -262,14 +279,16 @@ def verify_token(token):
         return payload
     return None
 
+PUBLIC_PATHS = ["/", "/robots.txt", "/sitemap.xml", "/test"]
+
 @server.before_request
 def check_auth():
-    # Let static files and assets load
-    if request.path.startswith("/_dash") or request.path.startswith("/assets"):
+    # Allow Dash internals and static files
+    if request.path.startswith(("/_dash", "/assets", "/static")):
         return None
 
-    # Skip auth for homepage
-    if request.path == "/":
+    # Allow public routes
+    if request.path in PUBLIC_PATHS:
         return None
 
     # Get Authorization header
@@ -286,15 +305,6 @@ def check_auth():
 
     # attach plan info for convenience
     request.user_plan = claims.get("public_metadata", {}).get("plan", "free")
-
-
-#Adding sitemap and robots
-@app.server.route("/sitemap.xml")
-def send_sitemap():
-    return send_from_directory("static", "sitemap.xml")
-@app.server.route("/robots.txt")
-def send_robots():
-    return send_from_directory("static", "robots.txt")
 
 @app.callback(
     Output("appshell", "navbar"),
