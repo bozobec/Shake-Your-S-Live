@@ -287,9 +287,14 @@ def check_auth():
     # attach plan info for convenience
     request.user_plan = claims.get("public_metadata", {}).get("plan", "free")
 
+
+#Adding sitemap and robots
 @app.server.route("/sitemap.xml")
 def send_sitemap():
     return send_from_directory("static", "sitemap.xml")
+@app.server.route("/robots.txt")
+def send_robots():
+    return send_from_directory("static", "robots.txt")
 
 @app.callback(
     Output("appshell", "navbar"),
@@ -467,16 +472,21 @@ def initialize_data(href):
     # Layout tweaks
     fig.update_layout(
         #title="Hype-Growth quadrant",
-        xaxis=dict(title="Growth potential", range=[0, 1], fixedrange=True),
+        xaxis=dict(
+            title="Growth potential",
+            range=[0, 1],
+            #fixedrange=True
+        ),
         yaxis=dict(
             title="Hype level",
-            fixedrange=True,
+            #fixedrange=True,
             #type="log",  # 🔹 log scale
             #autorange=True  # auto-fit the range
         ),
         plot_bgcolor="white",
-        dragmode=False,
-        clickmode=None,
+        config={'displayModeBar': True},
+    #dragmode=False,
+        #clickmode=None,
         #config = {'scrollZoom': False},
         margin=go.layout.Margin(
             l=0,  # left margin
