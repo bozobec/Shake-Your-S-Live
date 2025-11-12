@@ -240,7 +240,6 @@ def send_sitemap():
     return send_from_directory("static", "sitemap.xml")
 @server.route("/robots.txt")
 def send_robots():
-    print("Robots route accessed!")  # Debug line
     return send_from_directory("static", "robots.txt")
 
 # Login flow
