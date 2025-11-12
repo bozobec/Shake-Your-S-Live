@@ -242,11 +242,6 @@ def send_sitemap():
 def send_robots():
     print("Robots route accessed!")  # Debug line
     return send_from_directory("static", "robots.txt")
-@server.route("/test")
-def test_route():
-    print("Test route accessed!")
-    return "Test works!"
-print("Flask routes2:", [r.rule for r in app.server.url_map.iter_rules()])
 
 # Login flow
 
