@@ -1,0 +1,48 @@
+from dash import Dash, html, dcc, callback, dash_table
+import dash_mantine_components as dmc
+
+config_graph = {
+    'displayModeBar': True,
+    'scrollZoom': True,
+    'displaylogo': False,
+    'modeBarButtonsToRemove': ['zoom', 'zoomIn', 'zoomOut', 'pan', 'lasso', 'select','autoScale', 'resetScale'],
+    'toImageButtonOptions': {
+            'format': 'svg', # one of png, svg, jpeg, webp
+            'filename': 'RAST_Growth',
+            'height': 735,
+            'width': 1050,
+            'scale': 1 # Multiply title/legend/axis/canvas sizes by this factor
+          },
+}
+
+product_maturity_graph = dcc.Graph(id='product-maturity-graph', config=config_graph)
+
+
+# Graph message growth rate
+product_maturity_graph_message = dmc.Alert(
+    dmc.Text("About the Product Maturity"),
+    id="product-maturity-graph-message",
+    title="Is the product still improving?",
+    color="blue",
+    #hide="False",
+    withCloseButton="True")
+
+product_maturity_card = dmc.Card(
+    children=[
+        dmc.Group(
+            [
+                dmc.Title("Product Maturity", order=5),
+                html.Div(children=[product_maturity_graph_message, product_maturity_graph])
+            ],
+            #justify="space-around",
+            mt="md",
+            mb="xs",
+            wrap=True,
+        ),
+    ],
+    id="section-6",
+    #style={'display': 'none'},
+    withBorder=True,
+    shadow="sm",
+    radius="md",
+)

@@ -20,7 +20,7 @@ plateau_message = dmc.Alert(
 # Valuation
 valuation_message = dmc.Alert(
     children=dmc.Text(""),
-    id="valuation-message",
+    id="valuation-message2",
     title="",
     color="gray"),
 
@@ -124,5 +124,7 @@ analysis_card = dmc.Card(
     withBorder=True,
     shadow="sm",
     radius="md",
+    id="section-2",
+    style={'display': 'none'},
     # style={"width": 350},
 )

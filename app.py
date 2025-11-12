@@ -3,7 +3,7 @@
 # visit http://127.0.0.1:8050/ in your web browser.
 import dash
 import dash_mantine_components as dmc
-from dash import Dash, html, dcc, register_page, callback_context, no_update
+from dash import Dash, html, dcc, register_page, callback_context, no_update, clientside_callback
 from dash import callback
 from dash.dependencies import Input, Output, State
 import pandas as pd
@@ -40,6 +40,13 @@ from components.graph_layouts import layout_main_graph, layout_revenue_graph, la
 from components.offcanvas import offcanvas
 from components.analysis_card import analysis_card
 from components.selecting_card import selecting_card, labels
+from components.hype_meter_card import hype_meter_card
+from components.valuation_card import valuation_card
+from components.growth_card import growth_card
+from components.revenue_card import revenue_card
+from components.product_maturity_card import product_maturity_card
+from components.growth_rate_card import growth_rate_card
+from components.functionalities_card import functionalities_card
 
 t1 = time.perf_counter(), time.process_time()
 
@@ -93,6 +100,189 @@ YEARS_DCF = 15  # Amount of years taken into account for DCF calculation
 # App Layout
 
 server = app.server
+
+sections = [
+    {"id": "section-1", "title": "Summary", "color": "blue"},
+    {"id": "section-2", "title": "Analysis summary", "color": "green"},
+    {"id": "section-3", "title": "Valuation", "color": "orange"},
+    {"id": "section-4", "title": "Growth", "color": "purple"},
+    {"id": "section-5", "title": "Revenue", "color": "purple"},
+    {"id": "section-6", "title": "Product Maturity", "color": "red"},
+    {"id": "section-7", "title": "Growth rate", "color": "yellow"},
+]
+
+dropdown = dmc.Select(
+    placeholder="Select a company...",
+    id="dataset-selection",
+    data=labels,
+    style={"marginBottom": 10},
+    styles={
+        "input": {
+            "backgroundColor": "#1a1b1e",  # Dark background
+            "color": "#c1c2c5",  # Light text
+            "border": "1px solid #373A40",  # Subtle border
+            "&:focus": {
+                "borderColor": "#5c7cfa",  # Blue border on focus
+            },
+        },
+        "dropdown": {
+            "backgroundColor": "#1a1b1e",  # Dark dropdown background
+            "border": "1px solid #373A40",
+        },
+        "option": {
+            "color": "#c1c2c5",  # Light text for options
+            "backgroundColor": "#1a1b1e",
+            "&:hover": {
+                "backgroundColor": "#25262b",  # Slightly lighter on hover
+            },
+            "&[data-selected]": {
+                "backgroundColor": "#5c7cfa",  # Blue when selected
+                "color": "white",
+            },
+            "&[data-selected]:hover": {
+                "backgroundColor": "#4c6ef5",  # Darker blue on hover when selected
+            },
+        },
+    },
+    nothingFoundMessage="We don't have this company yet!",
+    searchable=True,
+    comboboxProps={"transitionProps": {"transition": "pop", "duration": 200}},
+)
+
+layout_one_column = dmc.AppShell(
+        children=[
+            dmc.AppShellHeader(
+                dmc.Group(
+                    [
+                        dmc.Group(
+                            [
+                                dmc.Burger(
+                                    id="burger",
+                                    size="sm",
+                                    hiddenFrom="sm",
+                                    opened=True,
+                                    color="white",
+                                ),
+                                dcc.Link(
+                                    children=dmc.Image(
+                                        src="/assets/RAST_Vector_Logo.svg",
+                                        h={"base": 30, "sm": 35, "lg": 40},  # Responsive height
+                                        alt="RAST app guru, valuation made simple"
+                                    ),
+                                    href="https://www.rast.guru",
+                                ),
+                            ],
+                            gap="md",
+                            wrap="nowrap",
+                        ),
+                        dropdown,
+                        dmc.Group(
+                            [
+                                offcanvas,
+                                html.Div(id="clerk-header"),  # Clerk user button
+                            ],
+                            gap="sm",
+                            wrap="nowrap",
+                        ),
+                    ],
+                    h="100%",
+                    px="xl",  # Increased padding (or use a number like px=40)
+                    justify="space-between",  # This pushes items to left and right
+                    align="center",
+                    wrap="nowrap",
+                ),
+                bg="black",
+            ),
+            dmc.AppShellNavbar(
+                p="md",
+                children=dmc.Stack(
+                    [
+                        #selecting_card,
+                        #dmc.Title("Navigation", order=3, mb="md"),
+                        *[
+                            dmc.NavLink(
+                                label=section["title"],
+                                href=f"#{section['id']}",
+                                id=f"link-{section['id']}",
+                                #underline=False,
+                                #c="gray.7",
+                                #size="sm",
+                                style={"padding": "8px 12px", "borderRadius": "4px"},
+                            )
+                            for section in sections
+                        ],
+                    ],
+                    gap="xs",
+                ),
+            ),
+            dmc.AppShellMain(
+                        children=dmc.Grid(
+                            [
+                                # Left column: scrollable content
+                                dmc.GridCol(
+                                    span={"base": 12, "lg": 8},
+                                    children=dmc.Stack(
+                                        [
+                                            dmc.Loader(
+                                                color="red",
+                                                size="md",
+                                                variant="oval",
+                                                style={"display": "none"},
+                                                id="loader-general",
+                                            ),
+                                            hype_meter_card,
+                                            analysis_card,
+                                            valuation_card,
+                                            growth_card,
+                                            revenue_card,
+                                            product_maturity_card,
+                                            growth_rate_card,
+                                            dmc.Space(h=600),
+                                            dash.page_container,
+                                            dcc.Location(id='url-input', refresh=False),
+                                            dcc.Location(id='url-output', refresh=False),
+                                            # Hidden stores
+                                            dcc.Store(id="url-state"),  # intermediary to avoid circular dependency
+                                            dcc.Store(id="login-state", storage_type="session"),
+                                            dcc.Store(id="user-id", storage_type="session"),
+                                            html.Div(id="login-state-bridge", children="", style={"display": "none"}),
+                                            dcc.Download(id="download-chart"),  # Component to handle file download
+                                            dcc.Store(id='dataset-selected-url', data=None),
+                                            dcc.Store(id='launch-counter', data={'flag': False}),
+                                            dcc.Location(id='url', refresh=False),
+                                        ],
+                                        gap="xl",
+                                        p="xl",
+                                    ),
+                                ),
+
+                                # Right column: static functionalities card
+                                dmc.GridCol(
+                                    span={"base": 12, "lg": 4},
+                                    children=dmc.Stack(
+                                        [functionalities_card],
+                                        gap="md",
+                                        p="md",
+                                        style={
+                                            "position": "sticky",
+                                            "top": "40px",  # stays fixed below header
+                                            "alignSelf": "start",
+                                        },
+                                    ),
+                                ),
+                            ],
+                            gutter="xs",
+                            style={"height": "100%", "overflow": "auto"},
+                        ),
+                        id="main-content",
+                        style={"height": "100vh", "overflow": "auto"},
+                    ),
+        ],
+        header={"height": 60},
+        navbar={"width": 250, "breakpoint": "sm"},
+        padding="0",
+        id="app-shell",
+    ),
 
 
 layout_page_standard = dmc.AppShell(
@@ -219,7 +409,7 @@ theme={
             "fontFamily": "ABCGravityVariable-Trial, sans-serif",
         },
     },
-    children=layout_page_standard)
+    children=layout_one_column)
 
 # Clerk domain (e.g., "your-app.clerk.accounts.dev")
 
@@ -233,7 +423,7 @@ print("Flask routes:", [r.rule for r in app.server.url_map.iter_rules()])
 
 # ----------------------------------------------------------------------------------
 
-#Adding sitemap and robotss
+#Adding sitemap and robots
 @server.route("/sitemap.xml")
 def send_sitemap():
     print("Sitemap route accessed!")  # Debug line
@@ -302,13 +492,132 @@ def check_auth():
     request.user_plan = claims.get("public_metadata", {}).get("plan", "free")
 
 @app.callback(
-    Output("appshell", "navbar"),
+    Output("app-shell", "navbar"),
     Input("burger", "opened"),
-    State("appshell", "navbar"),
+    State("app-shell", "navbar"),
 )
 def toggle_navbar(opened, navbar):
     navbar["collapsed"] = {"mobile": not opened}
     return navbar
+
+# Callback to close navbar when a navigation link is clicked (mobile only)
+@app.callback(
+    Output("burger", "opened", allow_duplicate=True),
+    [Input(f"link-{section['id']}", "n_clicks") for section in sections],
+    State("burger", "opened"),
+    prevent_initial_call=True,
+)
+def close_navbar_on_click(*args):
+    """Close the navbar when any navigation link is clicked on mobile"""
+    # args[-1] is the State (current opened status)
+    # If navbar is currently open, close it
+    if args[-1]:  # If opened is True
+        return False
+    return no_update
+
+# Clientside callback for smooth scrolling and scroll spy
+clientside_callback(
+    """
+    function(n_clicks_list) {
+        const mainContent = document.getElementById('main-content');
+        const links = document.querySelectorAll('[id^="link-section-"]');
+        const sections = document.querySelectorAll('[id^="section-"]');
+
+        // Function to update active link based on scroll position
+        function updateActiveLink() {
+            let currentSection = '';
+            const scrollPosition = mainContent.scrollTop + 100; // Offset for better UX
+
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.offsetHeight;
+
+                if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
+                    currentSection = section.id;
+                }
+            });
+
+            // Update link styles
+            links.forEach(link => {
+                const linkTarget = link.getAttribute('href').substring(1);
+                if (linkTarget === currentSection) {
+                    link.style.backgroundColor = '#953AF6';
+                    link.style.fontWeight = '600';
+                    link.style.color = '#FFFFFF';
+                } else {
+                    link.style.backgroundColor = 'transparent';
+                    link.style.fontWeight = 'normal';
+                    link.style.color = '#495057';
+                }
+            });
+        }
+
+        // Add scroll event listener
+        if (mainContent && !mainContent.hasAttribute('data-scroll-listener')) {
+            mainContent.addEventListener('scroll', updateActiveLink);
+            mainContent.setAttribute('data-scroll-listener', 'true');
+            // Initial update
+            updateActiveLink();
+        }
+
+        // Handle click events for smooth scrolling
+        links.forEach(link => {
+            if (!link.hasAttribute('data-click-listener')) {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href').substring(1);
+                    const targetElement = document.getElementById(targetId);
+
+                    if (targetElement && mainContent) {
+                        const targetPosition = targetElement.offsetTop;
+                        mainContent.scrollTo({ 
+                            top: targetPosition,
+                            behavior: 'smooth'
+                        });
+                    }
+                });
+                link.setAttribute('data-click-listener', 'true');
+            }
+        });
+
+        return window.dash_clientside.no_update;
+    }
+    """,
+    Output("link-section-1", "n_clicks"),
+    [Input(f"link-{section['id']}", "n_clicks") for section in sections],
+    prevent_initial_call=False,
+)
+
+clientside_callback(
+    """
+    function() {
+        const aside = document.querySelector('[class*="AppShellAside"]');
+
+        if (aside && !aside.hasAttribute('data-scroll-fixed')) {
+            aside.addEventListener('wheel', function(e) {
+                // Check if aside content is scrollable
+                const isScrollable = this.scrollHeight > this.clientHeight;
+
+                if (!isScrollable) {
+                    // If not scrollable, don't capture the scroll
+                    e.preventDefault();
+                    // Pass scroll to main content
+                    const mainContent = document.getElementById('main-content');
+                    if (mainContent) {
+                        mainContent.scrollTop += e.deltaY;
+                    }
+                }
+            });
+            aside.setAttribute('data-scroll-fixed', 'true');
+        }
+
+        return window.dash_clientside.no_update;
+    }
+    """,
+    Output("app-shell", "id"),
+    Input("app-shell", "id"),
+    prevent_initial_call=False,
+)
 
 # Stores login state & user data and avoids update if login state has not changed
 @app.callback(
@@ -607,10 +916,12 @@ def select_value(value):
     # Stores the users + dates formatted for computation
     Output(component_id='graph-unit', component_property='data'),  # Stores the graph unit (y axis legend)
     Output("graph-title", "children"),
-    Output("graph-subtitle", "children"),
+    Output("growth-card-title", "children"),
+    Output("revenue-card-title", "children"),
+    #Output("graph-subtitle", "children"),
     Output(component_id='profit-margin', component_property='style'),  # Show/hide depending on company or not
     Output(component_id='discount-rate', component_property='style'),  # Show/hide depending on company or not
-    Output(component_id='hype-meter-card', component_property='style'),  # Show/hide depending on company or not
+    Output(component_id='section-1', component_property='style'),  # Show/hide hypemetercard depending on company or not
     Output(component_id='arpu-growth', component_property='style'),  # Show/hide depending on company or not
     Output(component_id='profit-margin-container', component_property='children'),
     Output(component_id='best-profit-margin-container', component_property='children'),
@@ -628,11 +939,10 @@ def select_value(value):
     Output("loader-general", "style", allow_duplicate=True),
     Output("loading-overlay", "visible", allow_duplicate=True),
     Output("loading-overlay2", "visible", allow_duplicate=True),
-    Output(component_id='market-cap-tab', component_property='style'),  # Hides Market cap tab if other data is selected
+    #Output(component_id='market-cap-tab', component_property='style'),  # Hides Market cap tab if other data is selected
     Output(component_id='symbol-dataset', component_property='data'),  # Hides Market cap tab if other data is selected
     Output(component_id='max-net-margin', component_property='data'),  # Stores the max net margin opf the selected company
     Output('company-logo', 'src'),
-    Output('tabs-component', 'value'),  # Tab selected 'value' -> 2 for the growth tab, 1 for the valuation
 
     # the chosen KPI and the revenue
 
@@ -677,9 +987,13 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
 
         # Creating the title & subtitle for the graph
         if symbol_company != "N/A":
-            title = dropdown_value + " (" + symbol_company + ")"
+            title_valuation_card = dropdown_value + " (" + symbol_company + ")'s valuation over time"
+            title_growth_card = dropdown_value + "'s " + key_unit + " growth over time"
+            title_revenue_card = "Revenue per " + key_unit
         else:
-            title = dropdown_value
+            title_valuation_card = dropdown_value
+            title_growth_card = dropdown_value + "'s " + key_unit + " growth over time"
+            title_revenue_card = "Revenue per " + key_unit
 
         title_image = dmc.Group([dropdown_value, dmc.Image(
             src="https://upload.wikimedia.org/wikipedia/commons/6/69/Airbnb_Logo_B%C3%A9lo.svg", h=10)])
@@ -832,11 +1146,11 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
         print(f" Real time: {t2[0] - t1[0]:.2f} seconds")
         print(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
         return min_history_datepicker, max_history_datepicker, date_value_datepicker, users_dates_dict, \
-            users_dates_formatted_dict, y_legend_title, title, subtitle, \
+            users_dates_formatted_dict, y_legend_title, title_valuation_card, title_growth_card, title_revenue_card, \
             show_company_functionalities, show_company_functionalities, show_company_functionalities, \
             show_company_functionalities, text_profit_margin, text_best_profit_margin, marks_profit_margin_slider, \
             total_assets, users_revenue_regression, \
-            initial_sliders_values, source_string, True, True, hide_loader, display_loading_overlay, show_company_functionalities, symbol_company, max_net_margin, company_logo_link_src, tab_selected
+            initial_sliders_values, source_string, True, True, hide_loader, display_loading_overlay, symbol_company, max_net_margin, company_logo_link_src
     except Exception as e:
         print(f"Error fetching or processing dataset: {str(e)}")
         raise PreventUpdate
@@ -875,6 +1189,7 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
     Output("range-arpu-growth", "value", allow_duplicate=True),
     Output("range-discount-rate", "value", allow_duplicate=True),
     Output("range-profit-margin", "value", allow_duplicate=True),
+    Output(component_id="growth-score-text", component_property="children"), #hype score text
 
     Input(component_id='dataset-selection', component_property='value'),  # Take dropdown value
     Input(component_id='date-picker', component_property='value'),  # Take date-picker date
@@ -992,6 +1307,8 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
     # Growth score calculation (early rocket: low u, high r): BIG GS | tired incumbent (high u, low r): low GS
     # Here we take a simple 0.5 weight, different weight could be given to the headroom or core
     GS = 0.5*g/r_ref_global+0.5*h
+
+    growth_score_text = f"Growth score: {GS:.2f}"
 
     print("GS")
     print(GS)
@@ -1402,7 +1719,7 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
         product_maturity_accordion_color, product_maturity_accordion_icon_color, df_sorted_dict, slider_max_value, marks_slider, current_arpu, hype_market_cap, \
         current_market_cap, latest_market_cap, growth_rate_graph_message1, growth_rate_graph_color, \
         product_maturity_graph_message, product_maturity_graph_message_color, revenue_graph_message, \
-        revenue_graph_message_color, growth_slider_value, arpu_growth_slider_value, discount_rate_slider_value, profit_margin_slider_value
+        revenue_graph_message_color, growth_slider_value, arpu_growth_slider_value, discount_rate_slider_value, profit_margin_slider_value, growth_score_text
 
 
 @app.callback([
@@ -1591,17 +1908,16 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     )
     # Update layout to customize the annotation
     if k_scenarios[-1] > users_raw[-1]:
-        range_y = [0, main.logisticfunction(k_scenarios[-1], r_scenarios[-1], p0_scenarios[-1], [60])[0] * 1.5]
+        range_y = [0, main.logisticfunction(k_scenarios[-1], r_scenarios[-1], p0_scenarios[-1], [60])[0] * 1.3]
     else:
         range_y = [0, users_raw[-1] * 1.2]
 
-    print("range_y", range_y)
     fig_main.update_layout(
         hovermode="x unified",
         annotations=[
             dict(
                 x=(x_coordinate + relativedelta(months=9)).strftime("%Y-%m-%d"),
-                y=0.9 * k_scenarios[-1],
+                y=0.6 * main.logisticfunction(k_scenarios[-1], r_scenarios[-1], p0_scenarios[-1], [60]),
                 text="F O R E C A S T",
                 showarrow=False,
                 font=dict(size=8, color="black"),
@@ -1610,6 +1926,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
         ],
         yaxis=dict(
             title=graph_unit,
+            range= range_y
         ),
         margin=dict(t=40, b=10, l=5, r=5),
     )
@@ -2110,9 +2427,9 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
 
 # Callback displaying the functionalities & graph cards, and hiding the text
 @app.callback(
-    Output(component_id="graph-card-content", component_property='style'),
+    #Output(component_id="graph-card-content", component_property='style'),
     Output(component_id='functionalities-card', component_property='style'),
-    Output(component_id='welcome-timeline', component_property='style'),
+    #Output(component_id='welcome-timeline', component_property='style'),
     Output(component_id='launch-counter', component_property='data'),
     Input(component_id='dataset-selection', component_property='value'),
     [State('launch-counter', 'data')]
@@ -2124,7 +2441,7 @@ def show_cards(data, launch_counter):
         show_graph_card = {'display': 'block'}
         hide_graph_card = {'display': 'none'}
         print("Displaying the graph hihi")
-        return show_graph_card, show_graph_card, hide_graph_card, launch_counter
+        return show_graph_card, launch_counter
 
     else:
         print("Card already displayed", launch_counter)
@@ -2472,7 +2789,7 @@ def historical_valuation_calculation(df_formatted, total_assets, df_raw, latest_
     Output(component_id='valuation-graph-message', component_property='color'),
     Output(component_id='valuation-graph-message', component_property='title'),
     Output(component_id="valuation-message", component_property="title"),
-    Output(component_id="valuation-message", component_property="children"),
+    Output(component_id="valuation-content", component_property="children"),
     Output(component_id="valuation-message", component_property="color"),
     Output(component_id="accordion-valuation", component_property="icon"),
     Output(component_id="hype-score", component_property="data"), # hype score storage
