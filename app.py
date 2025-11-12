@@ -233,7 +233,7 @@ print("Flask routes:", [r.rule for r in app.server.url_map.iter_rules()])
 
 # ----------------------------------------------------------------------------------
 
-#Adding sitemap and robotsasdfsadfafd
+#Adding sitemap and robots
 @server.route("/sitemap.xml")
 def send_sitemap():
     print("Sitemap route accessed!")  # Debug line
