@@ -19,7 +19,6 @@ AIRTABLE_API_KEY = os.getenv("AIRTABLE_API_KEY")
 def get_airtable_labels():
     print("Fetching the dataset labels")
     url = "https://api.airtable.com/v0/appm3ffcu38jyqhi3/tbl7LiTDpXk9DeRUB?fields%5B%5D=Company&fields%5B%5D=Category&fields%5B%5D=Symbol"
-    auth_token = "patUQKc4meIVaiLIw.efa35a957210ca18edc4fc00ae1b599a6a49851b8b7c59994e4384c19c20fcd1"
     headers = {
         "Authorization": f"Bearer {AIRTABLE_API_KEY}"
     }

@@ -843,6 +843,20 @@ config_graph = {
           },
 }
 
+config_graph_with_toolbar = {
+    'displayModeBar': True,
+    'scrollZoom': True,
+    'displaylogo': False,
+    'modeBarButtonsToRemove': [],
+    'toImageButtonOptions': {
+            'format': 'svg', # one of png, svg, jpeg, webp
+            'filename': 'RAST_Growth',
+            'height': 735,
+            'width': 1050,
+            'scale': 1 # Multiply title/legend/axis/canvas sizes by this factor
+          },
+}
+
 main_graph = dcc.Graph(id='main-graph1', config=config_graph)
 revenue_graph = dcc.Graph(id='revenue-graph', config=config_graph)
 growth_graph = dcc.Graph(id='main-graph2', config=config_graph)
@@ -1316,7 +1330,7 @@ graph_hype = dmc.Card(children=[
         mt="md",
         mb="xs",
     ),
-    dcc.Graph(id='hyped-ranking-graph', config=config_graph),
+    dcc.Graph(id='hyped-ranking-graph', config=config_graph_with_toolbar),
     login_overlay_chart,
     ],
     withBorder=True, shadow='lg', radius='md')

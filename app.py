@@ -463,7 +463,6 @@ def initialize_data(href):
     # Alternate text positions to try to limit overlapping
     text_positions = ['top center' if i % 2 == 0 else 'bottom center' for i in range(len(growth_score))]
 
-
     # Add scatter points with labels
     fig.add_trace(go.Scatter(
         x=growth_score,
@@ -494,7 +493,6 @@ def initialize_data(href):
             #autorange=True  # auto-fit the range
         ),
         plot_bgcolor="white",
-        config={'displayModeBar': True},
     #dragmode=False,
         #clickmode=None,
         #config = {'scrollZoom': False},
@@ -940,6 +938,9 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
     if df_sorted.empty:
         print("No good scenario could be calculated")
         df_sorted = main.parameters_dataframe_cleaning_minimal(df_full, users[0:data_len])
+        if df_sorted.empty:
+            print("No good scenario AT ALL could be calculated, all kind of scenarios are considered")
+            df_sorted = df_full
     else:
         print("Successful scenarios exist")
     print("df_sorted", df_sorted)
@@ -2357,6 +2358,8 @@ def historical_valuation_calculation(df_formatted, total_assets, df_raw, latest_
             # All parameters are calculated by ignoring data 1 by 1, taking the history reference as the end point
             df_full = main.parameters_dataframe(dates,
                                                 users)  # Dataframe containing all parameters with all data ignored
+            if df_full.empty:
+                print("nonono scenario calculated at all")
             df_sorted = main.parameters_dataframe_cleaning(df_full,
                                                            users)  # Dataframe where inadequate scenarios are eliminated
 
@@ -2376,7 +2379,8 @@ def historical_valuation_calculation(df_formatted, total_assets, df_raw, latest_
                     df_sorted = main.parameters_dataframe_cleaning_minimal(df_full, users)
                     print("df_sorted_minimally", df_sorted)
                     if df_sorted.empty:
-                        print("No scenario could be calculated")
+                        df_sorted = df_full
+                        print("No scenario could be calculated, df used:", df_sorted)
                     #continue
             else:
                 print("Successful scenarios exist")
@@ -2496,7 +2500,7 @@ def historical_valuation_calculation(df_formatted, total_assets, df_raw, latest_
 )
 def graph_valuation_over_time(valuation_over_time_dict, date_picked, df_formatted, total_assets, df_raw,
                               latest_market_cap, df_sorted, current_arpu, company_sign, current_valuation, max_net_margin):
-    if latest_market_cap == 0:
+    if not latest_market_cap:  # if latest market cap doesn't exist, none of this callback is triggered
         raise PreventUpdate
     print("Graph Valuation Start")
     t1 = time.perf_counter(), time.process_time()
