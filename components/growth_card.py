@@ -41,7 +41,7 @@ growth_card = dmc.Card(
                 html.Div(children=[graph_message, main_graph, source],)
             ],
             #justify="space-around",
-            mt="md",
+            #mt="md",
             mb="xs",
             wrap=True,
         ),
@@ -51,4 +51,5 @@ growth_card = dmc.Card(
     withBorder=True,
     shadow="sm",
     radius="md",
+    p="xl"
 )

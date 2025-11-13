@@ -35,7 +35,7 @@ revenue_card = dmc.Card(
                 html.Div(children=[revenue_graph_message, revenue_graph])
             ],
             #justify="space-around",
-            mt="md",
+            #mt="xs",
             mb="xs",
             wrap=True,
         ),
@@ -45,4 +45,5 @@ revenue_card = dmc.Card(
     withBorder=True,
     shadow="sm",
     radius="md",
+    p="xl"
 )

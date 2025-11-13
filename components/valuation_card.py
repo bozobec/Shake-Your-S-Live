@@ -38,7 +38,7 @@ valuation_card = dmc.Card(
         dmc.Group(
                     [
                         dmc.Title("Welcome to RAST", id="graph-title", order=5),
-                        html.Img(id='company-logo',
+                        html.Img(id='company-logo2',
                                  src='',
                                  style={
                                      'height': '20px',  # Fixed height
@@ -59,7 +59,7 @@ valuation_card = dmc.Card(
                 html.Div(children=[valuation_graph_message, valuation_over_time])
             ],
             #justify="space-around",
-            mt="md",
+            #mt="xs",
             mb="xs",
             wrap=True,
         ),
@@ -69,4 +69,5 @@ valuation_card = dmc.Card(
     withBorder=True,
     shadow="sm",
     radius="md",
+    p="xl",
 )

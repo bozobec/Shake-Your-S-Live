@@ -1417,9 +1417,9 @@ def layout(company=None, **other_unknown_query_strings):
                             [
                                 #graph_card,
                                 dmc.Space(h=20),
-                                table_hype,
+                                #table_hype,
                                 dmc.Space(h=20),
-                                graph_hype
+                                #graph_hype
                                 # valuation_over_time_card  # Comment this line to remove the analysis graphs
                             ], span={'base': 12, 'lg': 8}, order={"xs": 2, "sm": 2, "lg": 2}),
                         dmc.GridCol([

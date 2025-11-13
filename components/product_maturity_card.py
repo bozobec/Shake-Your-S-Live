@@ -35,7 +35,7 @@ product_maturity_card = dmc.Card(
                 html.Div(children=[product_maturity_graph_message, product_maturity_graph])
             ],
             #justify="space-around",
-            mt="md",
+            #mt="xs",
             mb="xs",
             wrap=True,
         ),
@@ -45,4 +45,5 @@ product_maturity_card = dmc.Card(
     withBorder=True,
     shadow="sm",
     radius="md",
+    p="xl"
 )

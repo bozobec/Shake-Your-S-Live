@@ -90,7 +90,22 @@ hype_meter_visualization = dmc.Stack(
             hype_meter_bootstrap,
             hype_meter_bootstrap_price,
             line_middle,
-            dmc.Text("Market cap = $10.1B", size="xs", fw=500, ta="left", id="hype-market-cap"),
+            dmc.Group([
+                dmc.Text("Market cap = $10.1B", size="xs", fw=500, ta="left", id="hype-market-cap"),
+                html.Img(id='company-logo',
+                         src='',
+                         style={
+                             'height': '20px',  # Fixed height
+                             'width': 'auto',  # Width adjusts automatically to maintain aspect ratio
+                             'display': 'block',  # Prevents inline spacing issues
+                             # 'marginTop': '20px',
+                             'maxWidth': '100%',  # Prevents overflow in smaller containers
+                             'objectFit': 'contain'  # Ensures the image is scaled inside the box
+                         }
+                         ),
+                ],
+                justify="space-between"
+            )
         ],
         align="stretch",
         gap="xs"
@@ -99,17 +114,33 @@ hype_meter_visualization = dmc.Stack(
     gap="md"
 )
 
-# Main card with improved layout
+# Main card
+
 hype_meter_card = dmc.Card(
     children=[
-        # Title at the top
-        dmc.Group(
+        # Title and subtitle at the top
+        dmc.Stack(
             [
-                dmc.Title("In short", order=5),
-                hype_meter_indicator,
+                dmc.Group(
+                    [
+                        dmc.Title("in short", id="summary-card-title", order=5),
+                        hype_meter_indicator,
+                    ],
+                    justify="space-between",
+                ),
+                dmc.Text(
+                    "Select a dataset first",
+                    id="company-info-text",
+                    size="xs",
+                    c="dimmed",
+                    style={
+                        "@media (max-width: 768px)": {"display": "none"},  # hides on small screens
+                    },
+                ),
             ],
-            justify="space-between",
-            mb="lg",
+            gap="xs",
+            #mt="xs",
+            mb="xs",
         ),
         # Two-column layout: Alert on left, Hype meter on right
         dmc.Grid(
@@ -133,4 +164,5 @@ hype_meter_card = dmc.Card(
     shadow="sm",
     radius="md",
     p="xl",
+    #style={'display': 'none'}
 )

@@ -47,6 +47,8 @@ from components.revenue_card import revenue_card
 from components.product_maturity_card import product_maturity_card
 from components.growth_rate_card import growth_rate_card
 from components.functionalities_card import functionalities_card
+from components.ranking_card import table_hype_card
+from components.quadrant_card import quadrant_card
 
 t1 = time.perf_counter(), time.process_time()
 
@@ -102,20 +104,23 @@ YEARS_DCF = 15  # Amount of years taken into account for DCF calculation
 server = app.server
 
 sections = [
-    {"id": "section-1", "title": "Summary", "color": "blue"},
-    {"id": "section-2", "title": "Analysis summary", "color": "green"},
-    {"id": "section-3", "title": "Valuation", "color": "orange"},
-    {"id": "section-4", "title": "Growth", "color": "purple"},
-    {"id": "section-5", "title": "Revenue", "color": "purple"},
-    {"id": "section-6", "title": "Product Maturity", "color": "red"},
-    {"id": "section-7", "title": "Growth rate", "color": "yellow"},
+    {"id": "section-1", "title": "Summary", "subtitle": "", "color": "blue", "icon": "mdi:bullseye"},
+    #{"id": "section-2", "title": "Analysis summary", "title": "Analysis summary", "color": "green"},
+    {"id": "section-3", "title": "Valuation", "subtitle": "", "color": "orange", "icon": "tabler:pig-money"},
+    {"id": "section-4", "title": "Growth", "subtitle": "", "color": "purple", "icon": "streamline-sharp:decent-work-and-economic-growth"},
+    {"id": "section-5", "title": "Revenue", "subtitle": "", "color": "purple", "icon": "fa6-solid:money-check-dollar"},
+    {"id": "section-6", "title": "Product Maturity", "subtitle": "", "color": "red", "icon": "healthicons:old-man-outline"},
+    {"id": "section-7", "title": "Growth rate", "subtitle": "", "color": "yellow", "icon": "material-symbols-light:biotech-outline-rounded"},
+    {"id": "section-8", "title": "Ranking", "subtitle": "Logged in only", "color": "yellow", "icon": "solar:ranking-line-duotone"},
+    {"id": "section-9", "title": "Quadrant", "subtitle": "Logged in only", "color": "yellow", "icon": "carbon:quadrant-plot"},
 ]
 
 dropdown = dmc.Select(
     placeholder="Select a company...",
     id="dataset-selection",
     data=labels,
-    style={"marginBottom": 10},
+    #size="lg",
+    #style={"marginBottom": 10},
     styles={
         "input": {
             "backgroundColor": "#1a1b1e",  # Dark background
@@ -202,6 +207,8 @@ layout_one_column = dmc.AppShell(
                         *[
                             dmc.NavLink(
                                 label=section["title"],
+                                description=section["subtitle"],
+                                leftSection=DashIconify(icon=section["icon"], height=16),
                                 href=f"#{section['id']}",
                                 id=f"link-{section['id']}",
                                 #underline=False,
@@ -212,7 +219,7 @@ layout_one_column = dmc.AppShell(
                             for section in sections
                         ],
                     ],
-                    gap="xs",
+                    gap="sm",
                 ),
             ),
             dmc.AppShellMain(
@@ -237,6 +244,8 @@ layout_one_column = dmc.AppShell(
                                             revenue_card,
                                             product_maturity_card,
                                             growth_rate_card,
+                                            table_hype_card,
+                                            quadrant_card,
                                             dmc.Space(h=600),
                                             dash.page_container,
                                             dcc.Location(id='url-input', refresh=False),
@@ -252,7 +261,7 @@ layout_one_column = dmc.AppShell(
                                             dcc.Location(id='url', refresh=False),
                                         ],
                                         gap="xl",
-                                        p="xl",
+                                        p="md",
                                     ),
                                 ),
 
@@ -271,11 +280,17 @@ layout_one_column = dmc.AppShell(
                                     ),
                                 ),
                             ],
-                            gutter="xs",
-                            style={"height": "100%", "overflow": "auto"},
+                            gutter="md",
+                            style={
+                                "maxWidth": "100%",
+                                "margin": "0"},
                         ),
                         id="main-content",
-                        style={"height": "100vh", "overflow": "auto"},
+                        style={
+                            "height": "100vh",
+                            "overflow": "auto",
+                            "overflowX": "hidden"
+                        },
                     ),
         ],
         header={"height": 60},
@@ -526,7 +541,7 @@ clientside_callback(
         // Function to update active link based on scroll position
         function updateActiveLink() {
             let currentSection = '';
-            const scrollPosition = mainContent.scrollTop + 100; // Offset for better UX
+            const scrollPosition = mainContent.scrollTop + 200; // Offset for better UX
 
             sections.forEach(section => {
                 const sectionTop = section.offsetTop;
@@ -569,7 +584,7 @@ clientside_callback(
                     const targetElement = document.getElementById(targetId);
 
                     if (targetElement && mainContent) {
-                        const targetPosition = targetElement.offsetTop;
+                        const targetPosition = targetElement.offsetTop - 70;
                         mainContent.scrollTo({ 
                             top: targetPosition,
                             behavior: 'smooth'
@@ -891,6 +906,13 @@ def update_select_based_on_url(url_search, current_selected_dataset):
     Output("loader-general", "style", allow_duplicate=True),
     Output("loading-overlay", "visible", allow_duplicate=True),
     Output("loading-overlay2", "visible", allow_duplicate=True),
+    Output("section-1", "visible", allow_duplicate=True),
+    Output("section-2", "visible", allow_duplicate=True),
+    Output("section-3", "visible", allow_duplicate=True),
+    Output("section-4", "visible", allow_duplicate=True),
+    Output("section-5", "visible", allow_duplicate=True),
+    Output("section-6", "visible", allow_duplicate=True),
+    Output("section-7", "visible", allow_duplicate=True),
 
     Input("dataset-selection", "value"),
 ], prevent_initial_call=True)
@@ -902,7 +924,7 @@ def select_value(value):
                  "the Forecast Start Date Using the Datepicker. Use the 'Past performance' section " \
                  "to see RAST's calculated hype over time."
     show_loader = {'display': 'block'}
-    return False, False, False, False, show_loader, True, True
+    return False, False, False, False, show_loader, True, True, show_loader, show_loader, show_loader, show_loader, show_loader, show_loader, show_loader
 
 
 # Callback defining the minimum and the maximum date of the datepicker and loading the dataset
@@ -915,6 +937,8 @@ def select_value(value):
     Output(component_id='users-dates-formatted', component_property='data'),
     # Stores the users + dates formatted for computation
     Output(component_id='graph-unit', component_property='data'),  # Stores the graph unit (y axis legend)
+    Output("summary-card-title", "children"),
+    Output("company-info-text", "children"),
     Output("graph-title", "children"),
     Output("growth-card-title", "children"),
     Output("revenue-card-title", "children"),
@@ -985,12 +1009,32 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
             data_source = df.loc[0, 'Source']
             symbol_company = df.loc[0, 'Symbol']
 
+        # Fetches Max net Margin and stores it
+        # max_net_margin = df_all_companies.loc[df_all_companies["Company Name"] == dropdown_value, "Max Net Margin"]
+        max_net_margin = None
+        company_logo_link_src = None
+
+        # Ugly "if" statement making sure that the information are loaded, because it can happen that the initial callback is not triggered
+        if not df_all_companies:
+            df_all_companies_information = dataAPI.get_hyped_companies_data()
+            df_all_companies = df_all_companies_information.to_dict('records')
+        for company in df_all_companies:
+            if company['Company Name'].lower() == dropdown_value.lower():
+                max_net_margin = company['Max Net Margin']
+                company_logo_link_src = company['Company Logo']
+                description_company = company['Description']
+                break
+
         # Creating the title & subtitle for the graph
         if symbol_company != "N/A":
-            title_valuation_card = dropdown_value + " (" + symbol_company + ")'s valuation over time"
+            title_summary_card = dropdown_value + "'s current valuation in short" + " ($" + symbol_company + ")"
+            company_description = dropdown_value + " is a " + description_company.lower()
+            title_valuation_card = dropdown_value + "'s valuation over time"
             title_growth_card = dropdown_value + "'s " + key_unit + " growth over time"
             title_revenue_card = "Revenue per " + key_unit
         else:
+            title_summary_card = dropdown_value + "'s current valuation in short"
+            company_description = ""
             title_valuation_card = dropdown_value
             title_growth_card = dropdown_value + "'s " + key_unit + " growth over time"
             title_revenue_card = "Revenue per " + key_unit
@@ -1017,20 +1061,6 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
         dates_unformatted = np.array(df["Date"])
         users_formatted = np.array(df["Users"]).astype(float) * 1000000
 
-        # Fetches Max net Margin and stores it
-        # max_net_margin = df_all_companies.loc[df_all_companies["Company Name"] == dropdown_value, "Max Net Margin"]
-        max_net_margin = None
-        company_logo_link_src = None
-
-        # Ugly "if" statement making sure that the information are loaded, because it can happen that the initial callback is not triggered
-        if not df_all_companies:
-            df_all_companies_information = dataAPI.get_hyped_companies_data()
-            df_all_companies = df_all_companies_information.to_dict('records')
-        for company in df_all_companies:
-            if company['Company Name'].lower() == dropdown_value.lower():
-                max_net_margin = company['Max Net Margin']
-                company_logo_link_src = company['Company Logo']
-                break
 
         print("Basisnetmargin")
         print(type(max_net_margin))
@@ -1146,7 +1176,7 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
         print(f" Real time: {t2[0] - t1[0]:.2f} seconds")
         print(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
         return min_history_datepicker, max_history_datepicker, date_value_datepicker, users_dates_dict, \
-            users_dates_formatted_dict, y_legend_title, title_valuation_card, title_growth_card, title_revenue_card, \
+            users_dates_formatted_dict, y_legend_title, title_summary_card, company_description, title_valuation_card, title_growth_card, title_revenue_card, \
             show_company_functionalities, show_company_functionalities, show_company_functionalities, \
             show_company_functionalities, text_profit_margin, text_best_profit_margin, marks_profit_margin_slider, \
             total_assets, users_revenue_regression, \
@@ -3075,9 +3105,10 @@ def graph_valuation_over_time(valuation_over_time_dict, date_picked, df_formatte
         valuation_graph_message = "The purple line shows " + company_symbol + "s price (market cap) over time. The yellow zone is our confidence " \
                                   "range, calculated over time (without readjustment, obviously). " \
                                   "We believe the market cap tends to fall, sooner or later, within this range. " \
-                                  "The dot moves to show the valuation under your chosen scenario.\n" \
                                     " The market cap is currently lower than the most optimistic valuation (" + \
-                                  f"{high_scenario_valuation[-1] / 1e9:.2f} B$) meaning that this stock may be fairly or even undervalued!"
+                                  f"{high_scenario_valuation[-1] / 1e9:.2f} B$) meaning that this stock may be " \
+                                  f"fairly or even undervalued! Note: The dot moves to show the valuation under " \
+                                  f"your chosen scenario.\n"
         valuation_graph_color = "green"
         valuation_icon_color = DashIconify(icon="radix-icons:rocket", color=dmc.DEFAULT_THEME["colors"]["green"][6],
                                            width=20)

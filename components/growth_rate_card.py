@@ -31,21 +31,11 @@ growth_rate_card = dmc.Card(
     children=[
         dmc.Group(
             [
-                dmc.Title("Valuation over time", order=5),
-                dmc.Text(
-                    "Select a dataset first",
-                    size="xs",
-                    c="dimmed",
-                    #id='graph-subtitle',
-                    style={
-                        # base style (visible normally)
-                        "@media (max-width: 768px)": {"display": "none"},  # hides on small screens
-                    },
-                ),
+                dmc.Title("Growth rate over time", order=5),
                 html.Div(children=[growth_rate_graph_message, growth_graph])
             ],
             #justify="space-around",
-            mt="md",
+            #mt="xs",
             mb="xs",
             wrap=True,
         ),
@@ -55,4 +45,5 @@ growth_rate_card = dmc.Card(
     withBorder=True,
     shadow="sm",
     radius="md",
+    p="xl"
 )
