@@ -1,25 +1,21 @@
-import functools
-
 # Main file for approximating an S-curve, given a certain data set
-import numpy as np
+import base64
+# import datetime
+import io
 import math
-from sklearn import linear_model
-from scipy.optimize import curve_fit
 from datetime import datetime, timedelta
+
+import jwt
+import numpy as np
 import numpy_financial as npf
+import pandas as pd
+from dash import html, dash_table
+from scipy.optimize import curve_fit
+from sklearn import linear_model
+from sympy import Symbol
 # from sklearn import linear_model
 # from sklearn.metrics import mean_squared_error
 from sympy.solvers import solve
-from sympy import Symbol
-import sqlite3
-import pandas as pd
-import base64
-#import datetime
-import io
-from dash import Dash, dcc, html, dash_table, Input, Output, State, callback
-import jwt
-import os
-
 
 # ---------------------------- Importing Data for testing purpose
 

@@ -28,7 +28,7 @@ line_middle = html.Div(
 hype_meter_bootstrap = dbc.Progress(
     children=[
         dbc.Progress(value=10, color="#C58400", bar=True, label="N-O Assets", id="hype-meter-noa"),
-        dbc.Progress(value=10, color="#FFD000", bar=True, label="Intrinsic value", id="hype-meter-users"),
+        dbc.Progress(value=10, color="#953BF6", bar=True, label="Intrinsic value", id="hype-meter-users"),
         dbc.Progress(value=10, color="white", bar=True, animated=True, striped=True, label="Hype", id="hype-meter-hype"),
         dbc.Tooltip("Non-Operating Assets: $3.0B", target="hype-meter-noa", id='hype-tooltip-noa', placement="top"),
         dbc.Tooltip("Intrinsic value: $3.0B", target="hype-meter-users", id='hype-tooltip-users', placement="top"),
@@ -42,12 +42,12 @@ hype_meter_bootstrap_undervaluation = dbc.Progress(
         dbc.Progress(value=8.8975, color="#FFD000", bar=True, striped=True, id="hype-meter-undervaluation-hype"),
         dbc.Tooltip("Hype: $4.0B", target="hype-meter-undervaluation-hype", id='hype-tooltip-hype', placement="top"),
     ],
-    style={"height": "10px", "borderRadius": "0px"},
+    style={"height": "15px", "borderRadius": "0px"},
 )
 
 hype_meter_bootstrap_price = dbc.Progress(
     children=[
-        dbc.Progress(value=100, color="#953AF6", bar=True, label="Current price", id="hype-meter-price"),
+        dbc.Progress(value=100, color="#9F9F9E", bar=True, label="Current price", id="hype-meter-price"),
         dbc.Progress(value=0, color="white", bar=True, label="Current price", id="hype-meter-price-rest"),
     ],
     style={"height": "30px", "borderRadius": "0px"},
@@ -116,7 +116,90 @@ hype_meter_visualization = dmc.Stack(
 
 # Main card
 
-hype_meter_card = dmc.Card(
+companies = [
+    {'symbol': 'RDDT', 'name': 'Reddit', 'url': '/?company=Reddit', 'logo': 'https://upload.wikimedia.org/wikipedia/commons/2/2f/Reddit_wordmark.svg'},
+    {'symbol': 'DASH', 'name': 'Doordash', 'url': '/?company=Doordash', 'logo': 'https://upload.wikimedia.org/wikipedia/commons/6/6a/DoorDash_Logo.svg'},
+    {'symbol': 'TSLA', 'name': 'Tesla', 'url': '/?company=Tesla', 'logo': 'https://upload.wikimedia.org/wikipedia/commons/e/e8/Tesla_logo.png'},
+    {'symbol': 'SBUX', 'name': 'Starbucks', 'url': '/?company=Starbucks', 'logo': 'https://upload.wikimedia.org/wikipedia/sco/d/d3/Starbucks_Corporation_Logo_2011.svg'},
+    {'symbol': 'PYPL', 'name': 'PayPal', 'url': '/?company=Paypal', 'logo': 'https://upload.wikimedia.org/wikipedia/commons/3/39/PayPal_logo.svg'},
+    {'symbol': 'CHYM', 'name': 'Chime', 'url': '/?company=Chime', 'logo': 'https://upload.wikimedia.org/wikipedia/commons/f/f6/Chime_company_logo.svg'},
+    {'symbol': 'SNAP', 'name': 'Snap Inc.', 'url': '/?company=Snap%20Inc.', 'logo': 'https://upload.wikimedia.org/wikipedia/commons/0/0c/Snap_Inc._logo.svg'},
+    {'symbol': 'BMBL', 'name': 'Bumble', 'url': '/?company=Bumble', 'logo': 'https://upload.wikimedia.org/wikipedia/commons/b/ba/Bumble_logo_with_wordmark.svg'},
+    {'symbol': 'MSFT', 'name': 'Microsoft', 'url': '/?company=Microsoft', 'logo': 'https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg'},
+    {'symbol': 'SOFI', 'name': 'SoFi', 'url': '/?company=SoFi', 'logo': 'https://upload.wikimedia.org/wikipedia/commons/1/16/SoFi_logo.svg'},
+    {'symbol': 'META', 'name': 'Meta', 'url': '/?company=Meta', 'logo': 'https://upload.wikimedia.org/wikipedia/commons/7/7b/Meta_Platforms_Inc._logo.svg'},
+    {'symbol': 'LYFT', 'name': 'Lyft', 'url': '/?company=Lyft', 'logo': 'https://upload.wikimedia.org/wikipedia/commons/a/a0/Lyft_logo.svg'},
+    {'symbol': 'PTON', 'name': 'Peloton', 'url': '/?company=Peloton', 'logo': 'https://upload.wikimedia.org/wikipedia/commons/4/42/Peloton_%28Unternehmen%29_logo.svg'},
+    {'symbol': 'ACN', 'name': 'Accenture', 'url': '/?company=Accenture', 'logo': 'https://upload.wikimedia.org/wikipedia/commons/c/cd/Accenture.svg'},
+    {'symbol': 'WEN', 'name': "Wendy's", 'url': '/?company=Wendy%27s', 'logo': 'https://upload.wikimedia.org/wikipedia/en/3/32/Wendy%27s_full_logo_2012.svg'}
+]
+
+card_welcome2 = dmc.Stack(
+            id='card-welcome2',
+            gap='xl',
+            align="center",
+            children=[
+                dmc.Title(
+                    "Understand companies' potential",
+                    order=4,
+                    textWrap="nowrap",
+                    #align='center',
+                    style={
+                        #'fontSize': '2.5rem',
+                        #'fontWeight': 700,
+                        #'color': 'white',
+                        #'marginBottom': '10px',
+                        #'textAlign': 'center',
+                    }
+                ),
+                dmc.Group(
+                    #position='center',
+                    gap='sm',
+                    style={'flexWrap': 'wrap'},
+                    children=[
+                        dmc.Anchor(
+                            dmc.Button(
+                                html.Div([
+                                    html.Img(
+                                        src=company['logo'],
+                                        style={
+                                            'width': '20px',
+                                            'height': '20px',
+                                            'marginRight': '8px',
+                                            'verticalAlign': 'middle'
+                                        }
+                                    ),
+                                    html.Span(
+                                        company['symbol'],
+                                        style={'verticalAlign': 'middle'}
+                                    )
+                                ], style={'display': 'flex', 'alignItems': 'center'}),
+                                variant='light',
+                                color="violet",
+                                size='md',
+                                style={
+                                    #'background': 'rgba(255, 255, 255, 0.1)',
+                                    #'border': '1px solid rgba(255, 255, 255, 0.2)',
+                                    #'color': 'white',
+                                    'fontWeight': 600,
+                                    'fontSize': '0.9rem',
+                                    'padding': '10px 20px',
+                                    'transition': 'all 0.3s ease'
+                                }
+                            ),
+                            href=company['url'],
+                            target='_blank',
+                            style={'textDecoration': 'none'}
+                        )
+                        for company in companies
+                    ]
+                )
+            ]
+        )
+
+card_dashboard = dmc.Group(
+    id='card-dashboard',
+    style={'visibility': 'hidden'},
     children=[
         # Title and subtitle at the top
         dmc.Stack(
@@ -127,6 +210,7 @@ hype_meter_card = dmc.Card(
                         hype_meter_indicator,
                     ],
                     justify="space-between",
+                    wrap="nowrap",
                 ),
                 dmc.Text(
                     "Select a dataset first",
@@ -148,21 +232,168 @@ hype_meter_card = dmc.Card(
                 # Left column: Alert message
                 dmc.GridCol(
                     valuation_message,
-                    span={"base": 12, "sm": 4, "md": 4},
+                    span={"base": 12, "sm": 8, "md": 8},
                 ),
                 # Right column: Hype meter visualization
                 dmc.GridCol(
                     hype_meter_visualization,
-                    span={"base": 12, "sm": 8, "md": 8},
+                    span={"base": 12, "sm": 4, "md": 4},
                 ),
             ],
             gutter="lg",
         ),
+    ]
+)
+
+# Card 1 - Select a Company
+card_welcome = dmc.Card(
+    id='card-welcome',
+    children=[
+        dmc.LoadingOverlay(
+            visible=True,
+            id="loading-overlay-welcome",
+            overlayProps={"radius": "sm", "blur": 2},
+            zIndex=10,
+        ),
+        html.Img(
+            src='/assets/select_company_illustration.png',
+            style={
+                'width': '80px',
+                'height': '80px',
+                'marginBottom': '30px',
+                'borderRadius': '20px'
+            }
+        ),
+        dmc.Title(
+            "Explore a company's value",
+            order=5,
+            style={
+                'fontFamily': 'ABCGravityUprightVariable-Trial, sans-serif',
+                #'fontWeight': 'bold',
+                #'marginBottom': '30px',
+                #'fontSize': '2.5rem'
+            }
+        ),
+        dmc.Space(h=20),
+        dmc.SimpleGrid(
+            cols=3,  # number of buttons per row (2 or 3 depending on what you want)
+            spacing="xs",
+            children=[
+                dmc.Anchor(
+                    dmc.Button(
+                        html.Div([
+                            html.Img(
+                                src=company["logo"],
+                                style={
+                                    "width": "18px",
+                                    "height": "18px",
+                                    "marginRight": "3px",
+                                    "verticalAlign": "middle"
+                                }
+                            ),
+                            html.Span(company["symbol"])
+                        ], style={"display": "flex", "alignItems": "center"}),
+                        variant="outline",
+                        size="sm",
+                        fullWidth=True,
+                        style={
+                            #"fontWeight": 600,
+                            #"fontSize": "0.7rem",
+                            #"padding": "10px 20px"
+                        }
+                    ),
+                    href=company["url"],
+                    style={"textDecoration": "none"},
+                    #target="_blank"
+                )
+                for company in companies
+            ]
+        )
+    ],
+    withBorder=True,
+    shadow="sm",
+    radius="xl",
+    p="xl",
+    style={
+        'minHeight': '500px',
+        'backgroundColor': 'white'
+    }
+)
+
+# Card 2 - See the Ranking
+card2 = dmc.Card(
+    children=[
+        html.Img(
+            src='/assets/ranking_illustration.png',
+            style={
+                'width': '80px',
+                'height': '80px',
+                'marginBottom': '30px',
+                'borderRadius': '20px'
+            }
+        ),
+        dmc.Title(
+            "Explore our ranking",
+            order=5,
+            style={
+                'fontFamily': 'ABCGravityUprightVariable-Trial, sans-serif',
+                #'fontWeight': 'bold',
+                #'marginBottom': '30px',
+                #'fontSize': '2.5rem'
+            }
+        ),
+        dmc.Text(
+            "We rank the most undervalued companies based on our valuations.",
+            size="sm",
+            c="dimmed",
+            #style={'lineHeight': '1.6', 'marginBottom': '20px'}
+        ),
+        dmc.Space(h=40),
+        html.Div(
+            id="clerk-extra-signin",
+            style={
+                'textAlign': 'center',
+            }
+        ),
+    ],
+    withBorder=True,
+    shadow="sm",
+    radius="xl",
+    p="xl",
+    style={
+        'minHeight': '500px',
+        'backgroundColor': 'white'
+    }
+)
+
+card_welcome3 = dmc.Container(
+            children=[
+                dmc.SimpleGrid(
+                    cols={"base": 1, "lg": 2},
+                    spacing="xl",
+                    children=[
+                        card2,
+                        card2],
+                    style={'padding': '50px 0'}
+                )
+            ],
+            id='card-welcome3',
+            size="xl",
+            style={
+                #'visibility': 'hidden',
+                'background': 'linear-gradient(to bottom, #f8f9fa, #e9ecef)',
+                'minHeight': '100vh',
+                'padding': '50px 20px'
+            }
+        )
+
+hype_meter_card = dmc.Card(
+    children=[card_welcome,
+        card_dashboard
     ],
     id="section-1",
     withBorder=True,
     shadow="sm",
     radius="md",
     p="xl",
-    #style={'display': 'none'}
 )

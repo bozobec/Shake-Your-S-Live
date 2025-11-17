@@ -39,6 +39,10 @@ window.addEventListener("DOMContentLoaded", async () => {
 
         header.appendChild(userButtonWrapper);
         Clerk.mountUserButton(userButtonContainer);
+
+        // remove extra sign-in button
+        const extra = document.getElementById("clerk-extra-signin");
+        if (extra) extra.innerHTML = "";
       } else {
         const btn = document.createElement("button");
         btn.id = "sign-in-btn";
@@ -47,6 +51,16 @@ window.addEventListener("DOMContentLoaded", async () => {
         btn.addEventListener("click", () => Clerk.openSignIn());
         header.appendChild(btn);
       }
+          // --- Second button ---
+        const extra = document.getElementById("clerk-extra-signin");
+        if (extra) {
+        extra.innerHTML = ""; // clear previous
+        const extraBtn = document.createElement("button");
+        extraBtn.textContent = "Sign In";
+        extraBtn.className = "btn btn-primary";   // choose your style
+        extraBtn.addEventListener("click", () => Clerk.openSignIn());
+        extra.appendChild(extraBtn);
+        }
     }
 
     // Initial check

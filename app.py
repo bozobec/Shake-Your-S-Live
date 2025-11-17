@@ -40,7 +40,7 @@ from components.graph_layouts import layout_main_graph, layout_revenue_graph, la
 from components.offcanvas import offcanvas
 from components.analysis_card import analysis_card
 from components.selecting_card import selecting_card, labels
-from components.hype_meter_card import hype_meter_card
+from components.hype_meter_card import hype_meter_card, card_welcome, card_dashboard
 from components.valuation_card import valuation_card
 from components.growth_card import growth_card
 from components.revenue_card import revenue_card
@@ -49,6 +49,7 @@ from components.growth_rate_card import growth_rate_card
 from components.functionalities_card import functionalities_card
 from components.ranking_card import table_hype_card
 from components.quadrant_card import quadrant_card
+from components.stored_data import stored_data
 
 t1 = time.perf_counter(), time.process_time()
 
@@ -105,20 +106,20 @@ server = app.server
 
 sections = [
     {"id": "section-1", "title": "Summary", "subtitle": "", "color": "blue", "icon": "mdi:bullseye"},
-    #{"id": "section-2", "title": "Analysis summary", "title": "Analysis summary", "color": "green"},
-    {"id": "section-3", "title": "Valuation", "subtitle": "", "color": "orange", "icon": "tabler:pig-money"},
-    {"id": "section-4", "title": "Growth", "subtitle": "", "color": "purple", "icon": "streamline-sharp:decent-work-and-economic-growth"},
-    {"id": "section-5", "title": "Revenue", "subtitle": "", "color": "purple", "icon": "fa6-solid:money-check-dollar"},
-    {"id": "section-6", "title": "Product Maturity", "subtitle": "", "color": "red", "icon": "healthicons:old-man-outline"},
-    {"id": "section-7", "title": "Growth rate", "subtitle": "", "color": "yellow", "icon": "material-symbols-light:biotech-outline-rounded"},
-    {"id": "section-8", "title": "Ranking", "subtitle": "Logged in only", "color": "yellow", "icon": "solar:ranking-line-duotone"},
-    {"id": "section-9", "title": "Quadrant", "subtitle": "Logged in only", "color": "yellow", "icon": "carbon:quadrant-plot"},
+    {"id": "section-2", "title": "Valuation", "subtitle": "", "color": "orange", "icon": "tabler:pig-money"},
+    {"id": "section-3", "title": "Growth", "subtitle": "", "color": "purple", "icon": "streamline-sharp:decent-work-and-economic-growth"},
+    {"id": "section-4", "title": "Revenue", "subtitle": "", "color": "purple", "icon": "fa6-solid:money-check-dollar"},
+    {"id": "section-5", "title": "Product Maturity", "subtitle": "", "color": "red", "icon": "healthicons:old-man-outline"},
+    {"id": "section-6", "title": "Growth rate", "subtitle": "", "color": "yellow", "icon": "material-symbols-light:biotech-outline-rounded"},
+    {"id": "section-7", "title": "Ranking", "subtitle": "Logged in only", "color": "yellow", "icon": "solar:ranking-line-duotone"},
+    {"id": "section-8", "title": "Quadrant", "subtitle": "Logged in only", "color": "yellow", "icon": "carbon:quadrant-plot"},
 ]
 
 dropdown = dmc.Select(
     placeholder="Select a company...",
     id="dataset-selection",
     data=labels,
+    leftSection=DashIconify(icon="icon-park-outline:search"),
     #size="lg",
     #style={"marginBottom": 10},
     styles={
@@ -163,27 +164,35 @@ layout_one_column = dmc.AppShell(
                             [
                                 dmc.Burger(
                                     id="burger",
-                                    size="sm",
+                                    size="xs",
                                     hiddenFrom="sm",
-                                    opened=True,
+                                    opened=False,
                                     color="white",
                                 ),
                                 dcc.Link(
                                     children=dmc.Image(
                                         src="/assets/RAST_Vector_Logo.svg",
-                                        h={"base": 30, "sm": 35, "lg": 40},  # Responsive height
+                                        h={"base": 25, "sm": 35, "lg": 40},  # Responsive height
                                         alt="RAST app guru, valuation made simple"
                                     ),
                                     href="https://www.rast.guru",
+                                    target="_blank"
                                 ),
                             ],
-                            gap="md",
+                            gap="xs",
                             wrap="nowrap",
                         ),
-                        dropdown,
+                        dmc.Box(
+                            dropdown,
+                            style={
+                                "width": {"base": "200px", "sm": "250px", "lg": "400px"},  # Responsive width
+                                "flex": "1",  # Allow it to grow
+                                "maxWidth": {"lg": "80%"},  # Max width on large screens
+                            }
+                        ),
                         dmc.Group(
                             [
-                                offcanvas,
+                                dmc.Box(offcanvas, visibleFrom="sm"),
                                 html.Div(id="clerk-header"),  # Clerk user button
                             ],
                             gap="sm",
@@ -195,30 +204,89 @@ layout_one_column = dmc.AppShell(
                     justify="space-between",  # This pushes items to left and right
                     align="center",
                     wrap="nowrap",
+                    gap="sm",
                 ),
                 bg="black",
             ),
             dmc.AppShellNavbar(
+                id="navbar",
                 p="md",
+                style={'display': 'none'},
                 children=dmc.Stack(
                     [
-                        #selecting_card,
-                        #dmc.Title("Navigation", order=3, mb="md"),
-                        *[
-                            dmc.NavLink(
-                                label=section["title"],
-                                description=section["subtitle"],
-                                leftSection=DashIconify(icon=section["icon"], height=16),
-                                href=f"#{section['id']}",
-                                id=f"link-{section['id']}",
-                                #underline=False,
-                                #c="gray.7",
-                                #size="sm",
-                                style={"padding": "8px 12px", "borderRadius": "4px"},
-                            )
-                            for section in sections
+                        dmc.NavLink(
+                            label="Summary",
+                            description="",
+                            leftSection=DashIconify(icon="mdi:bullseye", height=16),
+                            href="#section-1",
+                            id="link-section-1",
+                            style={"padding": "8px 12px", "borderRadius": "4px"},
+                        ),
+                        dmc.NavLink(
+                            label="Valuation",
+                            description="",
+                            leftSection=DashIconify(icon="tabler:pig-money", height=16),
+                            href="#section-2",
+                            id="link-section-2",
+                            style={"padding": "8px 12px", "borderRadius": "4px"},
+                        ),
+                        dmc.NavLink(
+                            label="More about the valuation",
+                            childrenOffset=28,
+                            children=[
+                                dmc.NavLink(
+                                    label="Growth",
+                                    description="",
+                                    leftSection=DashIconify(icon="streamline-sharp:decent-work-and-economic-growth",
+                                                            height=16),
+                                    href="#section-3",
+                                    id="link-section-3",
+                                    style={"padding": "8px 12px", "borderRadius": "4px"},
+                                ),
+                                dmc.NavLink(
+                                    label="Revenue",
+                                    description="",
+                                    leftSection=DashIconify(icon="fa6-solid:money-check-dollar", height=16),
+                                    href="#section-4",
+                                    id="link-section-4",
+                                    style={"padding": "8px 12px", "borderRadius": "4px"},
+                                ),
+                                dmc.NavLink(
+                                    label="Product Maturity",
+                                    description="",
+                                    leftSection=DashIconify(icon="healthicons:old-man-outline", height=16),
+                                    href="#section-5",
+                                    id="link-section-5",
+                                    style={"padding": "8px 12px", "borderRadius": "4px"},
+                                ),
+                                dmc.NavLink(
+                                    label="Growth rate",
+                                    description="",
+                                    leftSection=DashIconify(icon="material-symbols-light:biotech-outline-rounded",
+                                                            height=16),
+                                    href="#section-6",
+                                    id="link-section-6",
+                                    style={"padding": "8px 12px", "borderRadius": "4px"},
+                                ),
+                            ],
+                        ),
+                        dmc.NavLink(
+                            label="Ranking",
+                            description="Logged in only",
+                            leftSection=DashIconify(icon="solar:ranking-line-duotone", height=16),
+                            href="#section-7",
+                            id="link-section-7",
+                            style={"padding": "8px 12px", "borderRadius": "4px"},
+                        ),
+                        dmc.NavLink(
+                            label="Quadrant",
+                            description="Logged in only",
+                            leftSection=DashIconify(icon="carbon:quadrant-plot", height=16),
+                            href="#section-8",
+                            id="link-section-8",
+                            style={"padding": "8px 12px", "borderRadius": "4px"},
+                        ),
                         ],
-                    ],
                     gap="sm",
                 ),
             ),
@@ -248,17 +316,7 @@ layout_one_column = dmc.AppShell(
                                             quadrant_card,
                                             dmc.Space(h=600),
                                             dash.page_container,
-                                            dcc.Location(id='url-input', refresh=False),
-                                            dcc.Location(id='url-output', refresh=False),
-                                            # Hidden stores
-                                            dcc.Store(id="url-state"),  # intermediary to avoid circular dependency
-                                            dcc.Store(id="login-state", storage_type="session"),
-                                            dcc.Store(id="user-id", storage_type="session"),
-                                            html.Div(id="login-state-bridge", children="", style={"display": "none"}),
-                                            dcc.Download(id="download-chart"),  # Component to handle file download
-                                            dcc.Store(id='dataset-selected-url', data=None),
-                                            dcc.Store(id='launch-counter', data={'flag': False}),
-                                            dcc.Location(id='url', refresh=False),
+                                            stored_data,
                                         ],
                                         gap="xl",
                                         p="md",
@@ -274,7 +332,7 @@ layout_one_column = dmc.AppShell(
                                         p="md",
                                         style={
                                             "position": "sticky",
-                                            "top": "40px",  # stays fixed below header
+                                            "top": "0px",  # stays fixed below header
                                             "alignSelf": "start",
                                         },
                                     ),
@@ -294,7 +352,12 @@ layout_one_column = dmc.AppShell(
                     ),
         ],
         header={"height": 60},
-        navbar={"width": 250, "breakpoint": "sm"},
+        navbar={"width": 250,
+                "breakpoint": "sm",
+                "collapsed": {"mobile": True},
+                "style": {
+                    "backgroundColor": "rgba(255, 255, 255, 0.7)",  # White with 70% opacity
+                }},
         padding="0",
         id="app-shell",
     ),
@@ -344,7 +407,7 @@ layout_page_standard = dmc.AppShell(
             bg="black",
         ),
         dmc.AppShellNavbar(
-            id="navbar",
+            id="navbar2",
             children=dmc.ScrollArea(
                 [
                     *[
@@ -379,8 +442,11 @@ layout_page_standard = dmc.AppShell(
     navbar={
         "width": {"base": 200, "sm": 400},  # 👈 200 on mobile, 400 on ≥ sm breakpoint
         "breakpoint": "sm",
-        "collapsed": {"mobile": False},
+        "collapsed": {"mobile": True},
         "withOverlay": False,  # 👈 disables full-screen overlay
+        "style": {
+                "backgroundColor": "rgba(255, 255, 255, 0.7)",  # White with 70% opacity
+            }
     },
     withBorder=False,
     padding="md",
@@ -421,7 +487,7 @@ theme={
         "primaryColor": "primaryPurple",
         "fontFamily": "Basel, Arial, sans-serif",
         "headings": {
-            "fontFamily": "ABCGravityVariable-Trial, sans-serif",
+            "fontFamily": "ABCGravityUprightVariable-Trial, sans-serif",
         },
     },
     children=layout_one_column)
@@ -698,6 +764,7 @@ def toggle_overlay(logged_in):
     Output('all-companies-information', 'data'),
     Output(component_id='hyped-ranking-graph', component_property='figure'),  # Update graph 1
     Output(component_id='hyped-table-industry', component_property='data'),  # Update graph 1
+    Output("loading-overlay-welcome", "visible"),
     Input('url', 'pathname'), # Triggered once when the page is loaded
 )
 def initialize_data(href):
@@ -824,7 +891,7 @@ def initialize_data(href):
         #width=700, height=600
     )
 
-    return all_companies_information_store, fig, industry_list
+    return all_companies_information_store, fig, industry_list, False
 
 
 # Callback to enable the slider if "Custom" is selected
@@ -833,16 +900,20 @@ def initialize_data(href):
     Output("range-arpu-growth", "disabled"),
     Output("range-discount-rate", "disabled"),
     Output("range-profit-margin", "disabled"),
+    Output("all-sliders", "style"),
     Output("loading-overlay", "visible"),
+    Output("loading-overlay-welcome", "visible", allow_duplicate=True),
     Output("loading-overlay2", "visible"),
 
     [Input("dataset-selection", "value"),
     Input("scenarios-picker", "value")], prevent_initial_call=True)
 def enable_slider(selection, scenario_value):
-    if scenario_value == "Custom":
-        return False, False, False, False, True, True
+    visible_style = {"display": "block"}
+    invisible_style = {"display": "hidden"}
+    if scenario_value == "Nerd mode":
+        return False, False, False, False, visible_style, True, True, True
     else:
-        return True, True, True, True, True, False
+        return True, True, True, True, invisible_style, True, True, False
 
 # Callback to update the URL based on the dropdown selection and track the dataset selected via posthog
 @app.callback(
@@ -896,9 +967,10 @@ def update_select_based_on_url(url_search, current_selected_dataset):
     # Update the dropdown value and clear the persistent URL dataset data
     return dataset_url, None
 
-
-# Callback to change the Graph's title, enable the analysis buttons
-@app.callback([
+# Callback displaying the functionalities & graph cards, and hiding the text
+@app.callback(
+    Output(component_id='functionalities-card', component_property='style'),
+    Output(component_id='launch-counter', component_property='data'),
     Output("accordion-plateau", "disabled"),
     Output("accordion-valuation", "disabled"),
     Output("accordion-correlation", "disabled"),
@@ -906,25 +978,36 @@ def update_select_based_on_url(url_search, current_selected_dataset):
     Output("loader-general", "style", allow_duplicate=True),
     Output("loading-overlay", "visible", allow_duplicate=True),
     Output("loading-overlay2", "visible", allow_duplicate=True),
-    Output("section-1", "visible", allow_duplicate=True),
-    Output("section-2", "visible", allow_duplicate=True),
-    Output("section-3", "visible", allow_duplicate=True),
-    Output("section-4", "visible", allow_duplicate=True),
-    Output("section-5", "visible", allow_duplicate=True),
-    Output("section-6", "visible", allow_duplicate=True),
-    Output("section-7", "visible", allow_duplicate=True),
+    Output("loading-overlay-welcome", "visible", allow_duplicate=True),
+    Output("card-dashboard", "style", allow_duplicate=True),
+    Output("card-welcome", 'style'),
+    Output("section-2", "style", allow_duplicate=True),
+    Output("section-3", "style", allow_duplicate=True),
+    Output("section-4", "style", allow_duplicate=True),
+    Output("section-5", "style", allow_duplicate=True),
+    Output("section-6", "style", allow_duplicate=True),
+    Output("section-7", "style", allow_duplicate=True),
+    Output("navbar", "style", allow_duplicate=True), # showing navbar
+    Input(component_id='dataset-selection', component_property='value'),
+    [State('launch-counter', 'data')]
+    , prevent_initial_call=True
+)
+def show_cards(data, launch_counter):
+    if launch_counter['flag'] is not True:
+        launch_counter['flag'] = True
+        show_card = {'visibility': 'visible'}
+        hide_graph_card = {'display': 'none'}
+        display_card = {'display': 'block'}
+        print("Displaying the graph hihi")
+        navbar_state = {"width": 250, "breakpoint": "sm", "style": {}}
+        navbar_state["style"] = {"display": "block"}
+        return {'display': 'block'}, launch_counter, False, False, False, False, show_card, True, True, True, show_card, hide_graph_card, \
+            display_card, display_card, display_card, display_card, display_card, show_card, \
+            {"visibility": "visible"}
 
-    Input("dataset-selection", "value"),
-], prevent_initial_call=True)
-def select_value(value):
-    title = value
-    subtitle = "Explore " + str(
-        value) + "'s Future Outlook to assess its current valuation and explore RAST's past valuations. Customize " \
-                 "Predictions with the Slider in the 'Valuation Drivers' Section and Adjust " \
-                 "the Forecast Start Date Using the Datepicker. Use the 'Past performance' section " \
-                 "to see RAST's calculated hype over time."
-    show_loader = {'display': 'block'}
-    return False, False, False, False, show_loader, True, True, show_loader, show_loader, show_loader, show_loader, show_loader, show_loader, show_loader
+    else:
+        print("Card already displayed", launch_counter)
+        raise PreventUpdate
 
 
 # Callback defining the minimum and the maximum date of the datepicker and loading the dataset
@@ -963,6 +1046,7 @@ def select_value(value):
     Output("loader-general", "style", allow_duplicate=True),
     Output("loading-overlay", "visible", allow_duplicate=True),
     Output("loading-overlay2", "visible", allow_duplicate=True),
+    Output("loading-overlay-welcome", "visible", allow_duplicate=True),
     #Output(component_id='market-cap-tab', component_property='style'),  # Hides Market cap tab if other data is selected
     Output(component_id='symbol-dataset', component_property='data'),  # Hides Market cap tab if other data is selected
     Output(component_id='max-net-margin', component_property='data'),  # Stores the max net margin opf the selected company
@@ -1180,7 +1264,7 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
             show_company_functionalities, show_company_functionalities, show_company_functionalities, \
             show_company_functionalities, text_profit_margin, text_best_profit_margin, marks_profit_margin_slider, \
             total_assets, users_revenue_regression, \
-            initial_sliders_values, source_string, True, True, hide_loader, display_loading_overlay, symbol_company, max_net_margin, company_logo_link_src
+            initial_sliders_values, source_string, True, True, hide_loader, display_loading_overlay, display_loading_overlay, symbol_company, max_net_margin, company_logo_link_src
     except Exception as e:
         print(f"Error fetching or processing dataset: {str(e)}")
         raise PreventUpdate
@@ -2455,29 +2539,6 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     return fig_main, fig_revenue, fig_second, fig_product_maturity, sections, graph_message
 
 
-# Callback displaying the functionalities & graph cards, and hiding the text
-@app.callback(
-    #Output(component_id="graph-card-content", component_property='style'),
-    Output(component_id='functionalities-card', component_property='style'),
-    #Output(component_id='welcome-timeline', component_property='style'),
-    Output(component_id='launch-counter', component_property='data'),
-    Input(component_id='dataset-selection', component_property='value'),
-    [State('launch-counter', 'data')]
-    , prevent_initial_call=True
-)
-def show_cards(data, launch_counter):
-    if launch_counter['flag'] is not True:
-        launch_counter['flag'] = True
-        show_graph_card = {'display': 'block'}
-        hide_graph_card = {'display': 'none'}
-        print("Displaying the graph hihi")
-        return show_graph_card, launch_counter
-
-    else:
-        print("Card already displayed", launch_counter)
-        raise PreventUpdate
-
-
 # Callback calculating the ARPU needed depending on the chosen scenario
 @app.callback(
     Output(component_id="arpu-needed", component_property="children"),
@@ -2534,6 +2595,7 @@ def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, current_m
     Output(component_id="hype-meter-price", component_property="value"),
     Output(component_id="hype-meter-price-rest", component_property="value"),
     Output(component_id="hype-overvaluation-label", component_property="children"),
+    Output(component_id="hype-meter-undervaluation-hype", component_property="label"),
     [
         Input(component_id='scenarios-sorted', component_property='data'),
         Input("range-profit-margin", "value"),
@@ -2627,7 +2689,7 @@ def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, arpu_grow
 
     return non_operating_assets_ratio, noa_tooltip, customer_equity_ratio, customer_equity_tooltip, intrinsic_value_ratio_rest, \
         hype_tooltip, hype_indicator_color, hype_indicator_text, current_valuation, hype_ratio_progress, hype_indicator_color, hype_ratio_rest, \
-        current_market_cap_ratio, price_rest_ratio, text_overvaluation
+        current_market_cap_ratio, price_rest_ratio, text_overvaluation, text_overvaluation
 
 
 # Callback calculating the valuation over time and displaying the functionalities & graph cards, and hiding the text

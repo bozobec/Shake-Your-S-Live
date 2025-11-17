@@ -4,7 +4,7 @@ from dash_iconify import DashIconify
 from datetime import date
 
 # Scenario picker
-data_scenarios = ["Worst", "Base", "Best", "Custom"]
+data_scenarios = ["Worst", "Base", "Best", "Nerd mode"]
 
 # Date picker
 today = date.today().isoformat()  # 'YYYY-MM-DD'
@@ -104,6 +104,15 @@ functionalities_card = dmc.Card(
         dmc.Group(
             [
                 dmc.Title("Scenarios analysis", order=5),
+                dmc.Text(
+                    "Toggle between the worst/best case scenarios to see how the valuation evolves, or choose your own"
+                    " parameters with the nerd mode.",
+                    size="xs",
+                    c="dimmed",
+                    style={
+                        "@media (max-width: 768px)": {"display": "none"},  # hides on small screens
+                    },
+                ),
             ],
             #justify="space-around",
             mt="md",
@@ -118,85 +127,92 @@ functionalities_card = dmc.Card(
         #dmc.Space(h=10),
         dmc.Space(h=10),
         scenarios_picker,
-        # Plateau slider
-        html.Div(
-            children=[
-                dmc.Space(h=10),
-                dmc.Group([
-                    dmc.Text(
-                        "Growth Forecast",
-                        size="sm",
-                        fw=700,
-                        ),
-                    dmc.Tooltip(
-                        children=DashIconify(icon="feather:info", width=15),
-                        label="Select 'Custom' to move the blue curve and see how well it fits the dataset. "
-                              "The star indicates RAST's best prediction",
-                        transitionProps={
-                                "transition": "slide-down",
-                                "duration": 300,
-                            },
-                        multiline=True,
-                    ),
-                    dmc.RingProgress(
-                        id="r2-ring-progress",
-                        size=24,
-                        thickness=4,
-                        roundCaps=True,
-                        sections=[
-                            {"value": 0, "color": "LightGrey"},
-                            ]
-                        ),
-                ],
-                    gap="md"),
-            ]),
-        dmc.Space(h=10),
-        html.Div(slider_k, style={"marginLeft":15, "marginRight": 15}),
-        dmc.Space(h=40),
 
-        # Profit margin
-        html.Div(
-            style={'display': 'none'},
-            id="profit-margin",
-            children=[
+        # Div wrapping all sliders
 
-                dmc.Group(
-                    style={'display': 'flex'},
+        html.Div(
+            id='all-sliders',
+            style={"display": "none"},
+            children=[
+                html.Div(
                     children=[
-                        dmc.Text(
-                            "Profit margin",
-                            size="sm",
-                            fw=700,
+                        dmc.Space(h=10),
+                        # Plateau slider
+                        dmc.Group([
+                            dmc.Text(
+                                "Growth Forecast",
+                                size="sm",
+                                fw=700,
+                                ),
+                            dmc.Tooltip(
+                                children=DashIconify(icon="feather:info", width=15),
+                                label="Select 'Custom' to move the blue curve and see how well it fits the dataset. "
+                                      "The star indicates RAST's best prediction",
+                                transitionProps={
+                                        "transition": "slide-down",
+                                        "duration": 300,
+                                    },
+                                multiline=True,
                             ),
-                        dmc.Tooltip(
-                            children=DashIconify(icon="feather:info", width=15),
-                            label="Adjust the profit margin using the slider to observe the impact on the company's "
-                                  "annual average revenue per user. Increasing the profit margin increases the company's"
-                                  " profit and therefore the company's value. MAX indicates the maximum theoretical"
-                                  " net profit margin for this company given its current business model",
-                            transitionProps={
-                                    "transition": "slide-down",
-                                    "duration": 300,
-                                },
-                            multiline=True,
-                        ),
+                            dmc.RingProgress(
+                                id="r2-ring-progress",
+                                size=24,
+                                thickness=4,
+                                roundCaps=True,
+                                sections=[
+                                    {"value": 0, "color": "LightGrey"},
+                                    ]
+                                ),
+                        ],
+                            gap="md"),
                     ]),
                 dmc.Space(h=10),
-                dmc.Container(slider_profit_margin),
-                dmc.Space(h=25),
-                dmc.Text(
-                    "Latest annual profit margin: 45%",
-                    id="profit-margin-container",
-                    size="sm",
-                    c="dimmed",
-                    ),
-                dmc.Text(
-                    "Best annual profit margin ever: 45%",
-                    id="best-profit-margin-container",
-                    size="sm",
-                    c="dimmed",
-                    ),
-        ]),
+                html.Div(slider_k, style={"marginLeft":15, "marginRight": 15}),
+                dmc.Space(h=40),
+
+                # Profit margin
+                html.Div(
+                    style={'display': 'none'},
+                    id="profit-margin",
+                    children=[
+
+                        dmc.Group(
+                            style={'display': 'flex'},
+                            children=[
+                                dmc.Text(
+                                    "Profit margin",
+                                    size="sm",
+                                    fw=700,
+                                    ),
+                                dmc.Tooltip(
+                                    children=DashIconify(icon="feather:info", width=15),
+                                    label="Adjust the profit margin using the slider to observe the impact on the company's "
+                                          "annual average revenue per user. Increasing the profit margin increases the company's"
+                                          " profit and therefore the company's value. MAX indicates the maximum theoretical"
+                                          " net profit margin for this company given its current business model",
+                                    transitionProps={
+                                            "transition": "slide-down",
+                                            "duration": 300,
+                                        },
+                                    multiline=True,
+                                ),
+                            ]),
+                        dmc.Space(h=10),
+                        dmc.Container(slider_profit_margin),
+                        dmc.Space(h=25),
+                        dmc.Text(
+                            "Latest annual profit margin: 45%",
+                            id="profit-margin-container",
+                            size="sm",
+                            c="dimmed",
+                            ),
+                        dmc.Text(
+                            "Best annual profit margin ever: 45%",
+                            id="best-profit-margin-container",
+                            size="sm",
+                            c="dimmed",
+                            ),
+                ]),
         dmc.Space(h=20),
 
 # Discount Rate
@@ -321,11 +337,13 @@ functionalities_card = dmc.Card(
                 dmc.Space(h=10),
                 datepicker,
         ]),
+            ]),
     ],
     id="functionalities-card",
     withBorder=True,
     shadow="sm",
     radius="md",
-    style={'display': 'none'},
+    style={'display': 'none'
+           },
     #style={"height": 500},
 )

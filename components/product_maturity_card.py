@@ -29,7 +29,7 @@ product_maturity_graph_message = dmc.Alert(
 
 product_maturity_card = dmc.Card(
     children=[
-        dmc.Group(
+        dmc.Stack(
             [
                 dmc.Title("Product Maturity", order=5),
                 html.Div(children=[product_maturity_graph_message, product_maturity_graph])
@@ -37,11 +37,12 @@ product_maturity_card = dmc.Card(
             #justify="space-around",
             #mt="xs",
             mb="xs",
-            wrap=True,
+            #wrap=True,
         ),
     ],
-    id="section-6",
-    #style={'display': 'none'},
+    id="section-5",
+    #style={'visibility': 'hidden'},
+    style={'display': 'none'},
     withBorder=True,
     shadow="sm",
     radius="md",
