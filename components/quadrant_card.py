@@ -51,8 +51,14 @@ config_graph_with_toolbar = {
 }
 
 quadrant_card = dmc.Card(children=[
-    dmc.Group([
+    dmc.Stack([
         dmc.Title("RAST Quadrant", order=5),
+        dmc.Text(
+            "The exhaustive list of companies that we analyze, mapped in our magic quadrant. The more up-left, "
+            "the more danger!",
+            size="xs",
+            c="dimmed",
+        ),
         ],
         justify="left",
         mt="md",

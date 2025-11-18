@@ -199,7 +199,7 @@ card_welcome2 = dmc.Stack(
 
 card_dashboard = dmc.Group(
     id='card-dashboard',
-    style={'visibility': 'hidden'},
+    style={'display': 'none'},
     children=[
         # Title and subtitle at the top
         dmc.Stack(

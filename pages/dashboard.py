@@ -25,6 +25,16 @@ import dash_daq as daq
 #from dash_extensions import DeferScript
 from functools import lru_cache
 from components.analysis_card import analysis_card
+from components.hype_meter_card import hype_meter_card, card_welcome, card_dashboard
+from components.valuation_card import valuation_card
+from components.growth_card import growth_card
+from components.revenue_card import revenue_card
+from components.product_maturity_card import product_maturity_card
+from components.growth_rate_card import growth_rate_card
+from components.functionalities_card import functionalities_card
+from components.ranking_card import table_hype_card
+from components.quadrant_card import quadrant_card
+from components.stored_data import stored_data
 import os
 
 register_page(
@@ -1404,33 +1414,4 @@ def layout_old(company=None, **other_unknown_query_strings):
 '''
 
 def layout(company=None, **other_unknown_query_strings):
-    layout =html.Div(
-            [
-                dmc.Grid(
-                    [
-                        # dmc.Col(span=0.5, lg=0), # Empty left column
-                        # dmc.GridCol([
-                        # selecting_card,
-                        # dmc.Space(h=20), selector_card
-                        # ], span={'base': 12,'lg': 3}, order={"xs": 1, "sm": 1, "lg": 1}),
-                        dmc.GridCol(
-                            [
-                                #graph_card,
-                                dmc.Space(h=20),
-                                #table_hype,
-                                dmc.Space(h=20),
-                                #graph_hype
-                                # valuation_over_time_card  # Comment this line to remove the analysis graphs
-                            ], span={'base': 12, 'lg': 8}, order={"xs": 2, "sm": 2, "lg": 2}),
-                        dmc.GridCol([
-                            #hype_meter_card,
-                            dmc.Space(h=20),
-                            #functionalities_card
-                        ],
-                                    span={'base': 12, 'lg': 4}, order={"xs": 1, "sm": 3, "lg": 3}),
-                    ],
-                ),
-                dmc.Space(h=20),
-        ]),
-
-    return layout
+    return html.Div()  # Empty - cards are in app.py

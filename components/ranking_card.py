@@ -72,6 +72,13 @@ table_hype_card = dmc.Card(children=[
         mt="md",
         mb="xs",
         wrap="nowrap",
+        gap="xl",
+    ),
+    dmc.Text(
+        "The exhaustive list of companies that we analyze and their ranking. Click on the company to get the most "
+        "updated hype/growth score",
+        size="xs",
+        c="dimmed",
     ),
     dmc.ScrollArea(
         h=400,

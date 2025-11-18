@@ -175,8 +175,8 @@ layout_one_column = dmc.AppShell(
                                         h={"base": 25, "sm": 35, "lg": 40},  # Responsive height
                                         alt="RAST app guru, valuation made simple"
                                     ),
-                                    href="https://www.rast.guru",
-                                    target="_blank"
+                                    href="/",
+                                    #target="_blank"
                                 ),
                             ],
                             gap="xs",
@@ -188,10 +188,21 @@ layout_one_column = dmc.AppShell(
                                 "width": {"base": "200px", "sm": "250px", "lg": "400px"},  # Responsive width
                                 "flex": "1",  # Allow it to grow
                                 "maxWidth": {"lg": "80%"},  # Max width on large screens
-                            }
+                            },
+                            id="dropdown-container"
                         ),
                         dmc.Group(
                             [
+                                dcc.Link(
+                                    dmc.Anchor(
+                                        "Ranking",
+                                        size="sm",
+                                        c="gray.3",  # Light gray text
+                                        underline="hover",
+                                        href="/ranking",
+                                    ),
+                                    href="/ranking",
+                                ),
                                 dmc.Box(offcanvas, visibleFrom="sm"),
                                 html.Div(id="clerk-header"),  # Clerk user button
                             ],
@@ -291,58 +302,71 @@ layout_one_column = dmc.AppShell(
                 ),
             ),
             dmc.AppShellMain(
-                        children=dmc.Grid(
-                            [
-                                # Left column: scrollable content
-                                dmc.GridCol(
-                                    span={"base": 12, "lg": 8},
-                                    children=dmc.Stack(
-                                        [
-                                            dmc.Loader(
-                                                color="red",
-                                                size="md",
-                                                variant="oval",
-                                                style={"display": "none"},
-                                                id="loader-general",
-                                            ),
-                                            hype_meter_card,
-                                            analysis_card,
-                                            valuation_card,
-                                            growth_card,
-                                            revenue_card,
-                                            product_maturity_card,
-                                            growth_rate_card,
-                                            table_hype_card,
-                                            quadrant_card,
-                                            dmc.Space(h=600),
-                                            dash.page_container,
-                                            stored_data,
-                                        ],
-                                        gap="xl",
-                                        p="md",
+                        children=[
+                            dmc.Grid(
+                                [
+                                    # Left column: scrollable content
+                                    dmc.GridCol(
+                                        span={"base": 12, "lg": 8},
+                                        children=dmc.Stack(
+                                            [
+                                                dmc.Loader(
+                                                    color="red",
+                                                    size="md",
+                                                    variant="oval",
+                                                    style={"display": "none"},
+                                                    id="loader-general",
+                                                ),
+                                                html.Div(
+                                                    id="homepage-cards",
+                                                    children=[
+                                                        hype_meter_card,
+                                                        analysis_card,
+                                                        valuation_card,
+                                                        growth_card,
+                                                        revenue_card,
+                                                        product_maturity_card,
+                                                        growth_rate_card,
+                                                        #dmc.Space(h=600),
+                                                    ]
+                                                ),
+                                                dash.page_container,
+                                                stored_data,
+                                            ],
+                                            gap="xl",
+                                            p="md",
+                                        ),
                                     ),
-                                ),
 
-                                # Right column: static functionalities card
-                                dmc.GridCol(
-                                    span={"base": 12, "lg": 4},
-                                    children=dmc.Stack(
-                                        [functionalities_card],
-                                        gap="md",
-                                        p="md",
-                                        style={
-                                            "position": "sticky",
-                                            "top": "0px",  # stays fixed below header
-                                            "alignSelf": "start",
-                                        },
+                                    # Right column: static functionalities card
+                                    dmc.GridCol(
+                                        span={"base": 12, "lg": 4},
+                                        children=dmc.Stack(
+                                            [functionalities_card],
+                                            gap="md",
+                                            p="md",
+                                            style={
+                                                "position": "sticky",
+                                                "top": "0px",  # stays fixed below header
+                                                "alignSelf": "start",
+                                            },
+                                        ),
                                     ),
-                                ),
-                            ],
-                            gutter="md",
-                            style={
-                                "maxWidth": "100%",
-                                "margin": "0"},
-                        ),
+                                ],
+                                gutter="md",
+                                style={
+                                    "maxWidth": "100%",
+                                    "margin": "0"},
+                            ),
+                            html.Div(
+                                id="ranking-grid",
+                                style={"display": "none"},  # Hidden by default
+                                children=dmc.Grid([
+                                    dmc.GridCol([table_hype_card], span={'base': 6, 'sm': 10}),
+                                    dmc.GridCol([quadrant_card], span={'base': 6, 'sm': 10}),
+                                ])
+                            )
+                        ],
                         id="main-content",
                         style={
                             "height": "100vh",
@@ -545,7 +569,7 @@ def verify_token(token):
         return payload
     return None
 
-PUBLIC_PATHS = ["/", "/robots.txt", "/sitemap.xml", "/test"]
+PUBLIC_PATHS = ["/", "/robots.txt", "/sitemap.xml", "/ranking"]
 
 @server.before_request
 def check_auth():
@@ -759,6 +783,40 @@ def toggle_overlay(logged_in):
 
 # ----------------------------------------------------------------------------------
 # Callback behaviours and interaction
+
+# Callback to show/hide sections based on page
+@callback(
+    [
+        Output("homepage-cards", "style"), # To hide the homepage cards
+        Output("dropdown-container", "style"), # To hide the dropdown
+        Output("ranking-grid", "style"), # To display the ranking
+     #Output("left-column", "span")
+        ],
+    Input("url", "pathname")
+)
+def toggle_page_layout(pathname):
+    if pathname == "/ranking":
+        # Hide homepage cards and right column, full width left
+        return (
+            {"display": "none"},  # Hide homepage cards
+            {"display": "none"},  # Hide dropdown
+            {}
+            #{"base": 12, "lg": 12}  # Full width
+        )
+    else:
+        # Show everything on homepage
+        return (
+            {},  # Show homepage cards
+            { # Show dropdown
+                "width": {"base": "200px", "sm": "250px", "lg": "400px"},  # Responsive width
+                "flex": "1",  # Allow it to grow
+                "maxWidth": {"lg": "80%"},  # Max width on large screens
+                "display": "block"
+            },
+            {"display": "none"},
+            #{"base": 12, "lg": 8}  # Normal width
+        )
+
 # Callback loading and storing the company information
 @app.callback(
     Output('all-companies-information', 'data'),
@@ -830,10 +888,10 @@ def initialize_data(href):
                   fillcolor="#FFD000", opacity=0.2, line_width=0)
 
     # Add quadrant labels
-    fig.add_annotation(x=0.75, y=y1-0.05, text="Hot & hyped", showarrow=False, font=dict(size=10), bgcolor="white")
-    fig.add_annotation(x=0.25, y=y1-0.05, text="Bubble zone", showarrow=False, font=dict(size=10), bgcolor="white")
-    fig.add_annotation(x=0.25, y=0.05, text="Steady, Forgotten", showarrow=False, font=dict(size=10), bgcolor="white")
-    fig.add_annotation(x=0.75, y=0.05, text="Undervalued gems", showarrow=False, font=dict(size=10), bgcolor="white")
+    fig.add_annotation(x=0.75, y=y1-0.05, text="Hot & hyped", showarrow=False, font=dict(size=12), bgcolor="#F862F0")
+    fig.add_annotation(x=0.25, y=y1-0.05, text="Bubble zone", showarrow=False, font=dict(size=12), bgcolor="#F862F0")
+    fig.add_annotation(x=0.25, y=0.05, text="Steady, Forgotten", showarrow=False, font=dict(size=12), bgcolor="#F862F0")
+    fig.add_annotation(x=0.75, y=0.05, text="Undervalued gems", showarrow=False, font=dict(size=12), bgcolor="#FED100")
 
     # Marking points as gold and bolded if in the "undervalued gems", otherwise as purple
     marker_colors = [
@@ -1001,7 +1059,7 @@ def show_cards(data, launch_counter):
         print("Displaying the graph hihi")
         navbar_state = {"width": 250, "breakpoint": "sm", "style": {}}
         navbar_state["style"] = {"display": "block"}
-        return {'display': 'block'}, launch_counter, False, False, False, False, show_card, True, True, True, show_card, hide_graph_card, \
+        return {'display': 'block'}, launch_counter, False, False, False, False, show_card, True, True, True, display_card, hide_graph_card, \
             display_card, display_card, display_card, display_card, display_card, show_card, \
             {"visibility": "visible"}
 
