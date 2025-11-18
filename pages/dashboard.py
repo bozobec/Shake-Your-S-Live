@@ -25,6 +25,16 @@ import dash_daq as daq
 #from dash_extensions import DeferScript
 from functools import lru_cache
 from components.analysis_card import analysis_card
+from components.hype_meter_card import hype_meter_card, card_welcome, card_dashboard
+from components.valuation_card import valuation_card
+from components.growth_card import growth_card
+from components.revenue_card import revenue_card
+from components.product_maturity_card import product_maturity_card
+from components.growth_rate_card import growth_rate_card
+from components.functionalities_card import functionalities_card
+from components.ranking_card import table_hype_card
+from components.quadrant_card import quadrant_card
+from components.stored_data import stored_data
 import os
 
 register_page(
@@ -1338,8 +1348,8 @@ graph_hype = dmc.Card(children=[
 
 
 
-
-def layout(company=None, **other_unknown_query_strings):
+'''
+def layout_old(company=None, **other_unknown_query_strings):
     layout =html.Div(
             [
                 dmc.Grid(
@@ -1400,3 +1410,8 @@ def layout(company=None, **other_unknown_query_strings):
         ]),
 
     return layout
+    
+'''
+
+def layout(company=None, **other_unknown_query_strings):
+    return html.Div()  # Empty - cards are in app.py

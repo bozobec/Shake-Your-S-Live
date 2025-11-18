@@ -278,7 +278,7 @@ def get_hyped_companies_data():
 
     base_url = "https://api.airtable.com/v0/appm3ffcu38jyqhi3/Companies"
     params = {
-        "fields[]": ["Company_Name", "Hype_meter_value", "Growth_score", "Max_Net_Margin", "Company_logo", "Industry"],
+        "fields[]": ["Company_Name", "Hype_meter_value", "Growth_score", "Max_Net_Margin", "Company_logo", "Industry", "Company description"],
         "view": "Most hyped companies"
     }
 
@@ -306,7 +306,8 @@ def get_hyped_companies_data():
                     "Max Net Margin": fields.get("Max_Net_Margin"),
                     "Growth Score": fields.get("Growth_score"),
                     "Company Logo": fields.get("Company_logo"),
-                    "Industry": fields.get("Industry")
+                    "Industry": fields.get("Industry"),
+                    "Description": fields.get("Company description")
                 })
 
             # Check if there’s another page

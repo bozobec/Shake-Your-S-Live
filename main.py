@@ -1,25 +1,21 @@
-import functools
-
 # Main file for approximating an S-curve, given a certain data set
-import numpy as np
+import base64
+# import datetime
+import io
 import math
-from sklearn import linear_model
-from scipy.optimize import curve_fit
 from datetime import datetime, timedelta
+
+import jwt
+import numpy as np
 import numpy_financial as npf
+import pandas as pd
+from dash import html, dash_table
+from scipy.optimize import curve_fit
+from sklearn import linear_model
+from sympy import Symbol
 # from sklearn import linear_model
 # from sklearn.metrics import mean_squared_error
 from sympy.solvers import solve
-from sympy import Symbol
-import sqlite3
-import pandas as pd
-import base64
-#import datetime
-import io
-from dash import Dash, dcc, html, dash_table, Input, Output, State, callback
-import jwt
-import os
-
 
 # ---------------------------- Importing Data for testing purpose
 
@@ -699,5 +695,41 @@ def verify_token(token):
         return claims
     except Exception:
         return None
+
+# Replace the infinite values
+def replace_inf_with_previous_2(df, column):
+    """
+    Replace infinite values in a column with the value from 2 rows back.
+
+    Parameters:
+    -----------
+    df : pandas.DataFrame
+        The dataframe to modify
+    column : str
+        The name of the column to check and replace infinite values
+
+    Returns:
+    --------
+    pandas.DataFrame
+        DataFrame with infinite values replaced
+    """
+    # Create a copy to avoid modifying the original
+    df_copy = df.copy()
+
+    # Find indices where values are infinite
+    inf_mask = np.isinf(df_copy[column])
+
+    # Get indices of infinite values
+    inf_indices = df_copy[inf_mask].index
+
+    # Replace each infinite value with value from 2 rows back
+    for idx in inf_indices:
+        idx_position = df_copy.index.get_loc(idx)
+        if idx_position >= 2:  # Check if there are at least 2 rows before
+            previous_idx = df_copy.index[idx_position - 2]
+            df_copy.loc[idx, column] = df_copy.loc[previous_idx, column]
+        # If less than 2 rows back, leave as inf or handle differently
+
+    return df_copy
 
 
