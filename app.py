@@ -105,8 +105,8 @@ YEARS_DCF = 15  # Amount of years taken into account for DCF calculation
 server = app.server
 
 sections = [
-    {"id": "section-1", "title": "Summary", "subtitle": "", "color": "blue", "icon": "mdi:bullseye"},
-    {"id": "section-2", "title": "Valuation", "subtitle": "", "color": "orange", "icon": "tabler:pig-money"},
+    {"id": "section-1", "title": "Current Situation", "subtitle": "", "color": "blue", "icon": "mdi:bullseye"},
+    {"id": "section-2", "title": "Valuation history", "subtitle": "", "color": "orange", "icon": "tabler:pig-money"},
     {"id": "section-3", "title": "Growth", "subtitle": "", "color": "purple", "icon": "streamline-sharp:decent-work-and-economic-growth"},
     {"id": "section-4", "title": "Revenue", "subtitle": "", "color": "purple", "icon": "fa6-solid:money-check-dollar"},
     {"id": "section-5", "title": "Product Maturity", "subtitle": "", "color": "red", "icon": "healthicons:old-man-outline"},
@@ -317,7 +317,7 @@ layout_one_column = dmc.AppShell(
                                                     style={"display": "none"},
                                                     id="loader-general",
                                                 ),
-                                                html.Div(
+                                                dmc.Stack(
                                                     id="homepage-cards",
                                                     children=[
                                                         hype_meter_card,
@@ -888,10 +888,10 @@ def initialize_data(href):
                   fillcolor="#FFD000", opacity=0.2, line_width=0)
 
     # Add quadrant labels
-    fig.add_annotation(x=0.75, y=y1-0.05, text="Hot & hyped", showarrow=False, font=dict(size=12), bgcolor="#F862F0")
-    fig.add_annotation(x=0.25, y=y1-0.05, text="Bubble zone", showarrow=False, font=dict(size=12), bgcolor="#F862F0")
-    fig.add_annotation(x=0.25, y=0.05, text="Steady, Forgotten", showarrow=False, font=dict(size=12), bgcolor="#F862F0")
-    fig.add_annotation(x=0.75, y=0.05, text="Undervalued gems", showarrow=False, font=dict(size=12), bgcolor="#FED100")
+    fig.add_annotation(x=0.75, y=y1-0.05, text=" Hot & hyped ", showarrow=False, font=dict(size=12), bgcolor="#F862F0")
+    fig.add_annotation(x=0.25, y=y1-0.05, text="<b> Bubble zone </b>", showarrow=False, font=dict(size=12), bgcolor="#F862F0")
+    fig.add_annotation(x=0.25, y=0.05, text=" Steady, Forgotten ", showarrow=False, font=dict(size=12), bgcolor="#F862F0")
+    fig.add_annotation(x=0.75, y=0.05, text="<b> Undervalued gems </b>", showarrow=False, font=dict(size=12), bgcolor="#FED100")
 
     # Marking points as gold and bolded if in the "undervalued gems", otherwise as purple
     marker_colors = [
@@ -2644,6 +2644,7 @@ def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, current_m
     Output(component_id="hype-tooltip-users", component_property="children"),
     Output(component_id="hype-meter-hype", component_property="value"),
     Output(component_id="hype-tooltip-hype", component_property="children"),
+    Output(component_id="hype-tooltip-price", component_property="children"),
     Output(component_id="hype-meter-indicator", component_property="color"),
     Output(component_id="hype-meter-indicator", component_property="children"),
     Output(component_id="current-valuation-calculated", component_property="data"),
@@ -2739,6 +2740,10 @@ def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, arpu_grow
 
     hype_tooltip = f"Hype: ${hype_total / 1e9:.2f} B.  It reflects the current overvaluation of the company in terms " \
                    f"of market capitalization versus actual value."
+    if current_market_cap > 1e9:
+        price_tooltip = f"Price: ${current_market_cap / 1e9:.2f} B, the current valuation (or price) on the stock market."
+    else:
+        price_tooltip = f"Price: ${current_market_cap / 1e6:.2f} M, the current valuation (or price) on the stock market."
     hype_indicator_color, hype_indicator_text = main.hype_meter_indicator_values(hype_ratio / 100)
     t2 = time.perf_counter(), time.process_time()
     print(f" Performance of the valuation over time")
@@ -2746,7 +2751,7 @@ def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, arpu_grow
     print(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
 
     return non_operating_assets_ratio, noa_tooltip, customer_equity_ratio, customer_equity_tooltip, intrinsic_value_ratio_rest, \
-        hype_tooltip, hype_indicator_color, hype_indicator_text, current_valuation, hype_ratio_progress, hype_indicator_color, hype_ratio_rest, \
+        hype_tooltip, price_tooltip, hype_indicator_color, hype_indicator_text, current_valuation, hype_ratio_progress, hype_indicator_color, hype_ratio_rest, \
         current_market_cap_ratio, price_rest_ratio, text_overvaluation, text_overvaluation
 
 

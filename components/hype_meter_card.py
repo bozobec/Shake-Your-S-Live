@@ -49,6 +49,7 @@ hype_meter_bootstrap_price = dbc.Progress(
     children=[
         dbc.Progress(value=100, color="#9F9F9E", bar=True, label="Current price", id="hype-meter-price"),
         dbc.Progress(value=0, color="white", bar=True, label="Current price", id="hype-meter-price-rest"),
+        dbc.Tooltip("Price: $4.0B", target="hype-meter-price", id='hype-tooltip-price', placement="bottom"),
     ],
     style={"height": "30px", "borderRadius": "0px"},
 )
