@@ -99,7 +99,7 @@ YEAR_OFFSET = 1970  # The year "zero" for all the calculations
 MIN_DATE_INDEX = 5  # Defines the minimum year below which no date can be picked in the datepicker
 YEARS_DCF = 15  # Amount of years taken into account for DCF calculation
 
-# ----------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------
 # App Layout
 
 server = app.server
