@@ -25,7 +25,9 @@ graph_message = dmc.Alert(
     title="Is there more growth ahead?",
     color="primaryPurple",
     #hide="False",
-    withCloseButton="True")
+    withCloseButton="True",
+    p={"base": "xs", "sm": "md"},  # ⬅ smaller padding on mobile
+)
 
 source = dmc.Text(
         id="data-source",
@@ -35,15 +37,14 @@ source = dmc.Text(
 
 growth_card = dmc.Card(
     children=[
-        dmc.Group(
+        dmc.Stack(
             [
                 dmc.Title("Growth over time", id='growth-card-title', order=5),
                 html.Div(children=[graph_message, main_graph, source],)
             ],
             #justify="space-around",
-            #mt="md",
-            mb="xs",
-            wrap=True,
+            mt={"base": 5, "sm": "md"},  # tighter on mobile
+            mb={"base": 5, "sm": "xs"},  # tighter on mobile
         ),
     ],
     id="section-3",
@@ -52,5 +53,7 @@ growth_card = dmc.Card(
     withBorder=True,
     shadow="sm",
     radius="md",
-    p="xl"
+    #p="xl",
+    p={"base": "sm", "sm": "xl"},  # smaller padding on mobile
+    m={"base": 5, "sm": "md"},  # tighter outer margin on mobile
 )

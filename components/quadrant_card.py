@@ -54,8 +54,10 @@ quadrant_card = dmc.Card(children=[
     dmc.Stack([
         dmc.Title("RAST Quadrant", order=5),
         dmc.Text(
-            "The exhaustive list of companies that we analyze, mapped in our magic quadrant. The more up-left, "
-            "the more danger!",
+            "The exhaustive list of companies that we analyze, mapped in our magic quadrant. 'Undervalued gems' are the "
+            "companies that are undervalued and have growth potential. 'Bubble zone' is the zone to avoid: they are overvalued"
+            "and have limited growth potential. 'Hot & Hyped' are overvalued companies that have an strong growth, "
+            "meaning that the overvaluation can last for a while.",
             size="xs",
             c="dimmed",
         ),

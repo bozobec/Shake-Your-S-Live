@@ -19,11 +19,16 @@ valuation_over_time = html.Div(children=[dcc.Graph(id='valuation-graph', config=
 
 # Graph message
 valuation_graph_message = dmc.Alert(
-    dmc.Text("About the Current Market Cap"),
+    dmc.Text(
+        "About the Current Market Cap",
+        #size={"base": "8px", "sm": "sm"}   # smaller text on mobile
+    ),
     id="valuation-graph-message",
     title="About the Current Market Cap",
     color="blue",
-    withCloseButton="True"
+    withCloseButton="True",
+    p={"base": "xs", "sm": "md"},  # ⬅ smaller padding on mobile
+    radius={"base": "xs", "sm": "md"},   # softer on mobil
 )
 
 valuation_card = dmc.Card(
@@ -35,40 +40,22 @@ valuation_card = dmc.Card(
                 zIndex=10,
         ),
         # Card Title
-        dmc.Group(
-                    [
-                        dmc.Title("Welcome to RAST", id="graph-title", order=5),
-                        html.Img(id='company-logo2',
-                                 src='',
-                                 style={
-                                     'height': '20px',  # Fixed height
-                                     'width': 'auto',  # Width adjusts automatically to maintain aspect ratio
-                                     'display': 'block',  # Prevents inline spacing issues
-                                     #'marginTop': '20px',
-                                     'maxWidth': '100%',  # Prevents overflow in smaller containers
-                                     'objectFit': 'contain'  # Ensures the image is scaled inside the box
-                                 }
-                                 )
-                    ],
-                    justify="space-between",
-                    mt="md",
-                    mb="xs",
-                ),
-        dmc.Group(
+        dmc.Stack(
             [
+                dmc.Title("Welcome to RAST", id="graph-title", order=5, textWrap="nowrap"),
                 html.Div(children=[valuation_graph_message, valuation_over_time])
             ],
-            #justify="space-around",
-            #mt="xs",
-            mb="xs",
-            wrap=True,
-        ),
+            justify="space-between",
+            mt={"base": 5, "sm": "md"},  # tighter on mobile
+            mb={"base": 5, "sm": "xs"},  # tighter on mobile
+        )
     ],
     id="section-2",
-    #style={'visibility': 'hidden'},
     style={'display': 'none'},
     withBorder=True,
     shadow="sm",
     radius="md",
-    p="xl",
+    #p="xl",
+    p={"base": "sm", "sm": "xl"},  # smaller padding on mobile
+    m={"base": 5, "sm": "md"},  # tighter outer margin on mobile
 )

@@ -77,7 +77,8 @@ valuation_message = dmc.Alert(
     title="Valuation Overview",
     color="blue",
     variant="light",
-    icon=dmc.Text("💡", size="xl"),
+    icon=dmc.Text("💡", size={"base": "xs", "sm": "xl"}),
+    p={"base": "xs", "sm": "md"},  # ⬅ smaller padding on mobile
     #style={"height": "100%"},
 )
 
@@ -200,11 +201,17 @@ card_welcome2 = dmc.Stack(
 
 card_dashboard = dmc.Group(
     id='card-dashboard',
-    style={'display': 'none'},
+    #style={'display': 'none'},
     children=[
         # Title and subtitle at the top
         dmc.Stack(
             [
+                dmc.LoadingOverlay(
+                    visible=True,
+                    id="loading-overlay-welcome",
+                    overlayProps={"radius": "sm", "blur": 2},
+                    zIndex=10,
+                ),
                 dmc.Group(
                     [
                         dmc.Title("in short", id="summary-card-title", order=5),
@@ -240,6 +247,13 @@ card_dashboard = dmc.Group(
                     hype_meter_visualization,
                     span={"base": 12, "sm": 4, "md": 4},
                 ),
+                dmc.Loader(
+                    color="red",
+                    size="md",
+                    variant="oval",
+                    style={"display": "none"},
+                    id="loader-general",
+                ),
             ],
             gutter="lg",
         ),
@@ -247,15 +261,9 @@ card_dashboard = dmc.Group(
 )
 
 # Card 1 - Select a Company
-card_welcome = dmc.Card(
-    id='card-welcome',
+card_1 = dmc.Card(
+    id='card-welcome1',
     children=[
-        dmc.LoadingOverlay(
-            visible=True,
-            id="loading-overlay-welcome",
-            overlayProps={"radius": "sm", "blur": 2},
-            zIndex=10,
-        ),
         html.Img(
             src='/assets/select_company_illustration.png',
             style={
@@ -344,17 +352,20 @@ card2 = dmc.Card(
             }
         ),
         dmc.Text(
-            "We rank the most undervalued companies based on our valuations.",
+            "We rank the most undervalued companies based on our valuations (for members only).",
             size="sm",
             c="dimmed",
             #style={'lineHeight': '1.6', 'marginBottom': '20px'}
         ),
         dmc.Space(h=40),
-        html.Div(
-            id="clerk-extra-signin",
-            style={
-                'textAlign': 'center',
-            }
+        dcc.Link(
+            html.Div(
+                id="clerk-extra-signin",
+                style={
+                    'textAlign': 'center',
+                }
+            ),
+            href="/ranking",
         ),
     ],
     withBorder=True,
@@ -367,34 +378,32 @@ card2 = dmc.Card(
     }
 )
 
-card_welcome3 = dmc.Container(
+card_welcome = dmc.Container(
             children=[
                 dmc.SimpleGrid(
                     cols={"base": 1, "lg": 2},
                     spacing="xl",
                     children=[
-                        card2,
+                        card_1,
                         card2],
                     style={'padding': '50px 0'}
                 )
             ],
-            id='card-welcome3',
+            id='card-welcome',
             size="xl",
             style={
-                #'visibility': 'hidden',
-                'background': 'linear-gradient(to bottom, #f8f9fa, #e9ecef)',
-                'minHeight': '100vh',
-                'padding': '50px 20px'
+                #'background': 'linear-gradient(to bottom, #f8f9fa, #D5AEFF)',
             }
         )
 
 hype_meter_card = dmc.Card(
-    children=[card_welcome,
-        card_dashboard
-    ],
-    id="section-1",
-    withBorder=True,
-    shadow="sm",
-    radius="md",
-    p="xl",
-)
+        children=[
+            card_dashboard
+        ],
+        id="section-1",
+        withBorder=True,
+        shadow="sm",
+        radius="md",
+        p={"base": "sm", "sm": "xl"},  # smaller padding on mobile
+        m={"base": 5, "sm": "md"},  # tighter outer margin on mobile
+    )

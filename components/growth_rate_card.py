@@ -20,24 +20,26 @@ growth_graph = dcc.Graph(id='main-graph2', config=config_graph)
 
 # Graph message growth rate
 growth_rate_graph_message = dmc.Alert(
-    dmc.Text("About the Discrete Growth Rate"),
+    children=dmc.Text("About the Discrete Growth Rate"),
     id="growth-rate-graph-message",
     title="When will the growth stop?",
     color="blue",
     #hide="False",
-    withCloseButton="True")
+    withCloseButton=True,
+    p={"base": "xs", "sm": "md"},  # ⬅ smaller padding on mobile
+)
 
 growth_rate_card = dmc.Card(
     children=[
-        dmc.Group(
+        dmc.Stack(
             [
                 dmc.Title("Growth rate over time", order=5),
                 html.Div(children=[growth_rate_graph_message, growth_graph])
             ],
             #justify="space-around",
             #mt="xs",
-            mb="xs",
-            wrap=True,
+            mt={"base": 5, "sm": "md"},  # tighter on mobile
+            mb={"base": 5, "sm": "xs"},  # tighter on mobile
         ),
     ],
     id="section-6",
@@ -46,5 +48,6 @@ growth_rate_card = dmc.Card(
     withBorder=True,
     shadow="sm",
     radius="md",
-    p="xl"
+    p={"base": "sm", "sm": "xl"},  # smaller padding on mobile
+    m={"base": 5, "sm": "md"},  # tighter outer margin on mobile
 )

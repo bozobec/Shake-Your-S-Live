@@ -56,7 +56,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         if (extra) {
         extra.innerHTML = ""; // clear previous
         const extraBtn = document.createElement("button");
-        extraBtn.textContent = "Sign In";
+        extraBtn.textContent = "Ranking";
         extraBtn.className = "btn btn-primary";   // choose your style
         extraBtn.addEventListener("click", () => Clerk.openSignIn());
         extra.appendChild(extraBtn);

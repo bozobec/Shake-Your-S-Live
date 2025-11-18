@@ -25,7 +25,9 @@ product_maturity_graph_message = dmc.Alert(
     title="Is the product still improving?",
     color="blue",
     #hide="False",
-    withCloseButton="True")
+    withCloseButton=True,
+    p={"base": "xs", "sm": "md"},  # ⬅ smaller padding on mobile
+)
 
 product_maturity_card = dmc.Card(
     children=[
@@ -35,9 +37,8 @@ product_maturity_card = dmc.Card(
                 html.Div(children=[product_maturity_graph_message, product_maturity_graph])
             ],
             #justify="space-around",
-            #mt="xs",
-            mb="xs",
-            #wrap=True,
+            mt={"base": 5, "sm": "md"},  # tighter on mobile
+            mb={"base": 5, "sm": "xs"},  # tighter on mobile
         ),
     ],
     id="section-5",
@@ -46,5 +47,6 @@ product_maturity_card = dmc.Card(
     withBorder=True,
     shadow="sm",
     radius="md",
-    p="xl"
+    p={"base": "sm", "sm": "xl"},  # smaller padding on mobile
+    m={"base": 5, "sm": "md"},  # tighter outer margin on mobile
 )
