@@ -123,6 +123,7 @@ dropdown = dmc.Select(
     #size="lg",
     #style={"marginBottom": 10},
     styles={
+        "fontSize": "16px",  # Prevents iOS zoom
         "input": {
             "backgroundColor": "#1a1b1e",  # Dark background
             "color": "#c1c2c5",  # Light text
@@ -175,7 +176,6 @@ layout_one_column = dmc.AppShell(
                                         src="/assets/RAST_Vector_Logo.svg",
                                         h={"base": 25, "sm": 35, "lg": 40},  # Responsive height
                                         w={"base": 65, "sm": 91, "lg": 104},  # Responsive width
-                                        #fit="contain",  # Preserve aspect ratio
                                         alt="RAST app guru, valuation made simple"
                                     ),
                                     href="/",
