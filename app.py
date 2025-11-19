@@ -3352,9 +3352,9 @@ def update_table(df_all_companies, hype_choice, industries, logged_in):
     t1 = time.perf_counter(), time.process_time()
 
     # Blocks the process for dev
-    IS_PRODUCTION = os.getenv("IS_PRODUCTION") == "true"  # Setup in heroku 'heroku config:set IS_PRODUCTION=true'
-    if IS_PRODUCTION is False:
-        return no_update  # nothing to do
+    #IS_PRODUCTION = os.getenv("IS_PRODUCTION") == "true"  # Setup in heroku 'heroku config:set IS_PRODUCTION=true'
+    #if IS_PRODUCTION is False:
+    #    return no_update  # nothing to do
 
     # If dropdown hasn't been used yet, set a default
     if hype_choice is None:
@@ -3370,8 +3370,8 @@ def update_table(df_all_companies, hype_choice, industries, logged_in):
     reverse = True if hype_choice == "most-hyped" else False
 
     # --- 3. Sort by Hype Score ---
-    sorted_data = sorted(filtered_data, key=lambda x: x["Hype Score"], reverse=reverse)
-
+    sorted_data = sorted(filtered_data, key=lambda x: x["Hype Score"] if x["Hype Score"] is not None else 0,
+                         reverse=reverse)
     # --- 4. Keep only selected columns ---
     reduced_data = [
         {
