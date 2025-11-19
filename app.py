@@ -89,7 +89,7 @@ posthog = Posthog(
 )
 
 # Load index template from external file
-with open("index_template.html") as f:
+with open("index.html") as f:
     app.index_string = f.read()
 
 # ---------------------------------------------------------------------------
@@ -756,6 +756,11 @@ def update_login_state(bridge_content):
     # Store the new state as a dict
     new_data = {"logged_in": logged_in, "user_id": user_id}
 
+    # 👉 Track login event in PostHog
+    if logged_in and user_id:
+        posthog.capture(user_id, "user_logged_in")
+        posthog.identify(user_id=user_id)
+
     # Access previous value if available to avoid unnecessary updates
     triggered = callback_context.triggered
     if triggered:
@@ -785,6 +790,14 @@ def toggle_overlay(logged_in):
                 "zIndex": 5,
                 "backdropFilter": "blur(2px)"}
         return style, style
+        # skipping it if no dropdown value is selected to avoid firing it when starting
+    posthog.capture(
+        #distinct_id='loggd',  # replace with real user/session ID
+        event='logged_in',
+        properties={
+            'logged_in': 'True',
+        }
+    )
     return {"display": "none"}, {"display": "none"}
 
 

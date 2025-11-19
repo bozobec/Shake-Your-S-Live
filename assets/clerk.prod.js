@@ -48,7 +48,11 @@ window.addEventListener("DOMContentLoaded", async () => {
         btn.id = "sign-in-btn";
         btn.className = "btn btn-outline-light btn-sm";
         btn.textContent = "Sign In";
-        btn.addEventListener("click", () => Clerk.openSignIn());
+        btn.addEventListener("click", () => {
+            posthog.capture("sign_in_clicked"); // posthog event
+            posthog.capture("sign_in_modal_opened"); //posthog event
+            Clerk.openSignIn();
+            });
         header.appendChild(btn);
       }
           // --- Second button ---
@@ -58,7 +62,11 @@ window.addEventListener("DOMContentLoaded", async () => {
         const extraBtn = document.createElement("button");
         extraBtn.textContent = "Ranking";
         extraBtn.className = "btn btn-primary";   // choose your style
-        extraBtn.addEventListener("click", () => Clerk.openSignIn());
+        extraBtn.addEventListener("click", () => {
+            posthog.capture("sign_in_clicked", { location: "ranking-button" }); // posthog event
+            posthog.capture("sign_in_modal_opened"); //posthog event
+            Clerk.openSignIn();
+        });
         extra.appendChild(extraBtn);
         }
     }
