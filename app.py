@@ -196,6 +196,18 @@ layout_one_column = dmc.AppShell(
                         ),
                         dmc.Group(
                             [
+                                # Icon version - visible only on small screens
+                                dcc.Link(
+                                    dmc.ActionIcon(
+                                        DashIconify(icon="solar:ranking-linear", width=20),  # or another ranking icon
+                                        variant="subtle",
+                                        color="white",
+                                        size="lg",
+                                        hiddenFrom="sm",  # Hide on sm and larger
+                                    ),
+                                    href="/ranking",
+                                ),
+                                # Text version - visible on medium+ screens
                                 dcc.Link(
                                     dmc.Anchor(
                                         "Ranking",
@@ -203,6 +215,7 @@ layout_one_column = dmc.AppShell(
                                         c="gray.3",  # Light gray text
                                         underline="hover",
                                         href="/ranking",
+                                        visibleFrom="sm",
                                     ),
                                     href="/ranking",
                                 ),
