@@ -174,6 +174,8 @@ layout_one_column = dmc.AppShell(
                                     children=dmc.Image(
                                         src="/assets/RAST_Vector_Logo.svg",
                                         h={"base": 25, "sm": 35, "lg": 40},  # Responsive height
+                                        w={"base": 65, "sm": 91, "lg": 104},  # Responsive width
+                                        #fit="contain",  # Preserve aspect ratio
                                         alt="RAST app guru, valuation made simple"
                                     ),
                                     href="/",
@@ -186,9 +188,9 @@ layout_one_column = dmc.AppShell(
                         dmc.Box(
                             dropdown,
                             style={
-                                "width": {"base": "200px", "sm": "250px", "lg": "400px"},  # Responsive width
-                                "flex": "1",  # Allow it to grow
-                                "maxWidth": {"lg": "80%"},  # Max width on large screens
+                                "minWidth": {"base": "200px", "sm": "250px", "lg": "400px"},  # Changed to minWidth
+                                "flex": "1 1 0%",  # Use 0% as flex-basis for consistent behavior
+                                "maxWidth": {"lg": "80%"},
                             },
                             id="dropdown-container"
                         ),
@@ -205,7 +207,10 @@ layout_one_column = dmc.AppShell(
                                     href="/ranking",
                                 ),
                                 dmc.Box(offcanvas, visibleFrom="sm"),
-                                html.Div(id="clerk-header"),  # Clerk user button
+                                html.Div(
+                                    id="clerk-header",
+                                    style={"flexShrink": "0"}  # Prevent shrinking
+                                ),  # Clerk user button
                             ],
                             gap="sm",
                             wrap="nowrap",
@@ -1809,9 +1814,13 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
         latest_market_cap = 0.0
 
     # Plateau Accordion
-    arpu_needed = main.arpu_for_valuation(k_scenarios[highest_r2_index], r_scenarios[highest_r2_index],
-                                          p0_scenarios[highest_r2_index], 0.2, 0.05, 10,
-                                          current_market_cap * 1000000)
+    try:
+        arpu_needed = main.arpu_for_valuation(k_scenarios[highest_r2_index], r_scenarios[highest_r2_index],
+                                              p0_scenarios[highest_r2_index], 0.2, 0.05, 10,
+                                              current_market_cap * 1000000)
+    except Exception as e:
+        arpu_needed = 0
+
     # Formating the displayed market cap:
     if current_market_cap >= 1000:
         formatted_market_cap = f"{current_market_cap / 1000:.2f} B$"
@@ -2311,6 +2320,8 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     if p0 > 2.192572e-11:
         t_plateau = main.time_to_population(k, r, p0, 0.95 * k) + 1970
         month_plateau = math.ceil((t_plateau - int(t_plateau)) * 12)
+        if month_plateau == 0: # sometimes month_plateau is 0, quick fix to be improved
+            month_plateau=1
         year_plateau = int(np.round(t_plateau, 0))
         date_plateau = datetime(year_plateau, month_plateau, 1).date()
         date_plateau_displayed = date_plateau.strftime("%b, %Y")
@@ -2706,6 +2717,10 @@ def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, arpu_grow
     current_customer_equity = users[-1] * current_arpu * profit_margin
     future_customer_equity = main.net_present_value_arpu_growth(k_selected, r_selected, p0_selected, current_arpu,
                                                                 arpu_growth, profit_margin, discount_rate, YEARS_DCF)
+    # Quick fix, in case the future_customer_equity throws inf. It should be refactored by only relying on the
+    # historical valuation function, instead of recalculating it here
+    if future_customer_equity == float('inf'):
+        future_customer_equity = current_customer_equity * 3
     total_customer_equity = current_customer_equity + future_customer_equity
     non_operating_assets = total_assets
 
@@ -3233,9 +3248,12 @@ def graph_valuation_over_time(valuation_over_time_dict, date_picked, df_formatte
     k_high_valuation = df_sorted[-1]['K']
     r_high_valuation = df_sorted[-1]['r']
     p0_high_valuation = df_sorted[-1]['p0']
-
-    profit_margin_needed = main.profit_margin_for_valuation(k_high_valuation, r_high_valuation, p0_high_valuation,
-                                                            current_arpu, 0.05, 0.1, YEARS_DCF, non_operating_assets, latest_market_cap * 1000000)
+    try:
+        profit_margin_needed = main.profit_margin_for_valuation(k_high_valuation, r_high_valuation, p0_high_valuation,
+                                                                current_arpu, 0.05, 0.1, YEARS_DCF, non_operating_assets, latest_market_cap * 1000000)
+    # Except to avoid errors
+    except Exception as e:
+        profit_margin_needed = max_net_margin*0.2
     #max_profit_margin = np.max(profit_margin_df) old method, using the max known PM
     max_profit_margin = max_net_margin  # new method, using the max theoretical net profit margin.
 
