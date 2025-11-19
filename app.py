@@ -217,7 +217,7 @@ layout_one_column = dmc.AppShell(
                         ),
                     ],
                     h="100%",
-                    px="xl",  # Increased padding (or use a number like px=40)
+                    px="sm",  # Increased padding (or use a number like px=40)
                     justify="space-between",  # This pushes items to left and right
                     align="center",
                     wrap="nowrap",
