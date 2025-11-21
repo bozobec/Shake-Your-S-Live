@@ -188,7 +188,7 @@ def polynomial_approximation(dates, users, n_polynomial):
     return parameters
 
 
-# This function looks very unused. Can it be removed?
+# ToDo: This function looks very unused. Can it be removed?
 def moving_average_smoothing(dates, users, window_size):
     """
     Function to smoothen the data with a given window size

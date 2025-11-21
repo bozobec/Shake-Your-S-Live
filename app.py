@@ -17,6 +17,9 @@ import math
 from src.analysis import discrete_user_interval, discrete_growth_rate
 from src.Utils.Logistics import logisticfunction
 from src.Utils.dates import date_formatting, date_minimum_history, get_earlier_dates
+from src.Utils.rast_logger import get_default_logger
+
+logger = get_default_logger()
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 # app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
@@ -60,6 +63,7 @@ def valuation_related(company_label):
     elif company_label == "Teladoc":
         valuation = valuation_Teladoc
     return valuation
+
 
 # ------------------------------------------------------------------------------------------------------------
 # Components definition
@@ -284,7 +288,7 @@ app.layout = html.Div(children=[
     # Output(component_id='uservalue-container', component_property='children'),
     Input(component_id='dropdown', component_property='value'), ])  # Take dropdown value
 def set_history_size(dropdown_value):
-    print("Fetching the dropdown_value...")
+    logger.info("Fetching the dropdown_value...")
     df = dataAPI.get_airtable_data(dropdown_value)
     # The dates in a panda serie of format YYYY-MM-DD are transformed to a decimal yearly array
     dates = np.array(date_formatting(df["Date"]))
@@ -295,7 +299,7 @@ def set_history_size(dropdown_value):
         min_history_date: {'label': str(int(min_history_date)), 'style': {'color': '#77b0b1'}},
         max_history_date: {'label': str(int(max_history_date)), 'style': {'color': '#f50'}}
     }
-    print("Dropdown value fetched and slider printed successfully")
+    logger.info("Dropdown value fetched and slider printed successfully")
     return [max_history_date], min_history_date, max_history_date, marks_history
 
 
@@ -312,7 +316,7 @@ def set_history_size(dropdown_value):
 )
 # Analysis to load the different scenarios (low & high) when a dropdown value is selected
 def load_data(dropdown_value, history_value):
-    print("Starting scenarios calculation")
+    logger.info("Starting scenarios calculation")
     # Initializing random data when dropdown is None
     if dropdown_value is None:
         dates = [48, 49, 50, 51, 52, 53, 54, 55]
@@ -326,12 +330,12 @@ def load_data(dropdown_value, history_value):
         users = np.array(df["Users"]).astype(float) * 1000000
 
     # Test to be deleted, changing dates & users to use moving average
-    print(dates)
-    print(users)
-    print("CHANGE")
+    logger.info(dates)
+    logger.info(users)
+    logger.info("CHANGE")
     # dates, users = main.moving_average_smoothing(dates, users, 3)
-    print(dates)
-    print(users)
+    logger.info(dates)
+    logger.info(users)
     history_value_formatted = history_value[0] - 1970  # Puts back the historical value to the format for computations
     dates_actual = get_earlier_dates(dates, history_value_formatted)
     data_len = len(dates_actual)  # length of the dataset to consider for retrofitting
@@ -349,8 +353,8 @@ def load_data(dropdown_value, history_value):
             state_alert = True
         else:
             state_alert = False
-    print("df_sorted")
-    print(df_sorted)
+    logger.info("df_sorted")
+    logger.info(df_sorted)
 
     user_value = current_valuation / users[-1]
     user_value_displayed = '{:.1f} $'.format(user_value)
@@ -358,9 +362,9 @@ def load_data(dropdown_value, history_value):
     min_history_date = date_minimum_history(formatted_dates)
     max_history_date = formatted_dates[-1]
 
-    print(min_history_date)
-    print(max_history_date)
-    print("Scenarios calculation completed")
+    logger.info(min_history_date)
+    logger.info(max_history_date)
+    logger.info("Scenarios calculation completed")
     return df_sorted.to_json(date_format='iso', orient='split'), df.to_json(date_format='iso', orient='split'), \
            [0], state_alert, True
 
@@ -394,7 +398,7 @@ def graph_update(jsonified_users_data, jsonified_cleaned_data, data_slider, hist
     # --------- Data Loading
     # Data prepared earlier is fetched here
     df = pd.read_json(jsonified_users_data, orient='split')  # Users+date data
-    print(df)
+    logger.info(df)
     # Way of dynamically adapting the title --> company_name should be used as a variable
     title_figure = "The growth evolution is shown"
     dates = np.array(date_formatting(df["Date"]))
@@ -419,8 +423,8 @@ def graph_update(jsonified_users_data, jsonified_cleaned_data, data_slider, hist
 
     # Creating the slider's marks
     max_value = len(df_sorted) - 1
-    print("Length of the slider for ignored data:")
-    print(max_value)
+    logger.info("Length of the slider for ignored data:")
+    logger.info(max_value)
     '''
     marks_history = {
         min_history_date: {'label': str(int(min_history_date)), 'style': {'color': '#77b0b1'}},
@@ -445,8 +449,8 @@ def graph_update(jsonified_users_data, jsonified_cleaned_data, data_slider, hist
     p0 = df_scenarios_array[row_selected, 3]
     r_squared_showed = np.round(df_sorted_array[row_selected, 4], 3)
     number_ignored_data = int(df_scenarios_array[row_selected, 0])
-    print("Number of ignored data")
-    print(number_ignored_data)
+    logger.info("Number of ignored data")
+    logger.info(number_ignored_data)
 
     # Polynomial approximation
     polynum3 = main.polynomial_approximation(dates, users, 3)
@@ -555,7 +559,7 @@ def graph_update(jsonified_users_data, jsonified_cleaned_data, data_slider, hist
     k_printed = int(np.rint(k) / pow(10, 6))
     k_printed = "{:,} M".format(k_printed)
     # PLATEAU: Time when the plateau is reached, assuming the plateau is "reached" when p(t)=95%*K
-    print(p0)
+    logger.info(p0)
     if p0 > 2.192572e-11:
         t_plateau = main.time_to_population(k, r, p0, 0.95 * k) + 1970
         month_plateau = math.ceil((t_plateau - int(t_plateau)) * 12)
@@ -565,9 +569,9 @@ def graph_update(jsonified_users_data, jsonified_cleaned_data, data_slider, hist
         t_plateau_displayed = 'Year {:.1f}'.format(t_plateau)
     else:
         date_plateau_displayed = "Plateau could not be calculated"
-    print("2. CALLBACK END")
-    print(dates)
-    print(users)
+    logger.info("2. CALLBACK END")
+    logger.info(dates)
+    logger.info(users)
 
     # Analysis test to be deleted
 
