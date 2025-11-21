@@ -15,7 +15,7 @@ import datetime
 import math
 
 from src.Utils.Logistics import logisticfunction
-import src.Utils.dates
+from src.Utils.dates import date_formatting, date_minimum_history, get_earlier_dates
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 # app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
@@ -286,9 +286,9 @@ def set_history_size(dropdown_value):
     print("Fetching the dropdown_value...")
     df = dataAPI.get_airtable_data(dropdown_value)
     # The dates in a panda serie of format YYYY-MM-DD are transformed to a decimal yearly array
-    dates = np.array(main.date_formatting(df["Date"]))
+    dates = np.array(date_formatting(df["Date"]))
     formatted_dates = dates + 1970
-    min_history_date = main.date_minimum_history(formatted_dates)
+    min_history_date = date_minimum_history(formatted_dates)
     max_history_date = formatted_dates[-1]
     marks_history = {
         min_history_date: {'label': str(int(min_history_date)), 'style': {'color': '#77b0b1'}},
@@ -320,7 +320,7 @@ def load_data(dropdown_value, history_value):
         # The data is loaded from airtable
         df = dataAPI.get_airtable_data(dropdown_value)
         # The dates in a panda serie of format YYYY-MM-DD are transformed to a decimal yearly array
-        dates = np.array(main.date_formatting(df["Date"]))
+        dates = np.array(date_formatting(df["Date"]))
         # Users are taken from the database and multiply by a million
         users = np.array(df["Users"]).astype(float) * 1000000
 
@@ -332,7 +332,7 @@ def load_data(dropdown_value, history_value):
     print(dates)
     print(users)
     history_value_formatted = history_value[0] - 1970  # Puts back the historical value to the format for computations
-    dates_actual = src.Utils.dates.get_earlier_dates(dates, history_value_formatted)
+    dates_actual = get_earlier_dates(dates, history_value_formatted)
     data_len = len(dates_actual)  # length of the dataset to consider for retrofitting
 
     # All parameters are calculated by ignoring data 1 by 1, taking the history reference as the end point
@@ -354,7 +354,7 @@ def load_data(dropdown_value, history_value):
     user_value = current_valuation / users[-1]
     user_value_displayed = '{:.1f} $'.format(user_value)
     formatted_dates = dates + 1970
-    min_history_date = src.Utils.dates.date_minimum_history(formatted_dates)
+    min_history_date = date_minimum_history(formatted_dates)
     max_history_date = formatted_dates[-1]
 
     print(min_history_date)
@@ -396,13 +396,13 @@ def graph_update(jsonified_users_data, jsonified_cleaned_data, data_slider, hist
     print(df)
     # Way of dynamically adapting the title --> company_name should be used as a variable
     title_figure = "The growth evolution is shown"
-    dates = np.array(main.date_formatting(df["Date"]))
-    users = np.array(df["Users"]).astype(float)*1000000
+    dates = np.array(date_formatting(df["Date"]))
+    users = np.array(df["Users"]).astype(float) * 1000000
     # To be deleted: changed dates & users to moving average
     # dates, users = main.moving_average_smoothing(dates, users, 3)
     # Calculating the length of historical values to be considered in the plots
     history_value_formatted = history_value[0] - 1970  # Puts back the historical value to the format for computations
-    dates_actual = main.get_earlier_dates(dates, history_value_formatted)
+    dates_actual = get_earlier_dates(dates, history_value_formatted)
     data_len = len(dates_actual)  # length of the dataset to consider for retrofitting
 
     df_sorted = pd.read_json(jsonified_cleaned_data, orient='split')
