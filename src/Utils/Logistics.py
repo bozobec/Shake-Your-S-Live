@@ -4,7 +4,7 @@ import numpy as np
 from scipy.optimize import curve_fit
 from sklearn import linear_model
 
-from main import discrete_growth_rate, discrete_user_interval
+from src.analysis import discrete_growth_rate, discrete_user_interval
 
 
 def logisticfunction(k, r, p0, dates):

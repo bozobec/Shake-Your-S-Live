@@ -14,6 +14,7 @@ from dash import html
 import datetime
 import math
 
+from src.analysis import discrete_user_interval, discrete_growth_rate
 from src.Utils.Logistics import logisticfunction
 from src.Utils.dates import date_formatting, date_minimum_history, get_earlier_dates
 
@@ -514,16 +515,16 @@ def graph_update(jsonified_users_data, jsonified_cleaned_data, data_slider, hist
     fig_second.update_yaxes(range=[0, 1.2])  # Fixing the size of the Y axis
     fig_second.add_trace(
         go.Scatter(name="Discrete Growth Rate",
-                   x=main.discrete_user_interval(users),
-                   y=main.discrete_growth_rate(users, dates + 1970),
+                   x=discrete_user_interval(users),
+                   y=discrete_growth_rate(users, dates + 1970),
                    mode="markers",
                    line=dict(color='#54c4f4')))
 
     # Add trace of the regression
     fig_second.add_trace(
         go.Scatter(name="Discrete Growth Rate",
-                   x=main.discrete_user_interval(users),
-                   y=-r / k * main.discrete_user_interval(users) + r,
+                   x=discrete_user_interval(users),
+                   y=-r / k * discrete_user_interval(users) + r,
                    mode="lines",
                    line=dict(color='#54c4f4')))
 
@@ -539,15 +540,15 @@ def graph_update(jsonified_users_data, jsonified_cleaned_data, data_slider, hist
     # Changes the color of the scatters ignored
     if number_ignored_data > 0:
         fig_second.add_trace(
-            go.Scatter(name="Discrete Growth Rate", x=main.discrete_user_interval(users[0:number_ignored_data]),
-                       y=main.discrete_growth_rate(users[0:number_ignored_data], dates[0:number_ignored_data] + 1970),
+            go.Scatter(name="Discrete Growth Rate", x=discrete_user_interval(users[0:number_ignored_data]),
+                       y=discrete_growth_rate(users[0:number_ignored_data], dates[0:number_ignored_data] + 1970),
                        mode="markers", line=dict(color='#808080')))
 
     # Changes the color of the scatters after the date considered
     if data_len < len(dates):
         fig_second.add_trace(
-            go.Scatter(name="Discrete Growth Rate", x=main.discrete_user_interval(users[data_len:]),
-                       y=main.discrete_growth_rate(users[data_len:], dates[data_len:] + 1970),
+            go.Scatter(name="Discrete Growth Rate", x=discrete_user_interval(users[data_len:]),
+                       y=discrete_growth_rate(users[data_len:], dates[data_len:] + 1970),
                        mode="markers", line=dict(color='#e6ecf5')))
 
     # Carrying capacity to be printed
