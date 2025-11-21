@@ -250,14 +250,14 @@ def parameters_dataframe(dates, users):
                 dataframe[j+i*n_data_ignored, 8] = moving_average  # Difference between the linear R^2 and the log R^2
             except RuntimeError as e:
                 dataframe[j+i*n_data_ignored, 0] = 0  # Data ignored column
-                dataframe[j+i*n_data_ignored, 1] = 0  # K (carrying capacity) column
+                dataframe[j+i*n_data_ignored, 1] = 1  # K (carrying capacity) column
                 dataframe[j+i*n_data_ignored, 2] = 0  # r (growth rate) column
-                dataframe[j+i*n_data_ignored, 3] = 0  # p0 (initial population) column
+                dataframe[j+i*n_data_ignored, 3] = users[-1]  # p0 (initial population) column
                 dataframe[j+i*n_data_ignored, 4] = 0  # r squared column
                 dataframe[j+i*n_data_ignored, 5] = 0  # Root Mean Square Deviation column
                 dataframe[j+i*n_data_ignored, 6] = 0  # Root Mean Square Deviation of the log approximation column
                 dataframe[j+i*n_data_ignored, 7] = 0  # Difference between the linear R^2 and the log R^2
-                dataframe[j+i*n_data_ignored, 8] = 0  # Difference between the linear R^2 and the log R^2
+                dataframe[j+i*n_data_ignored, 8] = 1  # Moving average
     pd.set_option('display.max_rows', None)
     df = pd.DataFrame(dataframe, columns=['Data Ignored', 'K', 'r', 'p0', 'R Squared', 'RMSD', 'R Squared LOG', 'Lin/Log Diff', 'Moving Average'])
     df['Method'] = 'Linear regression'
@@ -696,7 +696,8 @@ def verify_token(token):
     except Exception:
         return None
 
-# Replace the infinite values
+# Replace the infinite values and Nan values
+# This is a fix that should be fixed by improving the valuation in the first place
 def replace_inf_with_previous_2(df, column):
     """
     Replace infinite values in a column with the value from 2 rows back.
@@ -716,20 +717,64 @@ def replace_inf_with_previous_2(df, column):
     # Create a copy to avoid modifying the original
     df_copy = df.copy()
 
-    # Find indices where values are infinite
-    inf_mask = np.isinf(df_copy[column])
+    # Find indices where values are infinite OR NaN
+    inf_mask = np.isinf(df_copy[column]) | df_copy[column].isna()
 
     # Get indices of infinite values
     inf_indices = df_copy[inf_mask].index
 
-    # Replace each infinite value with value from 2 rows back
+    # Replace each infinite value with value from 2 rows back or next value (if no 2 rows back exist)
     for idx in inf_indices:
         idx_position = df_copy.index.get_loc(idx)
         if idx_position >= 2:  # Check if there are at least 2 rows before
-            previous_idx = df_copy.index[idx_position - 2]
-            df_copy.loc[idx, column] = df_copy.loc[previous_idx, column]
+            previous_scenario_idx = df_copy.index[idx_position - 2]
+            prev_scenario_value = df_copy.loc[previous_scenario_idx, column]
+        else:
+            next_valuation_idx = df_copy.index[idx_position - 2]
+            prev_scenario_value = df_copy.loc[next_valuation_idx, column]
+
+        # Takes the highest value between the previous high valuation OR the current low one +20%
+        df_copy.loc[idx, column] = prev_scenario_value
         # If less than 2 rows back, leave as inf or handle differently
 
     return df_copy
 
+
+def cleans_high_valuations(df, column):
+    """
+    Check if every second value (high valuation) is smaller than the previous one (low valuation).
+    If it is, replace it with the previous value * 1.2.
+
+    Parameters:
+    -----------
+    df : pandas.DataFrame
+        The dataframe to modify
+    column : str
+        The name of the column to check and adjust values
+
+    Returns:
+    --------
+    pandas.DataFrame
+        DataFrame with adjusted values
+    """
+    # Create a copy to avoid modifying the original
+    df_copy = df.copy()
+
+    # Iterate through every second row starting from index 1 (second row)
+    for i in range(1, len(df_copy), 2):
+        current_idx = df_copy.index[i]
+        previous_idx = df_copy.index[i - 1]
+        previous_high_valuation_idx = df_copy.index[i - 2]
+
+        current_value = df_copy.loc[current_idx, column]
+        previous_value = df_copy.loc[previous_idx, column]
+
+        previous_high_valuation = df_copy.loc[previous_high_valuation_idx, column]
+
+        # Check if current value is smaller than previous value
+        if current_value < previous_value:
+            # Replace with previous value * 1.2
+            df_copy.loc[current_idx, column] = previous_high_valuation
+
+    return df_copy
 

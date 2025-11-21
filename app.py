@@ -1971,7 +1971,7 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
         Input(component_id='date-picker', component_property='value'),  # Take date-picker date
         Input(component_id='users-dates-formatted', component_property='data'),
         Input(component_id='scenarios-sorted', component_property='data'),
-        Input(component_id='graph-unit', component_property='data'),  # Stores the graph unit (y axis legend)
+        State(component_id='graph-unit', component_property='data'),  # Stores the graph unit (y axis legend)
         Input(component_id='users-dates-raw', component_property='data'),
         Input(component_id='range-arpu-growth', component_property='value'),
         Input(component_id='current-arpu-stored', component_property='data'),
@@ -2082,13 +2082,25 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
                                                    p0_scenarios[data_slider],
                                                    k_scenarios[data_slider] * 0.9) + 1970
 
-    graph_message = "The pink bars show how "+ dropdown_value +"’s " + graph_unit + " (the key revenue driver) have " \
-                   "grown over time. The yellow zone is our forecast range, " \
-                     "showing how this driver should evolve in the future. These drivers follow an S-curve: " \
-                    "fast growth at first, then a gradual slowdown.\n" \
-                    " With the selected growth, the plateau will be approaching as of " \
-                    + main.string_formatting_to_date(time_selected_growth) + ", projected at " \
-                    + str(plateau_selected_growth) + " " + str(graph_unit)
+    today_time = main.date_formatting_from_string(datetime.today().strftime('%Y-%m-%d'))
+    if time_selected_growth < today_time:
+        past_tense = " started approaching 90% of its peak in "
+    else:
+        past_tense = " will be approaching 90% of its peak as of "
+    graph_message = dmc.Text(children =[
+        dmc.Text("The pink bars ", span=True, c="#F862F0"),
+        "show how "+ dropdown_value +"’s " + graph_unit + " (the key revenue driver) have grown over time. ",
+        dmc.Text("The yellow zone ", span=True, c="#C48501"), "is our forecast range, " \
+        "showing how this driver should evolve in the future. These drivers follow an S-curve: " \
+        "fast growth at first, then a gradual slowdown.\n" \
+        " With the selected growth, the",
+        dmc.Text(" plateau ", span=True, c="#953BF6") ,past_tense,
+        dmc.Text(main.string_formatting_to_date(time_selected_growth) + ", projected at " \
+                    + str(plateau_selected_growth) + " " + str(graph_unit), span=True, c="#953BF6"),
+        ],
+        size="sm",
+        fw=300,
+    )
 
     # Build Main Chart
     # ---------------------
@@ -2165,10 +2177,10 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
 
     date_a = datetime.strptime(dates_raw[0], "%Y-%m-%d")
     #date_b = datetime.strptime(dates_raw[-1], "%Y-%m-%d")
-    date_b = datetime.strptime(dates_raw[len(dates_actual)-1], "%Y-%m-%d")
+    date_b = datetime.strptime(dates_raw[-1], "%Y-%m-%d")
 
     #date_b_actual = history_value_graph  # Date including the datepicker
-    date_b_actual = dates_actual[-1]
+    date_b_actual = datetime.strptime(dates_raw[data_len-1], "%Y-%m-%d")
 
     # Calculate date_end using the formula date_b + 2 * (date_b - date_a)
     date_end = date_b + (date_b - date_a)
@@ -2183,7 +2195,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     y_predicted = main.logisticfunction(k, r, p0, x_scenarios)
     # Generate x_dates array
     x_dates = np.linspace(date_a.timestamp(), date_end.timestamp(), num=50)
-    x_dates_scenarios = np.linspace(date_b.timestamp(), date_end.timestamp(), num=50) # changed
+    x_dates_scenarios = np.linspace(date_b_actual.timestamp(), date_end.timestamp(), num=50) # changed
     x_dates = [datetime.fromtimestamp(timestamp) for timestamp in x_dates]
     x_dates_scenarios = [datetime.fromtimestamp(timestamp) for timestamp in x_dates_scenarios]
 
@@ -2969,6 +2981,14 @@ def historical_valuation_calculation(df_formatted, total_assets, df_raw, latest_
                                                                                 profit_margin[j], discount_rate[j],
                                                                                 YEARS_DCF)
                     current_customer_equity = users_valuation[-1] * current_arpu * profit_margin[j]
+                    total_valuation = future_customer_equity + current_customer_equity + non_operating_assets
+                    # Check if this is the second iteration (j=1) and ensure it's higher than first
+                    if j == 1 and len(valuation_data) > 0:
+                        # Get the valuation from the first iteration (index 7 in the list)
+                        first_valuation = valuation_data[-1][7]
+                        # Ensure second valuation is at least 1.2x the first
+                        if total_valuation <= first_valuation:
+                            total_valuation = first_valuation * 2
                     valuation_data.append([
                         dates_new[i + MIN_DATE_INDEX],
                         dates_raw[i + MIN_DATE_INDEX],
@@ -2977,7 +2997,7 @@ def historical_valuation_calculation(df_formatted, total_assets, df_raw, latest_
                         p0_selected,
                         profit_margin[j],
                         current_arpu,
-                        future_customer_equity + current_customer_equity + non_operating_assets,
+                        total_valuation,
                         market_cap_valuation
                     ])
     # Convert the list to a DataFrame
@@ -2987,7 +3007,8 @@ def historical_valuation_calculation(df_formatted, total_assets, df_raw, latest_
     # Clean up dataframe to avoid having infinite values (function to be deleted once K calculation is improved)
     # Create a copy to avoid modifying the original
     df_valuation_cleaned = main.replace_inf_with_previous_2(df_valuation_over_time, "Valuation")
-    df_valuation_over_time_dict = df_valuation_cleaned.to_dict(orient='records')
+    #df_valuation_cleaned_second_time = main.cleans_high_valuations(df_valuation_cleaned, "Valuation")
+    df_valuation_over_time_dict = df_valuation_cleaned.to_dict(orient='records') # Removing "inf" values
 
     print("DF Valuation over time")
     print(df_valuation_over_time)
@@ -3298,7 +3319,7 @@ def graph_valuation_over_time(valuation_over_time_dict, date_picked, df_formatte
                                                        "If you see long-term potential, it might be a good buy."
         # Messages right above the graph
         valuation_graph_title = "How well did our model perform over time?"
-        valuation_graph_message = "The purple line shows " + company_symbol + "s price (market cap) over time. The yellow zone is our confidence " \
+        valuation_graph_message = "The purple line shows " + company_symbol + "'s price (market cap) over time. The yellow zone is our confidence " \
                                   "range, calculated over time (without readjustment, obviously). " \
                                   "We believe the market cap tends to fall, sooner or later, within this range. " \
                                     " The market cap is currently lower than the most optimistic valuation (" + \
