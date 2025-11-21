@@ -7,7 +7,6 @@ from dash.dependencies import Input, Output
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
-import dataAPI
 import main
 import dash_bootstrap_components as dbc
 from dash import html
@@ -17,6 +16,7 @@ import math
 from src.analysis import discrete_user_interval, discrete_growth_rate
 from src.Utils.Logistics import logisticfunction
 from src.Utils.dates import date_formatting, date_minimum_history, get_earlier_dates
+from src.AirTableAPI import AirTableAPI
 from src.Utils.rast_logger import get_default_logger
 
 logger = get_default_logger()
@@ -43,7 +43,8 @@ valuation_Tesla = 1000 * pow(10, 9)
 valuation_Teladoc = 23.1 * pow(10, 9)
 
 # Values for the dropdown (all different companies in the DB)
-labels = dataAPI.get_airtable_labels()
+airtable_api = AirTableAPI()
+labels = airtable_api.get_labels()
 
 
 # Function returning the correct valuation, as an MVP solution before integrating it to the DB
@@ -288,8 +289,10 @@ app.layout = html.Div(children=[
     # Output(component_id='uservalue-container', component_property='children'),
     Input(component_id='dropdown', component_property='value'), ])  # Take dropdown value
 def set_history_size(dropdown_value):
+    # ToDo: should None be caught and should the function just return?
     logger.info("Fetching the dropdown_value...")
-    df = dataAPI.get_airtable_data(dropdown_value)
+    airtable_api = AirTableAPI()
+    df = airtable_api.get_data(dropdown_value)
     # The dates in a panda serie of format YYYY-MM-DD are transformed to a decimal yearly array
     dates = np.array(date_formatting(df["Date"]))
     formatted_dates = dates + 1970
@@ -323,7 +326,8 @@ def load_data(dropdown_value, history_value):
         users = [1, 2, 3, 5, 7, 10, 14, 20]
     else:
         # The data is loaded from airtable
-        df = dataAPI.get_airtable_data(dropdown_value)
+        airtable_api = AirTableAPI()
+        df = airtable_api.get_data(dropdown_value)
         # The dates in a panda serie of format YYYY-MM-DD are transformed to a decimal yearly array
         dates = np.array(date_formatting(df["Date"]))
         # Users are taken from the database and multiply by a million
