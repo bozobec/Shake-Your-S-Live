@@ -14,6 +14,13 @@ from dash import html
 import datetime
 import math
 
+from src.analysis import discrete_user_interval, discrete_growth_rate
+from src.Utils.Logistics import logisticfunction
+from src.Utils.dates import date_formatting, date_minimum_history, get_earlier_dates
+from src.Utils.rast_logger import get_default_logger
+
+logger = get_default_logger()
+
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 # app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 app = dash.Dash(external_stylesheets=[dbc.themes.LUX])
@@ -57,6 +64,7 @@ def valuation_related(company_label):
         valuation = valuation_Teladoc
     return valuation
 
+
 # ------------------------------------------------------------------------------------------------------------
 # Components definition
 
@@ -75,27 +83,32 @@ navbar = dbc.NavbarSimple(
 dropdown = dcc.Dropdown(id='dropdown', options=[{'label': i, 'value': i} for i in labels])
 
 # Tooltips
-tooltip_plateau = dbc.Tooltip("This number highlights the maximum amount of users that will be reached with the selected scenario",
-                       target="plateau-header",)
+tooltip_plateau = dbc.Tooltip(
+    "This number highlights the maximum amount of users that will be reached with the selected scenario",
+    target="plateau-header", )
 # Sliders
 slider = html.Div(children=[dcc.RangeSlider(id="range-slider-data-ignored1", min=0, step=1,
-                                                               marks={},
-                                                               value=[0],
-                            tooltip={"placement": "bottom", "always_visible": True},
+                                            marks={},
+                                            value=[0],
+                                            tooltip={"placement": "bottom", "always_visible": True},
                                             vertical=True),
                             html.Div(id="max-label")])
 slider_history = html.Div(children=[dcc.RangeSlider(id="range-slider-history", min=0, max=10,
-                                                               marks={},
-                                                               value=[10],
-                                                            tooltip={"placement": "bottom", "always_visible": True}),
-                            html.Div(id="max-label2")])
+                                                    marks={},
+                                                    value=[10],
+                                                    tooltip={"placement": "bottom", "always_visible": True}),
+                                    html.Div(id="max-label2")])
 # slider_profitability = html.Div(children=[dcc.RangeSlider(id="range-slider-profitability", min=20, max=50, step=5,
-                                                               # marks={20: '20% Profitability', 50: '50% Profitability'},
-                                                               # value=[20])])
+# marks={20: '20% Profitability', 50: '50% Profitability'},
+# value=[20])])
 # Table summarising insights
-row1 = html.Tr([html.Td(["Users ", html.Span("plateau: ", id="tooltip-plateau-target", style={"textDecoration": "underline", "cursor": "pointer"},)], style={"width": "380px"}),
-                        html.Td(id='carrying-capacity', children=carrying_capacity_container, style={"color": '#54c4f4'}), tooltip_plateau], style={"margin-bottom": "0px"})
-row2 = html.Tr([html.Td("Plateau reached in: "), html.Td(id='time-plateau', children=time_plateau_container, style={"color": '#54c4f4'})])
+row1 = html.Tr([html.Td(["Users ", html.Span("plateau: ", id="tooltip-plateau-target",
+                                             style={"textDecoration": "underline", "cursor": "pointer"}, )],
+                        style={"width": "380px"}),
+                html.Td(id='carrying-capacity', children=carrying_capacity_container, style={"color": '#54c4f4'}),
+                tooltip_plateau], style={"margin-bottom": "0px"})
+row2 = html.Tr([html.Td("Plateau reached in: "),
+                html.Td(id='time-plateau', children=time_plateau_container, style={"color": '#54c4f4'})])
 # row3 = html.Tr([html.Td("Current valuation: "), html.Td(id='current-valuation', children=current_valuation_container)])
 # row4 = html.Tr([html.Td("Yearly profit per user to justify the current valuation: "),
 # html.Td(id='arpu-needed', children=arpu_needed_container, style={"color": '#54c4f4'})])
@@ -104,63 +117,63 @@ row2 = html.Tr([html.Td("Plateau reached in: "), html.Td(id='time-plateau', chil
 
 # Left card consolidating all the rows defined above
 left_card = dbc.Card(id="left-card", children=[
-                    dbc.CardBody(
-                        [
-                            # R squared text and value displayed
-                            html.Span([
-                                html.H6("Prediction data"),
-                                dbc.Table(html.Tbody(row1), style={"margin-bottom": "0px"}),
-                                # html.Div(slider, style={"height": "10px", "margin-bottom": "20px"}),
-                                # dbc.Table(html.Tbody(row4), style={"margin-bottom": "0px"}),
-                                # html.Div(slider_profitability, style={"height": "10px", "margin-bottom": "40px"}),
-                                dbc.Table(html.Tbody([row2])),
-                            ]),
-                        ])
-                ], style={'display': 'none'}),
+    dbc.CardBody(
+        [
+            # R squared text and value displayed
+            html.Span([
+                html.H6("Prediction data"),
+                dbc.Table(html.Tbody(row1), style={"margin-bottom": "0px"}),
+                # html.Div(slider, style={"height": "10px", "margin-bottom": "20px"}),
+                # dbc.Table(html.Tbody(row4), style={"margin-bottom": "0px"}),
+                # html.Div(slider_profitability, style={"height": "10px", "margin-bottom": "40px"}),
+                dbc.Table(html.Tbody([row2])),
+            ]),
+        ])
+], style={'display': 'none'}),
 # Card that contains the main graph with the prediction
 right_card = dbc.Card(id="right-card", children=[
-                        html.Div(id='graph-container1', children=[dcc.Graph(id='main-graph1',
-                                                                            config={'displayModeBar': False})])
-                      ], style={'display': 'none'})
+    html.Div(id='graph-container1', children=[dcc.Graph(id='main-graph1',
+                                                        config={'displayModeBar': False})])
+], style={'display': 'none'})
 # Card that contains the regression
 bottom_card = dbc.Card(id="bottom-card", children=[
-                        html.Div(id='graph-container2', children=[dcc.Graph(id='main-graph2',
-                                                                            config={'displayModeBar': False})])
-                      ], style={'display': 'none'})
+    html.Div(id='graph-container2', children=[dcc.Graph(id='main-graph2',
+                                                        config={'displayModeBar': False})])
+], style={'display': 'none'})
 # Card containing the history slider
 top_card = dbc.Card(id="top-card", children=[
-                        dbc.CardBody(
-                            [
-                            html.Span([html.H6("Date of the prediction"),
-                            html.Div(slider_history, style={"height": "10px", "margin-bottom": "20px"})])
-                            ])
-                      ], style={'display': 'none'})
+    dbc.CardBody(
+        [
+            html.Span([html.H6("Date of the prediction"),
+                       html.Div(slider_history, style={"height": "10px", "margin-bottom": "20px"})])
+        ])
+], style={'display': 'none'})
 
 # Card containing the vertical slider for the carrying capacity
 vertical_slider_card = dbc.Card(id="vertical-slider", children=[
-                        dbc.CardBody(
-                            [
-                            html.Span([
-                            html.H6("Plateau", id="plateau-header"),
-                            html.Div(slider)])
-                            ])
-                      ], style={'display': 'none'})
+    dbc.CardBody(
+        [
+            html.Span([
+                html.H6("Plateau", id="plateau-header"),
+                html.Div(slider)])
+        ])
+], style={'display': 'none'})
 r_squared_card = dbc.Card(id="r-squared-card", children=[
-                        dbc.CardBody(
-                            [
-                            html.H6(["R", html.Sup(2)], id="r-squared-header"),
-                            html.P(id="rsquared-container"),
-                            ])
-                      ], style={'display': 'none'})
+    dbc.CardBody(
+        [
+            html.H6(["R", html.Sup(2)], id="r-squared-header"),
+            html.P(id="rsquared-container"),
+        ])
+], style={'display': 'none'})
 
 # Alert generated
 alert_no_calculation_possible = dbc.Alert(
-            "No estimation could be done with the selected dataset. Try another dataset and/or point in time",
-            id="alert-fade",
-            dismissable=True,
-            is_open=False,
-            color="info"
-        ),
+    "No estimation could be done with the selected dataset. Try another dataset and/or point in time",
+    id="alert-fade",
+    dismissable=True,
+    is_open=False,
+    color="info"
+),
 
 # Graph layout
 
@@ -218,7 +231,7 @@ layout_second_graph = go.Layout(
     ),
 )
 
-loading = dcc.Loading(id="loading-component", children=[html.Div([html.Div(id="loading-output")])], type="circle",),
+loading = dcc.Loading(id="loading-component", children=[html.Div([html.Div(id="loading-output")])], type="circle", ),
 
 # ----------------------------------------------------------------------------------
 # App Layout
@@ -228,12 +241,13 @@ app.layout = html.Div(children=[
     # Title row & loading animation
     dbc.Row(dbc.Col([
         html.Div([html.Img(src="/assets/Vector.svg", style={'height': '35px', 'float': 'left'}),
-                  html.H1(id='main-title', style={'float': 'left', 'margin-left': '20px'} , children='Growth estimation')]),
+                  html.H1(id='main-title', style={'float': 'left', 'margin-left': '20px'},
+                          children='Growth estimation')]),
         html.Div(loading)], style={'clear': 'both', "margin-top": "40px"},
-                    width={"size": 6, "offset": 1})),
+        width={"size": 6, "offset": 1})),
     # Subtitle
     # dbc.Row(dbc.Col(html.Div(children="Have fun estimating the user growth of companies"),
-                    # width={"size": 6, "offset": 1})),
+    # width={"size": 6, "offset": 1})),
     # Dropdown
     dbc.Row(dbc.Col(html.Div(dropdown), width={"size": 2, "offset": 1})),
     # Title - You are seeing the evolution of X company
@@ -272,38 +286,38 @@ app.layout = html.Div(children=[
     Output(component_id='range-slider-history', component_property='max'),  # Calculate the max of the history slider
     Output(component_id='range-slider-history', component_property='marks'),
     # Output(component_id='uservalue-container', component_property='children'),
-    Input(component_id='dropdown', component_property='value'),])  # Take dropdown value
-
+    Input(component_id='dropdown', component_property='value'), ])  # Take dropdown value
 def set_history_size(dropdown_value):
-    print("Fetching the dropdown_value...")
+    logger.info("Fetching the dropdown_value...")
     df = dataAPI.get_airtable_data(dropdown_value)
     # The dates in a panda serie of format YYYY-MM-DD are transformed to a decimal yearly array
-    dates = np.array(main.date_formatting(df["Date"]))
+    dates = np.array(date_formatting(df["Date"]))
     formatted_dates = dates + 1970
-    min_history_date = main.date_minimum_history(formatted_dates)
+    min_history_date = date_minimum_history(formatted_dates)
     max_history_date = formatted_dates[-1]
     marks_history = {
         min_history_date: {'label': str(int(min_history_date)), 'style': {'color': '#77b0b1'}},
         max_history_date: {'label': str(int(max_history_date)), 'style': {'color': '#f50'}}
     }
-    print("Dropdown value fetched and slider printed successfully")
+    logger.info("Dropdown value fetched and slider printed successfully")
     return [max_history_date], min_history_date, max_history_date, marks_history
+
+
 @app.callback(
-    Output(component_id='intermediate-value', component_property='data'), #prints the dataframe
+    Output(component_id='intermediate-value', component_property='data'),  # prints the dataframe
     Output(component_id='users-data', component_property='data'),
-    Output(component_id='range-slider-data-ignored1', component_property='value'), # Reset slider value to zero
+    Output(component_id='range-slider-data-ignored1', component_property='value'),  # Reset slider value to zero
     Output("alert-fade", "is_open"),  # Reset slider value to zero
     Output("loading-component", "loading"),
     # Output(component_id='range-slider-history', component_property='value'), # Set slider to the last date available
     # Output(component_id='uservalue-container', component_property='children'),
     Input(component_id='dropdown', component_property='value'),  # Take dropdown value
     Input(component_id='range-slider-history', component_property='value'),  # Take slider history value
-    )
-
+)
 # Analysis to load the different scenarios (low & high) when a dropdown value is selected
 def load_data(dropdown_value, history_value):
-    print("Starting scenarios calculation")
-    #Initializing random data when dropdown is None
+    logger.info("Starting scenarios calculation")
+    # Initializing random data when dropdown is None
     if dropdown_value is None:
         dates = [48, 49, 50, 51, 52, 53, 54, 55]
         users = [1, 2, 3, 5, 7, 10, 14, 20]
@@ -311,24 +325,26 @@ def load_data(dropdown_value, history_value):
         # The data is loaded from airtable
         df = dataAPI.get_airtable_data(dropdown_value)
         # The dates in a panda serie of format YYYY-MM-DD are transformed to a decimal yearly array
-        dates = np.array(main.date_formatting(df["Date"]))
+        dates = np.array(date_formatting(df["Date"]))
         # Users are taken from the database and multiply by a million
         users = np.array(df["Users"]).astype(float) * 1000000
 
     # Test to be deleted, changing dates & users to use moving average
-    print(dates)
-    print(users)
-    print("CHANGE")
+    logger.info(dates)
+    logger.info(users)
+    logger.info("CHANGE")
     # dates, users = main.moving_average_smoothing(dates, users, 3)
-    print(dates)
-    print(users)
-    history_value_formatted = history_value[0]-1970  # Puts back the historical value to the format for computations
-    dates_actual = main.get_earlier_dates(dates, history_value_formatted)
+    logger.info(dates)
+    logger.info(users)
+    history_value_formatted = history_value[0] - 1970  # Puts back the historical value to the format for computations
+    dates_actual = get_earlier_dates(dates, history_value_formatted)
     data_len = len(dates_actual)  # length of the dataset to consider for retrofitting
 
     # All parameters are calculated by ignoring data 1 by 1, taking the history reference as the end point
-    df_full = main.parameters_dataframe(dates[0:data_len], users[0:data_len])  # Dataframe containing all parameters with all data ignored
-    df_sorted = main.parameters_dataframe_cleaning(df_full, users[0:data_len])  # Dataframe where inadequate scenarios are eliminated
+    df_full = main.parameters_dataframe(dates[0:data_len],
+                                        users[0:data_len])  # Dataframe containing all parameters with all data ignored
+    df_sorted = main.parameters_dataframe_cleaning(df_full, users[
+                                                            0:data_len])  # Dataframe where inadequate scenarios are eliminated
     if dropdown_value is None:  # Exception for when dropdown is not selected yet, initializing df
         df = df_full
     current_valuation = 100
@@ -337,20 +353,21 @@ def load_data(dropdown_value, history_value):
             state_alert = True
         else:
             state_alert = False
-    print("df_sorted")
-    print(df_sorted)
+    logger.info("df_sorted")
+    logger.info(df_sorted)
 
     user_value = current_valuation / users[-1]
     user_value_displayed = '{:.1f} $'.format(user_value)
     formatted_dates = dates + 1970
-    min_history_date = main.date_minimum_history(formatted_dates)
+    min_history_date = date_minimum_history(formatted_dates)
     max_history_date = formatted_dates[-1]
 
-    print(min_history_date)
-    print(max_history_date)
-    print("Scenarios calculation completed")
+    logger.info(min_history_date)
+    logger.info(max_history_date)
+    logger.info("Scenarios calculation completed")
     return df_sorted.to_json(date_format='iso', orient='split'), df.to_json(date_format='iso', orient='split'), \
-        [0], state_alert, True
+           [0], state_alert, True
+
 
 @app.callback([
     # Output(component_id='title', component_property='children'),  # Title
@@ -370,26 +387,27 @@ def load_data(dropdown_value, history_value):
     ],
 
     [
-    Input(component_id='users-data', component_property='data'),  # Take dropdown value
-    Input(component_id='intermediate-value', component_property='data'), # Read data of the parameters calculated earlier
-    Input(component_id='range-slider-data-ignored1', component_property='value'),  # Take user slider value
-    Input(component_id='range-slider-history', component_property='value'),  # Take user slider history value
-    # Input(component_id='range-slider-profitability', component_property='value')
-              ])
+        Input(component_id='users-data', component_property='data'),  # Take dropdown value
+        Input(component_id='intermediate-value', component_property='data'),
+        # Read data of the parameters calculated earlier
+        Input(component_id='range-slider-data-ignored1', component_property='value'),  # Take user slider value
+        Input(component_id='range-slider-history', component_property='value'),  # Take user slider history value
+        # Input(component_id='range-slider-profitability', component_property='value')
+    ])
 def graph_update(jsonified_users_data, jsonified_cleaned_data, data_slider, history_value):
     # --------- Data Loading
     # Data prepared earlier is fetched here
     df = pd.read_json(jsonified_users_data, orient='split')  # Users+date data
-    print(df)
+    logger.info(df)
     # Way of dynamically adapting the title --> company_name should be used as a variable
     title_figure = "The growth evolution is shown"
-    dates = np.array(main.date_formatting(df["Date"]))
-    users = np.array(df["Users"]).astype(float)*1000000
+    dates = np.array(date_formatting(df["Date"]))
+    users = np.array(df["Users"]).astype(float) * 1000000
     # To be deleted: changed dates & users to moving average
     # dates, users = main.moving_average_smoothing(dates, users, 3)
     # Calculating the length of historical values to be considered in the plots
     history_value_formatted = history_value[0] - 1970  # Puts back the historical value to the format for computations
-    dates_actual = main.get_earlier_dates(dates, history_value_formatted)
+    dates_actual = get_earlier_dates(dates, history_value_formatted)
     data_len = len(dates_actual)  # length of the dataset to consider for retrofitting
 
     df_sorted = pd.read_json(jsonified_cleaned_data, orient='split')
@@ -405,8 +423,8 @@ def graph_update(jsonified_users_data, jsonified_cleaned_data, data_slider, hist
 
     # Creating the slider's marks
     max_value = len(df_sorted) - 1
-    print("Length of the slider for ignored data:")
-    print(max_value)
+    logger.info("Length of the slider for ignored data:")
+    logger.info(max_value)
     '''
     marks_history = {
         min_history_date: {'label': str(int(min_history_date)), 'style': {'color': '#77b0b1'}},
@@ -431,8 +449,8 @@ def graph_update(jsonified_users_data, jsonified_cleaned_data, data_slider, hist
     p0 = df_scenarios_array[row_selected, 3]
     r_squared_showed = np.round(df_sorted_array[row_selected, 4], 3)
     number_ignored_data = int(df_scenarios_array[row_selected, 0])
-    print("Number of ignored data")
-    print(number_ignored_data)
+    logger.info("Number of ignored data")
+    logger.info(number_ignored_data)
 
     # Polynomial approximation
     polynum3 = main.polynomial_approximation(dates, users, 3)
@@ -440,53 +458,80 @@ def graph_update(jsonified_users_data, jsonified_cleaned_data, data_slider, hist
 
     # Build Main Chart
     fig_main = go.Figure(layout=layout_main_graph)
-    fig_main.update_xaxes(range=[dates[0]+1970, dates[-1]*2-dates[0]+1970])  # Fixing the size of the X axis with users max + 10%
-    fig_main.update_yaxes(range=[0, users[-1]*1.3])  # Fixing the size of the Y axis
+    fig_main.update_xaxes(
+        range=[dates[0] + 1970, dates[-1] * 2 - dates[0] + 1970])  # Fixing the size of the X axis with users max + 10%
+    fig_main.update_yaxes(range=[0, users[-1] * 1.3])  # Fixing the size of the Y axis
     # Add S-curve - S-Curve the user can play with
-    x = np.linspace(dates[0], dates[-1]*2-dates[0], num=50)
-    fig_main.add_trace(go.Scatter(name="Predicted S Curve", x=x+1970, y=main.logisticfunction(k, r, p0, x), mode="lines", line=dict(color='#54c4f4')))
+    x = np.linspace(dates[0], dates[-1] * 2 - dates[0], num=50)
+    fig_main.add_trace(go.Scatter(name="Predicted S Curve",
+                                  x=x + 1970,
+                                  y=logisticfunction(k, r, p0, x),
+                                  mode="lines",
+                                  line=dict(color='#54c4f4')))
+
     # Add 3 scenarios
-    x0 = np.linspace(dates_actual[-1] + 0.25, dates_actual[-1]*2-dates_actual[0], num=10)  # Creates a future timeline the size of the data
+    x0 = np.linspace(dates_actual[-1] + 0.25, dates_actual[-1] * 2 - dates_actual[0],
+                     num=10)  # Creates a future timeline the size of the data
     # Low growth scenario
-    fig_main.add_trace(go.Scatter(name="Predicted S Curve", x=x0 + 1970,
-                             y=main.logisticfunction(k_scenarios[0], r_scenarios[0], p0_scenarios[0], x0), mode='lines',
-                             line=dict(color='LightGrey', width=2, dash='dash')))
-    #fig.add_trace(go.Line(name="Predicted S Curve", x=x + 1970,
-                             #y=main.logisticfunction(k_scenarios[1], r_scenarios[1], p0_scenarios[1], x), mode="lines"))
+    fig_main.add_trace(go.Scatter(name="Predicted S Curve",
+                                  x=x0 + 1970,
+                                  y=logisticfunction(k_scenarios[0], r_scenarios[0], p0_scenarios[0], x0),
+                                  mode='lines',
+                                  line=dict(color='LightGrey', width=2, dash='dash')))
+
+    # fig.add_trace(go.Line(name="Predicted S Curve", x=x + 1970,
+    # y=main.logisticfunction(k_scenarios[1], r_scenarios[1], p0_scenarios[1], x), mode="lines"))
     # High growth scenario, if existent
     if len(df_scenarios_array) > 1:
-        fig_main.add_trace(go.Scatter(name="Predicted S Curve", x=x0 + 1970,
-                             y=main.logisticfunction(k_scenarios[-1], r_scenarios[-1], p0_scenarios[-1], x0), mode='lines',
-                             line=dict(color='Grey', width=2, dash='dash')))
+        fig_main.add_trace(go.Scatter(name="Predicted S Curve",
+                                      x=x0 + 1970,
+                                      y=logisticfunction(k_scenarios[-1], r_scenarios[-1], p0_scenarios[-1], x0),
+                                      mode='lines',
+                                      line=dict(color='Grey', width=2, dash='dash')))
+
     x1 = np.linspace(dates[-1] + 0.25, dates[-1] + 10, num=10)
+
     # Add predicted bars
     # fig_main.add_trace(go.Bar(name="Predicted S Curve", x=x1+1970, y=main.logisticfunction(k, r, p0, x1),
-                         # marker_color='White', marker_line_color='Black'))
+    # marker_color='White', marker_line_color='Black'))
     # Highlight points considered for the approximation
-    fig_main.add_trace(go.Bar(name="Data used for the approximation", x=dates[number_ignored_data:data_len] + 1970,
+    fig_main.add_trace(go.Bar(name="Data used for the approximation",
+                              x=dates[number_ignored_data:data_len] + 1970,
                               y=users[number_ignored_data:data_len],
                               marker_color="Black"))
     # Highlight points not considered for the approximation
-    fig_main.add_trace(go.Bar(name="Data used for the approximation", x=dates[0:number_ignored_data]+1970, y=users[0:number_ignored_data],
-                         marker_color="Grey"))
+    fig_main.add_trace(go.Bar(name="Data used for the approximation",
+                              x=dates[0:number_ignored_data] + 1970,
+                              y=users[0:number_ignored_data],
+                              marker_color="Grey"))
     # Highlight points past the current date
-    fig_main.add_trace(go.Bar(name="Data used for the approximation", x=dates[data_len:] + 1970,
+    fig_main.add_trace(go.Bar(name="Data used for the approximation",
+                              x=dates[data_len:] + 1970,
                               y=users[data_len:],
                               marker_color='#e6ecf5'))
+
     # Add vertical line indicating the year of the prediction for retrofitting
     fig_main.add_vline(x=history_value[0], line_width=3, line_dash="dash")
 
     # Build second chart containing the discrete growth rates
     fig_second = go.Figure(layout=layout_second_graph)
-    fig_second.update_xaxes(range=[0, users[-1]*1.1])  # Fixing the size of the X axis with users max + 10%
-    fig_second.update_yaxes(range=[0, 1.2]) # Fixing the size of the Y axis
+    fig_second.update_xaxes(range=[0, users[-1] * 1.1])  # Fixing the size of the X axis with users max + 10%
+    fig_second.update_yaxes(range=[0, 1.2])  # Fixing the size of the Y axis
     fig_second.add_trace(
-        go.Scatter(name="Discrete Growth Rate", x=main.discrete_user_interval(users),
-                   y=main.discrete_growth_rate(users, dates+1970), mode="markers",line=dict(color='#54c4f4')))
+        go.Scatter(name="Discrete Growth Rate",
+                   x=discrete_user_interval(users),
+                   y=discrete_growth_rate(users, dates + 1970),
+                   mode="markers",
+                   line=dict(color='#54c4f4')))
+
     # Add trace of the regression
     fig_second.add_trace(
-        go.Scatter(name="Discrete Growth Rate", x=main.discrete_user_interval(users),
-                   y=-r/k*main.discrete_user_interval(users)+r, mode="lines", line=dict(color='#54c4f4')))
+        go.Scatter(name="Discrete Growth Rate",
+                   x=discrete_user_interval(users),
+                   y=-r / k * discrete_user_interval(users) + r,
+                   mode="lines",
+                   line=dict(color='#54c4f4')))
+
     # Add trace of the polynomial approximation
     '''
     fig_second.add_trace(
@@ -499,43 +544,39 @@ def graph_update(jsonified_users_data, jsonified_cleaned_data, data_slider, hist
     # Changes the color of the scatters ignored
     if number_ignored_data > 0:
         fig_second.add_trace(
-            go.Scatter(name="Discrete Growth Rate", x=main.discrete_user_interval(users[0:number_ignored_data]),
-                       y=main.discrete_growth_rate(users[0:number_ignored_data], dates[0:number_ignored_data] + 1970),
+            go.Scatter(name="Discrete Growth Rate", x=discrete_user_interval(users[0:number_ignored_data]),
+                       y=discrete_growth_rate(users[0:number_ignored_data], dates[0:number_ignored_data] + 1970),
                        mode="markers", line=dict(color='#808080')))
+
     # Changes the color of the scatters after the date considered
     if data_len < len(dates):
         fig_second.add_trace(
-            go.Scatter(name="Discrete Growth Rate", x=main.discrete_user_interval(users[data_len:]),
-                       y=main.discrete_growth_rate(users[data_len:], dates[data_len:] + 1970),
+            go.Scatter(name="Discrete Growth Rate", x=discrete_user_interval(users[data_len:]),
+                       y=discrete_growth_rate(users[data_len:], dates[data_len:] + 1970),
                        mode="markers", line=dict(color='#e6ecf5')))
 
     # Carrying capacity to be printed
-    k_printed = int(np.rint(k)/pow(10, 6))
+    k_printed = int(np.rint(k) / pow(10, 6))
     k_printed = "{:,} M".format(k_printed)
     # PLATEAU: Time when the plateau is reached, assuming the plateau is "reached" when p(t)=95%*K
-    print(p0)
+    logger.info(p0)
     if p0 > 2.192572e-11:
-        t_plateau = main.time_to_population(k, r, p0, 0.95*k) + 1970
-        month_plateau = math.ceil((t_plateau - int(t_plateau))*12)
+        t_plateau = main.time_to_population(k, r, p0, 0.95 * k) + 1970
+        month_plateau = math.ceil((t_plateau - int(t_plateau)) * 12)
         year_plateau = int(np.round(t_plateau, 0))
         date_plateau = datetime.date(year_plateau, month_plateau, 1)
         date_plateau_displayed = date_plateau.strftime("%b, %Y")
         t_plateau_displayed = 'Year {:.1f}'.format(t_plateau)
     else:
         date_plateau_displayed = "Plateau could not be calculated"
-    print("2. CALLBACK END")
-    print(dates)
-    print(users)
+    logger.info("2. CALLBACK END")
+    logger.info(dates)
+    logger.info(users)
 
     # Analysis test to be deleted
 
-
-    return {'display': 'block'}, {'display': 'block'}, {'display': 'block'}, {'display': 'block'},  {'display': 'block'},\
-        fig_main, fig_second, k_printed, r_squared_showed, date_plateau_displayed, marks
-
-
-
-
+    return {'display': 'block'}, {'display': 'block'}, {'display': 'block'}, {'display': 'block'}, {'display': 'block'}, \
+           fig_main, fig_second, k_printed, r_squared_showed, date_plateau_displayed, marks
 
 
 if __name__ == '__main__':
