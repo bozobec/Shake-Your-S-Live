@@ -85,7 +85,8 @@ app = dash.Dash(__name__,
 # Posthog settings
 posthog = Posthog(
   project_api_key='phc_b1l76bi8dgph2LI23vhWTdSNkiL34y2dkholjYEC7gw',
-  host='https://eu.i.posthog.com'
+  host='https://eu.i.posthog.com',
+    enable_exception_autocapture=True,
 )
 
 # Load index template from external file
