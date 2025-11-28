@@ -28,7 +28,6 @@ from flask import request, jsonify, send_from_directory
 from plotly.subplots import make_subplots
 from posthog import Posthog
 
-import dataAPI
 import main
 import src.ParametersDataFrame
 import src.Utils.Logistics
@@ -50,6 +49,8 @@ from components.revenue_card import revenue_card
 from components.selecting_card import selecting_card, labels
 from components.stored_data import stored_data
 from components.valuation_card import valuation_card
+from src.API.AirTableAPI import AirTableAPI
+from src.API.FinhubAPI import FinhubAPI
 from src.Utils.RastLogger import get_default_logger
 from src.Utils.dates import YEAR_OFFSET
 
@@ -63,8 +64,6 @@ load_dotenv()
 
 
 # Retrieve secrets
-AIRTABLE_API_KEY = os.getenv("AIRTABLE_API_KEY")
-logger.info(f"Airtable key loaded: {bool(AIRTABLE_API_KEY)}")
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 logger.info(f"Stripe key loaded: {bool(stripe.api_key)}")
 
@@ -944,7 +943,8 @@ def initialize_data(href):
 
 
     # Load or compute data
-    df_all_companies_information = dataAPI.get_hyped_companies_data()
+    airtable_api = AirTableAPI()
+    df_all_companies_information = airtable_api.get_hyped_companies_data()
     all_companies_information_store = df_all_companies_information.to_dict('records')
 
     # Create the list of industries for the ranking dropdown
@@ -1195,7 +1195,8 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
         )
     try:
         # Fetch dataset from API
-        df = dataAPI.get_airtable_data(dropdown_value)
+        airtable_api = AirTableAPI()
+        df = airtable_api.get_data(dropdown_value)
         if df.empty:
             dropdown_value = "Imported Data"
             df = pd.DataFrame(imported_df)
@@ -1216,7 +1217,7 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
 
         # Ugly "if" statement making sure that the information are loaded, because it can happen that the initial callback is not triggered
         if not df_all_companies:
-            df_all_companies_information = dataAPI.get_hyped_companies_data()
+            df_all_companies_information = airtable_api.get_hyped_companies_data()
             df_all_companies = df_all_companies_information.to_dict('records')
         for company in df_all_companies:
             if company['Company Name'].lower() == dropdown_value.lower():
@@ -1282,7 +1283,7 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
                 if dropdown_value == "Centene Corporation":
                     total_assets = 0
                 else:
-                    yearly_revenue, total_assets = dataAPI.get_previous_quarter_revenue(symbol_company)  # Getting with API
+                    yearly_revenue, total_assets = FinhubAPI().get_previous_quarter_revenue(symbol_company)  # Getting with API
                 logger.info("Latest yearly revenue & total assets fetched")
             except Exception as e:
                 logger.info("Error fetching revenue & total assets, standard value assigned")
@@ -1807,7 +1808,7 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
     if symbol_company != "N/A":
         # If the date picked is the latest, then API call
         try:
-            latest_market_cap = dataAPI.get_marketcap(symbol_company)
+            latest_market_cap = FinhubAPI.get_marketcap(symbol_company)
             if latest_market_cap is None:
                 raise ValueError("Market cap returned None")
             logger.info(f"{latest_market_cap = }")
