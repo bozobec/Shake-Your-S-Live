@@ -15,8 +15,12 @@ logger = get_default_logger()
 load_dotenv()
 AIRTABLE_API_KEY = os.getenv("AIRTABLE_API_KEY")
 
-# This function fetches all the unique categories in the airtable database
+
 def get_airtable_labels():
+    """
+    This function fetches all the unique categories in the airtable database
+    :return:
+    """
     logger.info("Fetching the dataset labels")
     url = "https://api.airtable.com/v0/appm3ffcu38jyqhi3/tbl7LiTDpXk9DeRUB?fields%5B%5D=Company&fields%5B%5D=Category&fields%5B%5D=Symbol"
     headers = {
@@ -66,11 +70,7 @@ def get_airtable_labels():
         # Sort DataFrame by Category and Company
         df.sort_values(by=['Category', 'Company'], inplace=True)
 
-        # Initialize label_list
-        label_list = []
-
         # Iterate through the sorted DataFrame to create label_list
-        current_category = None
         grouped = defaultdict(list)
         for _, row in df.iterrows():
             grouped[row['Category']].append({
@@ -83,9 +83,8 @@ def get_airtable_labels():
         return [{"group": g, "items": items} for g, items in grouped.items()]
 
     except Exception as e:
-        logger.info(f"Error fetching dataset labels: {str(e)}")
+        logger.error(f"Error fetching dataset labels: {str(e)}")
         return None
-
 
 
 def get_airtable_data(filter):
@@ -110,7 +109,7 @@ def get_airtable_data(filter):
         response = requests.get(url, headers=headers)  # Call the Airtable data with the specified filter
         data = response.json()  # Transforms it into a dictionary
 
-        #Format the data into a dataframe including only the Date and the Users
+        # Format the data into a dataframe including only the Date and the Users
         records = data['records']
         formatted_data = []
         for record in records:
@@ -126,14 +125,18 @@ def get_airtable_data(filter):
                 'Research_And_Development': record['fields']['Research_And_Development'],
             })
         df = pd.DataFrame(formatted_data)  # Create a DataFrame from the sample data
-        # sorted_df = df.sort_values(by='Date')  # Sort df to avoid bugs linked to wrong API call
         return df
     except Exception as e:
-        logger.info(f"Error fetching dataset data: {str(e)}")
+        logger.error(f"Error fetching dataset data: {str(e)}")
         return None
 
-# API Fetching the market cap of the company in $mio.
+
 def get_marketcap(symbol_input):
+    """
+    API Fetching the market cap of the company in $mio.
+    :param symbol_input:
+    :return:
+    """
     logger.info("Fetching the current market cap")
     try:
         url = "https://finnhub.io/api/v1/stock/profile2?"
@@ -146,12 +149,18 @@ def get_marketcap(symbol_input):
         if currency == "JPY":
             market_cap = 0.0064 * market_cap  # exchange rate on 16 Jan 25, to be updated regularly
         return market_cap
+
     except Exception as e:
-        logger.info(f"Error fetching market cap: {str(e)}")
+        logger.error(f"Error fetching market cap: {str(e)}")
         return None
 
-# API Fetching the revenue of the last quarter
+
 def get_previous_quarter_revenue(symbol_input):
+    """
+    API Fetching the revenue of the last quarter
+    :param symbol_input:
+    :return:
+    """
     logger.info("Fetching the quarterly revenue")
     try:
         url = "https://finnhub.io/api/v1/stock/financials-reported?"
@@ -165,21 +174,17 @@ def get_previous_quarter_revenue(symbol_input):
         if current_date.month in [1, 2, 3]:
             # If the current quarter is Q1, the previous quarter is Q4 of the previous year
             end_date_prev_quarter = datetime(current_date.year - 1, 12, 31)
-            year_percentage = 1/4
+            year_percentage = 1 / 4
         else:
             # Otherwise, calculate the last day of the previous quarter
             previous_quarter = (current_date.month - 1) // 3
             end_date_prev_quarter = datetime(current_date.year, previous_quarter * 3, 1)
-            year_percentage = previous_quarter/4  # Defines the percentage of the year that has passed. Because
-                                                    # the revenue in the report is from the beginning of the year
-        from_date = end_date_prev_quarter.strftime('%Y-%m-%d')
-        to_date = current_date.strftime('%Y-%m-%d')
+            year_percentage = previous_quarter / 4  # Defines the percentage of the year that has passed. Because
+            # the revenue in the report is from the beginning of the year
 
         # Response
         response = requests.get(url, params={'symbol': symbol,
                                              'freq': frequency,
-                                             #'from': from_date,
-                                             #'to': to_date,
                                              'token': auth_token})
         data = response.json()
         try:
@@ -187,7 +192,7 @@ def get_previous_quarter_revenue(symbol_input):
                 item['value'] for item in data['data'][0]['report']['bs'] if item['label'] == 'Total current assets')
         except:
             total_assets = 0.0
-            logger.info("Error fetching total assets")
+            logger.exception("Error fetching total assets")
         try:
             revenue = next(item['value'] for item in data['data'][0]['report']['ic'] if item['label'] == 'Revenue'
                            or item['label'] == 'Revenues' or item['label'] == 'Revenue:')
@@ -200,11 +205,16 @@ def get_previous_quarter_revenue(symbol_input):
 
         return revenue / year_percentage, total_assets
     except Exception as e:
-        logger.info(f"Error fetching quarterly revenue: {str(e)}")
+        logger.error(f"Error fetching quarterly revenue: {str(e)}")
         return 0, total_assets
 
-# API Fetching the profit margin of the past year
+
 def get_profit_margin(symbol_input):
+    """
+    API Fetching the profit margin of the past year
+    :param symbol_input:
+    :return:
+    """
     logger.info("Fetching the profit margin")
     try:
         url = "https://finnhub.io/api/v1/stock/metric?"
@@ -217,24 +227,30 @@ def get_profit_margin(symbol_input):
         data = response.json()
         profit_margin = data['metric']['netProfitMarginAnnual']
         return profit_margin
+
     except Exception as e:
-        logger.info(f"Error fetching yearly profit_margin: {str(e)}")
+        logger.error(f"Error fetching yearly profit_margin: {str(e)}")
         return 0
 
-# API Fetching the most hyped or least hyped companies
-# hyped is a boolean -> True for hyped companies; False for not hyped
+
 def get_hyped_companies(hyped):
+    """
+    API Fetching the most hyped or least hyped companies
+    hyped is a boolean -> True for hyped companies; False for not hyped
+    :param hyped:
+    :return:
+    """
     logger.info("Fetching the hyped/not hyped data list")
     headers = {
         "Authorization": f"Bearer {AIRTABLE_API_KEY}"
     }
-    if hyped: # If hyped is set as "true"
+    if hyped:  # If hyped is set as "true"
         try:
             url = "https://api.airtable.com/v0/appm3ffcu38jyqhi3/Companies?fields%5B%5D=Company_Name&fields%5B%5D=Hype_meter_value&view=Most+hyped+companies"
             response = requests.get(url, headers=headers)  # Call the Airtable data with the specified filter
             data = response.json()  # Transforms it into a dictionary
 
-            #Format the data into a dataframe including only the Date and the Users
+            # Format the data into a dataframe including only the Date and the Users
             records = data['records']
             formatted_data = []
             for record in records:
@@ -243,17 +259,17 @@ def get_hyped_companies(hyped):
                     'Hype Score': record['fields']['Hype_meter_value'],
                 })
             df = pd.DataFrame(formatted_data)  # Create a DataFrame from the sample data
-            # sorted_df = df.sort_values(by='Date')  # Sort df to avoid bugs linked to wrong API call
             return df
+
         except Exception as e:
-            logger.info(f"Error fetching dataset data: {str(e)}")
+            logger.error(f"Error fetching dataset data: {str(e)}")
             return None
     else:
         try:
             url = "https://api.airtable.com/v0/appm3ffcu38jyqhi3/Companies?fields%5B%5D=Company_Name&fields%5B%5D=Hype_meter_value&fields%5B%5D=Growth_score&view=Least+hyped+companies"
             response = requests.get(url, headers=headers)  # Call the Airtable data with the specified filter
             data = response.json()  # Transforms it into a dictionary
-            #Format the data into a dataframe including only the Date and the Users
+            # Format the data into a dataframe including only the Date and the Users
             records = data['records']
             formatted_data = []
             for record in records:
@@ -263,15 +279,18 @@ def get_hyped_companies(hyped):
                     'Growth Score': record['fields']['Growth_score']
                 })
             df = pd.DataFrame(formatted_data)  # Create a DataFrame from the sample data
-            # sorted_df = df.sort_values(by='Date')  # Sort df to avoid bugs linked to wrong API call
             return df
         except Exception as e:
-            logger.info(f"Error fetching dataset data: {str(e)}")
+            logger.error(f"Error fetching dataset data: {str(e)}")
             return None
 
-# Function fetching the list of all the companies (companies sheet on airtable) and the related information
-# (max net margin, other info, etc.)
+
 def get_hyped_companies_data():
+    """
+    Function fetching the list of all the companies (companies sheet on airtable) and the related information
+    (max net margin, other info, etc.)
+    :return:
+    """
     logger.info("Fetching the dataset data...")
     headers = {
         "Authorization": f"Bearer {AIRTABLE_API_KEY}"
@@ -279,7 +298,8 @@ def get_hyped_companies_data():
 
     base_url = "https://api.airtable.com/v0/appm3ffcu38jyqhi3/Companies"
     params = {
-        "fields[]": ["Company_Name", "Hype_meter_value", "Growth_score", "Max_Net_Margin", "Company_logo", "Industry", "Company description"],
+        "fields[]": ["Company_Name", "Hype_meter_value", "Growth_score", "Max_Net_Margin", "Company_logo", "Industry",
+                     "Company description"],
         "view": "Most hyped companies"
     }
 
@@ -320,5 +340,5 @@ def get_hyped_companies_data():
         logger.info(f"Fetched {len(df)} records successfully.")
         return df
     except Exception as e:
-        logger.info(f"Error fetching dataset data: {str(e)}")
+        logger.error(f"Error fetching dataset data: {str(e)}")
         return None
