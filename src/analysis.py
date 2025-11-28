@@ -5,7 +5,7 @@ import numpy as np
 import numpy_financial as npf
 from sympy import Symbol, solve
 
-from src.Utils.mathematics import logisticfunction
+from src.Utils.Logistics import logisticfunction
 from src.Utils.RastLogger import get_default_logger
 
 logger = get_default_logger()

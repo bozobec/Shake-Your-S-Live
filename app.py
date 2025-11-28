@@ -1,63 +1,57 @@
 # -*- coding: utf-8 -*-
 # Run this app with `python app.py` and
 # visit http://127.0.0.1:8050/ in your web browser
+import json
+import math
+import os
+import time
+import urllib.parse
+from datetime import datetime, timedelta, date
+
 import dash
+import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
-from dash import Dash, html, dcc, register_page, callback_context, no_update, clientside_callback
-from dash import callback
-from dash.dependencies import Input, Output, State
-import pandas as pd
+import jwt
 import numpy as np
+import pandas as pd
 import plotly.graph_objects as go
+import requests
+import stripe
+from dash import callback
+from dash import html, dcc, callback_context, no_update, clientside_callback
+from dash.dependencies import Input, Output, State
+from dash.exceptions import PreventUpdate
+from dash_iconify import DashIconify
+from dateutil.relativedelta import relativedelta
+from dotenv import load_dotenv
+from flask import request, jsonify, send_from_directory
+from plotly.subplots import make_subplots
+from posthog import Posthog
+
 import dataAPI
 import main
-import dash_bootstrap_components as dbc
-# import datetime
-from datetime import datetime, timedelta, date
-import math
-from plotly.subplots import make_subplots
-from dash_iconify import DashIconify
-import time
-from dash.exceptions import PreventUpdate
-import urllib.parse
-import plotly.io as pio
-import io
-from flask import send_file, request, jsonify, send_from_directory, Flask
-import base64
-from dateutil.relativedelta import relativedelta
-from scipy.stats import mstats
-from posthog import Posthog
-import random
-import jwt
-import requests
-import os
-from dotenv import load_dotenv
-import stripe
-import json
-
 import src.ParametersDataFrame
+import src.Utils.Logistics
 import src.Utils.dates
 import src.Utils.mathematics
 import src.analysis
-from components.navbar import navbar
+from components.analysis_card import analysis_card
+from components.functionalities_card import functionalities_card
 from components.graph_layouts import layout_main_graph, layout_revenue_graph, layout_growth_rate_graph, \
     layout_product_maturity_graph
-from components.offcanvas import offcanvas
-from components.analysis_card import analysis_card
-from components.selecting_card import selecting_card, labels
-from components.hype_meter_card import hype_meter_card, card_welcome, card_dashboard
-from components.valuation_card import valuation_card
 from components.growth_card import growth_card
-from components.revenue_card import revenue_card
-from components.product_maturity_card import product_maturity_card
 from components.growth_rate_card import growth_rate_card
-from components.functionalities_card import functionalities_card
-from components.ranking_card import table_hype_card
+from components.hype_meter_card import hype_meter_card, card_welcome
+from components.offcanvas import offcanvas
+from components.product_maturity_card import product_maturity_card
 from components.quadrant_card import quadrant_card
+from components.ranking_card import table_hype_card
+from components.revenue_card import revenue_card
+from components.selecting_card import selecting_card, labels
 from components.stored_data import stored_data
-
-from src.Utils.dates import YEAR_OFFSET
+from components.valuation_card import valuation_card
 from src.Utils.RastLogger import get_default_logger
+from src.Utils.dates import YEAR_OFFSET
 
 logger = get_default_logger()
 
@@ -70,9 +64,9 @@ load_dotenv()
 
 # Retrieve secrets
 AIRTABLE_API_KEY = os.getenv("AIRTABLE_API_KEY")
-logger.info("Airtable key loaded:", bool(AIRTABLE_API_KEY))
+logger.info(f"Airtable key loaded: {bool(AIRTABLE_API_KEY)}")
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
-logger.info("Stripe key loaded:", bool(stripe.api_key))
+logger.info(f"Stripe key loaded: {bool(stripe.api_key)}")
 
 pd.set_option('display.max_rows', 200)
 #APP_TITLE = "RAST"
@@ -542,7 +536,7 @@ CLERK_JWKS_URL = os.getenv("https://clerk.rast.guru/.well-known/jwks.json", "htt
 logger.info("clerk jwks")
 logger.info(CLERK_JWKS_URL)
 jwks = requests.get(CLERK_JWKS_URL).json()
-logger.info("Flask routes:", [r.rule for r in app.server.url_map.iter_rules()])
+logger.info(f"Flask routes: {[r.rule for r in app.server.url_map.iter_rules()]}")
 
 
 # ----------------------------------------------------------------------------------
@@ -756,7 +750,7 @@ def update_login_state(bridge_content):
     try:
         state = json.loads(bridge_content)
     except json.JSONDecodeError:
-        logger.info("Failed to parse login-state-bridge content:", bridge_content)
+        logger.info(f"Failed to parse login-state-bridge content: {bridge_content}")
         return no_update
 
     # Extract logged_in and user_id
@@ -787,7 +781,7 @@ def update_login_state(bridge_content):
         if prev_value == new_data:
             return no_update
 
-    logger.info("Updating login-state to:", logged_in, user_id)
+    logger.info(f"Updating login-state to: {logged_in} for user: {user_id}")
     return logged_in, user_id
 
 @app.callback(
@@ -1128,7 +1122,7 @@ def show_cards(data, launch_counter):
             {"visibility": "visible"}
 
     else:
-        logger.info("Card already displayed", launch_counter)
+        logger.info(f"Card already displayed {launch_counter}")
         raise PreventUpdate
 
 
@@ -1363,8 +1357,8 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
         max_history_datepicker = current_date.date().isoformat()
         date_value_datepicker = max_history_datepicker # Sets the value of the datepicker as the max date
         # current_date = dates_formatted[-1]
-        logger.info("Other data", min_history_datepicker, max_dataset_date, max_history_datepicker_date,
-              max_history_datepicker, date_value_datepicker)
+        logger.info(f"Other data : { min_history_datepicker = }; { max_dataset_date = };" +
+                    f" { max_history_datepicker_date = }; { max_history_datepicker = }; { date_value_datepicker= }; ")
 
         # Discount Rate
         value_discount_rate_slider = 5
@@ -1446,7 +1440,7 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
     date_picked_formatted = src.Utils.dates.date_formatting_from_string(date_picked)
     logger.info("datedate")
     df_dataset = pd.DataFrame(df_dataset_dict)
-    logger.info("DF_dataset_first", df_dataset)
+    logger.info(f"DF_dataset_first {df_dataset}")
     if dropdown_value is None:
         raise PreventUpdate
     # Dates array definition from dictionary
@@ -1476,10 +1470,10 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
     # All parameters are calculated by ignoring data 1 by 1, taking the history reference as the end point
     df_full = src.ParametersDataFrame.parameters_dataframe(dates[0:data_len],
                                         users[0:data_len])  # Dataframe containing all parameters with all data ignored
-    logger.info("df_full", df_full)
+    logger.info(f"{df_full = }")
     df_sorted = src.ParametersDataFrame.parameters_dataframe_cleaning(df_full, users[
                                                             0:data_len])  # Dataframe where inadequate scenarios are eliminated
-    logger.info("df_sorted", df_sorted)
+    logger.info(f"{df_sorted = }")
 
     if df_sorted.empty:
         logger.info("No good scenario could be calculated")
@@ -1489,7 +1483,7 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
             df_sorted = df_full
     else:
         logger.info("Successful scenarios exist")
-    logger.info("df_sorted", df_sorted)
+    logger.info(f"{df_sorted = }")
     df_sorted_dict = df_sorted.to_dict(orient='records')  # Transforming it to dict to be stored
     if dropdown_value is None:  # Exception for when dropdown is not selected yet, initializing df
         df = df_full
@@ -1816,7 +1810,7 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
             latest_market_cap = dataAPI.get_marketcap(symbol_company)
             if latest_market_cap is None:
                 raise ValueError("Market cap returned None")
-            logger.info("Latest_market_cap", latest_market_cap)
+            logger.info(f"{latest_market_cap = }")
         except Exception as e:
             logger.info("Couldn't fetch latest market cap, assigning DB value")
             latest_market_cap = df_dataset.loc[closest_index, 'Market Cap'] * 1e3
@@ -1834,7 +1828,7 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
         current_arpu = sum(quarterly_revenue[-4:] / current_users_array[closest_index-4:closest_index])
         printed_current_arpu = f"{current_arpu:.0f} $ (current arpu)"  # formatting
         first_arpu = quarterly_revenue[0] / current_users_array[0]
-        logger.info("FirstARPU", first_arpu)
+        logger.info(f"FirstARPU = {first_arpu}")
         #arpu_growth_calculated = current_arpu/(first_arpu * (dates[data_len] - dates[3]))
         marks_profit_margin_slider = []
         if current_annual_profit_margin > 1:
@@ -2009,7 +2003,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
 
     # Profit Margin Array
     profit_margin_array = np.array([entry['Profit Margin'] for entry in df_dataset_dict])
-    logger.info("ProfitMargin", profit_margin_array)
+    logger.info(f"ProfitMargin {profit_margin_array}")
 
     # Gets the date selected from the new date picker
     date_picked_formatted = src.Utils.dates.date_formatting_from_string(date_picked_formatted_original)
@@ -2025,7 +2019,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     data_len = len(dates_actual)  # length of the dataset to consider for retrofitting
     users_actual = users[0:data_len]
 
-    logger.info("Selected date", date_picked_formatted)
+    logger.info(f"Selected date {date_picked_formatted}")
     logger.info(graph_unit)
 
     # If selecting all possible scenarios,  Creation of the arrays of parameters
@@ -2043,7 +2037,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     r = r_scenarios[row_selected]
     p0 = p0_scenarios[row_selected]
     moving_average = moving_average_scenarios[row_selected]
-    logger.info("movingaverage", moving_average)
+    logger.info(f"{moving_average = }")
     r_squared_showed = np.round(rsquared_scenarios[row_selected], 3)
     number_ignored_data = int(number_ignored_data_scenarios[row_selected])
 
@@ -2073,10 +2067,10 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
             {"value": value_section, "color": "LightGrey", "tooltip": "Computation issue"},
         ]
 
-    logger.info("Value Ring", value_section, r_squared_showed)
+    logger.info(f"Value Ring: {value_section = }, {r_squared_showed = }")
 
     highest_r2_index = np.argmax(rsquared_scenarios)
-    logger.info("HIGHEST", highest_r2_index)
+    logger.info(f"HIGHEST {highest_r2_index}")
 
     # Graph message
 
@@ -2160,7 +2154,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     )
     # Update layout to customize the annotation
     if k_scenarios[-1] > users_raw[-1]:
-        range_y = [0, src.Utils.mathematics.logisticfunction(k_scenarios[-1], r_scenarios[-1], p0_scenarios[-1], [60])[0] * 1.3]
+        range_y = [0, src.Utils.Logistics.logisticfunction(k_scenarios[-1], r_scenarios[-1], p0_scenarios[-1], [60])[0] * 1.3]
     else:
         range_y = [0, users_raw[-1] * 1.2]
 
@@ -2169,7 +2163,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
         annotations=[
             dict(
                 x=(x_coordinate + relativedelta(months=9)).strftime("%Y-%m-%d"),
-                y=0.6 * src.Utils.mathematics.logisticfunction(k_scenarios[-1], r_scenarios[-1], p0_scenarios[-1], [60]),
+                y=0.6 * src.Utils.Logistics.logisticfunction(k_scenarios[-1], r_scenarios[-1], p0_scenarios[-1], [60]),
                 text="F O R E C A S T",
                 showarrow=False,
                 font=dict(size=8, color="black"),
@@ -2202,7 +2196,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
 
 
     x_scenarios = np.linspace(dates_actual[-1], float(date_end_formatted) - 1970, num=50) # changed
-    y_predicted = src.Utils.mathematics.logisticfunction(k, r, p0, x_scenarios)
+    y_predicted = src.Utils.Logistics.logisticfunction(k, r, p0, x_scenarios)
     # Generate x_dates array
     x_dates = np.linspace(date_a.timestamp(), date_end.timestamp(), num=50)
     x_dates_scenarios = np.linspace(date_b_actual.timestamp(), date_end.timestamp(), num=50) # changed
@@ -2226,19 +2220,19 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
 
     # Low growth scenario
     # x = np.linspace(dates[-1], dates[-1] * 2 - dates[0], num=50)
-    y_trace = src.Utils.mathematics.logisticfunction(k_scenarios[0], r_scenarios[0], p0_scenarios[0], x_scenarios)
+    y_trace = src.Utils.Logistics.logisticfunction(k_scenarios[0], r_scenarios[0], p0_scenarios[0], x_scenarios)
     formatted_y_values = [
         f"{y:.3f}" if y < 1e6 else f"{y / 1e6:.3f} M" if y < 1e9 else f"{y / 1e9:.3f} B"
         for y in y_trace
     ]
     fig_main.add_trace(go.Scatter(name="Low Growth", x=x_dates_scenarios,
-                                  y=src.Utils.mathematics.logisticfunction(k_scenarios[0], r_scenarios[0], p0_scenarios[0], x_scenarios),
+                                  y=src.Utils.Logistics.logisticfunction(k_scenarios[0], r_scenarios[0], p0_scenarios[0], x_scenarios),
                                   mode='lines',
                                   line=dict(color='#C58400', width=0.5), showlegend=False, text=formatted_y_values,
                                   hovertemplate=hovertemplate_maingraph)),
     # fig.add_trace(go.Line(name="Predicted S Curve", x=x + 1970,
     # y=main.logisticfunction(k_scenarios[1], r_scenarios[1], p0_scenarios[1], x), mode="lines"))
-    y_trace = src.Utils.mathematics.logisticfunction(k_scenarios[-1], r_scenarios[-1], p0_scenarios[-1], x_scenarios)
+    y_trace = src.Utils.Logistics.logisticfunction(k_scenarios[-1], r_scenarios[-1], p0_scenarios[-1], x_scenarios)
     formatted_y_values = [
         f"{y:.3f}" if y < 1e6 else f"{y / 1e6:.3f} M" if y < 1e9 else f"{y / 1e9:.3f} B"
         for y in y_trace
@@ -2254,9 +2248,9 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
 
     # Filling the area of possible scenarios
     x_area = np.append(x, np.flip(x))  # Creating one array made of two Xs
-    y_area_low = src.Utils.mathematics.logisticfunction(k_scenarios[0], r_scenarios[0], p0_scenarios[0], x_scenarios)  # Low growth array
-    y_area_high = src.Utils.mathematics.logisticfunction(k_scenarios[-1], r_scenarios[-1], p0_scenarios[-1],
-                                                         np.flip(x_scenarios))  # High growth array
+    y_area_low = src.Utils.Logistics.logisticfunction(k_scenarios[0], r_scenarios[0], p0_scenarios[0], x_scenarios)  # Low growth array
+    y_area_high = src.Utils.Logistics.logisticfunction(k_scenarios[-1], r_scenarios[-1], p0_scenarios[-1],
+                                                       np.flip(x_scenarios))  # High growth array
     y_area = np.append(y_area_low, y_area_high)
     dates_area = np.append(x_dates_scenarios, np.flip(x_dates_scenarios))
     fig_main.add_trace(go.Scatter(x=dates_area,
@@ -2311,7 +2305,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
                    x = src.analysis.discrete_user_interval(users_moved),
                    y = src.analysis.discrete_growth_rate(users_moved, dates_moved + 1970), mode ="markers", line = dict(color='#F963F1')
                    ))
-    logger.info(users, dates + 1970)
+    logger.info(f"{users = } - {dates + 1970}")
     logger.info(src.analysis.discrete_growth_rate(users, dates + 1970))
     # Add trace of the regression
     fig_second.add_trace(
@@ -2891,7 +2885,7 @@ def historical_valuation_calculation(df_formatted, total_assets, df_raw, latest_
     non_operating_assets = total_assets
     # df_valuation_over_time = pd.DataFrame(columns=columns)
     valuation_data = []
-    logger.info("Iteration range", iteration_range)
+    logger.info(f"{iteration_range = }")
     if df_rawdataset_counter:  # calculates the historic of valuation only if the dataset has been updated
         for i in range(iteration_range[0], iteration_range[1]):
             dates_valuation = dates_original[:i]
@@ -2929,10 +2923,10 @@ def historical_valuation_calculation(df_formatted, total_assets, df_raw, latest_
                 if df_sorted.empty:
                     logger.info("Cleaning it minimally")
                     df_sorted = src.ParametersDataFrame.parameters_dataframe_cleaning_minimal(df_full, users)
-                    logger.info("df_sorted_minimally", df_sorted)
+                    logger.info(f"df_sorted_minimally {df_sorted}")
                     if df_sorted.empty:
                         df_sorted = df_full
-                        logger.info("No scenario could be calculated, df used:", df_sorted)
+                        logger.info(f"No scenario could be calculated, df used: {df_sorted}")
                     #continue
             else:
                 logger.info("Successful scenarios exist")
@@ -3193,7 +3187,7 @@ def graph_valuation_over_time(valuation_over_time_dict, date_picked, df_formatte
                                        hovertemplate=hovertemplate_maingraph))
 
     # Current valuation
-    #logger.info("Datata", date_picked, type(date_picked))
+    # logger.info(f"Datata {date_picked = }; {type(date_picked) = }")
     # date_obj = datetime.strptime(date_picked, '%Y-%m-%d')
     if current_valuation > high_scenario_valuation[-1]:
         color_dot = "#300541"
