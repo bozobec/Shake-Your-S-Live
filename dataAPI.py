@@ -1,12 +1,12 @@
 import requests
-import json
-import numpy as np
 import pandas as pd
-import main
 from datetime import datetime
 import os
 from dotenv import load_dotenv
 from collections import defaultdict
+from src.Utils.RastLogger import get_default_logger
+
+logger = get_default_logger()
 
 # The following code specifies firstly the filter and then fetches the data according to
 # it in the specified airtable database
@@ -17,7 +17,7 @@ AIRTABLE_API_KEY = os.getenv("AIRTABLE_API_KEY")
 
 # This function fetches all the unique categories in the airtable database
 def get_airtable_labels():
-    print("Fetching the dataset labels")
+    logger.info("Fetching the dataset labels")
     url = "https://api.airtable.com/v0/appm3ffcu38jyqhi3/tbl7LiTDpXk9DeRUB?fields%5B%5D=Company&fields%5B%5D=Category&fields%5B%5D=Symbol"
     headers = {
         "Authorization": f"Bearer {AIRTABLE_API_KEY}"
@@ -83,13 +83,13 @@ def get_airtable_labels():
         return [{"group": g, "items": items} for g, items in grouped.items()]
 
     except Exception as e:
-        print(f"Error fetching dataset labels: {str(e)}")
+        logger.info(f"Error fetching dataset labels: {str(e)}")
         return None
 
 
 
 def get_airtable_data(filter):
-    print("Fetching the dataset data")
+    logger.info("Fetching the dataset data")
     try:
         url = "https://api.airtable.com/v0/appm3ffcu38jyqhi3/tbl7LiTDpXk9DeRUB?fields%5B%5D=Company" \
               "&fields%5B%5D=Date" \
@@ -129,12 +129,12 @@ def get_airtable_data(filter):
         # sorted_df = df.sort_values(by='Date')  # Sort df to avoid bugs linked to wrong API call
         return df
     except Exception as e:
-        print(f"Error fetching dataset data: {str(e)}")
+        logger.info(f"Error fetching dataset data: {str(e)}")
         return None
 
 # API Fetching the market cap of the company in $mio.
 def get_marketcap(symbol_input):
-    print("Fetching the current market cap")
+    logger.info("Fetching the current market cap")
     try:
         url = "https://finnhub.io/api/v1/stock/profile2?"
         auth_token = "clmplq1r01qjj8i8s6ugclmplq1r01qjj8i8s6v0"  # Free token visible here: https://finnhub.io/dashboard
@@ -147,12 +147,12 @@ def get_marketcap(symbol_input):
             market_cap = 0.0064 * market_cap  # exchange rate on 16 Jan 25, to be updated regularly
         return market_cap
     except Exception as e:
-        print(f"Error fetching market cap: {str(e)}")
+        logger.info(f"Error fetching market cap: {str(e)}")
         return None
 
 # API Fetching the revenue of the last quarter
 def get_previous_quarter_revenue(symbol_input):
-    print("Fetching the quarterly revenue")
+    logger.info("Fetching the quarterly revenue")
     try:
         url = "https://finnhub.io/api/v1/stock/financials-reported?"
         auth_token = "clmplq1r01qjj8i8s6ugclmplq1r01qjj8i8s6v0"  # Free token visible here: https://finnhub.io/dashboard
@@ -187,24 +187,25 @@ def get_previous_quarter_revenue(symbol_input):
                 item['value'] for item in data['data'][0]['report']['bs'] if item['label'] == 'Total current assets')
         except:
             total_assets = 0.0
-            print("Error fetching total assets")
+            logger.info("Error fetching total assets")
         try:
             revenue = next(item['value'] for item in data['data'][0]['report']['ic'] if item['label'] == 'Revenue'
                            or item['label'] == 'Revenues' or item['label'] == 'Revenue:')
         except:
             revenue = next(item['value'] for item in data['data'][0]['report']['ic'] if item['label'] == 'Revenues')
-        #print("Total Assets: ", str(symbol))
-        #print(total_assets)
-        #print(data)
+
+        logger.debug("Total Assets: ", str(symbol))
+        logger.debug(total_assets)
+        logger.debug(data)
 
         return revenue / year_percentage, total_assets
     except Exception as e:
-        print(f"Error fetching quarterly revenue: {str(e)}")
+        logger.info(f"Error fetching quarterly revenue: {str(e)}")
         return 0, total_assets
 
 # API Fetching the profit margin of the past year
 def get_profit_margin(symbol_input):
-    print("Fetching the profit margin")
+    logger.info("Fetching the profit margin")
     try:
         url = "https://finnhub.io/api/v1/stock/metric?"
         auth_token = "clmplq1r01qjj8i8s6ugclmplq1r01qjj8i8s6v0"  # Free token visible here: https://finnhub.io/dashboard
@@ -217,13 +218,13 @@ def get_profit_margin(symbol_input):
         profit_margin = data['metric']['netProfitMarginAnnual']
         return profit_margin
     except Exception as e:
-        print(f"Error fetching yearly profit_margin: {str(e)}")
+        logger.info(f"Error fetching yearly profit_margin: {str(e)}")
         return 0
 
 # API Fetching the most hyped or least hyped companies
 # hyped is a boolean -> True for hyped companies; False for not hyped
 def get_hyped_companies(hyped):
-    print("Fetching the hyped/not hyped data list")
+    logger.info("Fetching the hyped/not hyped data list")
     headers = {
         "Authorization": f"Bearer {AIRTABLE_API_KEY}"
     }
@@ -245,7 +246,7 @@ def get_hyped_companies(hyped):
             # sorted_df = df.sort_values(by='Date')  # Sort df to avoid bugs linked to wrong API call
             return df
         except Exception as e:
-            print(f"Error fetching dataset data: {str(e)}")
+            logger.info(f"Error fetching dataset data: {str(e)}")
             return None
     else:
         try:
@@ -265,13 +266,13 @@ def get_hyped_companies(hyped):
             # sorted_df = df.sort_values(by='Date')  # Sort df to avoid bugs linked to wrong API call
             return df
         except Exception as e:
-            print(f"Error fetching dataset data: {str(e)}")
+            logger.info(f"Error fetching dataset data: {str(e)}")
             return None
 
 # Function fetching the list of all the companies (companies sheet on airtable) and the related information
 # (max net margin, other info, etc.)
 def get_hyped_companies_data():
-    print("Fetching the dataset data...")
+    logger.info("Fetching the dataset data...")
     headers = {
         "Authorization": f"Bearer {AIRTABLE_API_KEY}"
     }
@@ -316,8 +317,8 @@ def get_hyped_companies_data():
                 break  # No more pages
 
         df = pd.DataFrame(all_records)
-        print(f"Fetched {len(df)} records successfully.")
+        logger.info(f"Fetched {len(df)} records successfully.")
         return df
     except Exception as e:
-        print(f"Error fetching dataset data: {str(e)}")
+        logger.info(f"Error fetching dataset data: {str(e)}")
         return None

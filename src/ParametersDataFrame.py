@@ -4,6 +4,9 @@ import pandas as pd
 from src.Utils.mathematics import moving_average_smoothing, logistic_function_approximation, rsquare_calculation, rmsd, \
     logisticfunction, log_approximation, logistic_parameters_given_K
 from src.analysis import discrete_growth_rate, discrete_user_interval
+from src.Utils.RastLogger import get_default_logger
+
+logger = get_default_logger()
 
 
 def parameters_dataframe(dates, users):
@@ -33,9 +36,9 @@ def parameters_dataframe(dates, users):
                     k, r, p0 = logistic_function_approximation(dates_rsquare, users_rsquare)
                 except:
                     k, r, p0 = 0
-                    print("Parameters could not be calculated for: ", j, " data ignored")
+                    logger.info("Parameters could not be calculated for: ", j, " data ignored")
                 if k == 0:
-                    print("Issue when ignoring", j, "data")
+                    logger.info("Issue when ignoring", j, "data")
                     raise RuntimeError("Skipping ignoring", j, " data")
                 observed_values_df = rd
                 approximated_values_df = -r / k * userinterval + r
@@ -44,7 +47,7 @@ def parameters_dataframe(dates, users):
                     rootmeansquare = rmsd(users_rsquare, logisticfunction(k, r, p0, dates_rsquare))
                 except:
                     rootmeansquare = 0
-                    print("rmsd could not be calculated when ignoring:", n_data_ignored, " number of data points")
+                    logger.info("rmsd could not be calculated when ignoring:", n_data_ignored, " number of data points")
                 logfit = log_approximation(dates_rsquare, users_rsquare)
 
                 approximated_values_log = rsquare_calculation(observed_values_df,

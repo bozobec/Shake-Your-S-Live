@@ -4,6 +4,9 @@ from datetime import datetime
 
 import pandas as pd
 from dash import html, dash_table
+from src.Utils.RastLogger import get_default_logger
+
+logger = get_default_logger()
 
 
 def parse_contents(contents, filename, date):
@@ -12,20 +15,20 @@ def parse_contents(contents, filename, date):
     decoded = base64.b64decode(content_string)
     try:
         if 'csv' in filename:
-            print("CSV uploaded")
+            logger.info("CSV uploaded")
             # Assume that the user uploaded a CSV file
             df = pd.read_csv(
                 io.StringIO(decoded.decode('utf-8')))
-            print("CSV successfully read")
+            logger.info("CSV successfully read")
         elif 'xls' in filename:
-            print("XLS uploaded")
+            logger.info("XLS uploaded")
             # Assume that the user uploaded an excel file
             df = pd.read_excel(io.BytesIO(decoded))
-            print("XLS successfully read")
+            logger.info("XLS successfully read")
         # Remove empty rows
         df.dropna(axis=0, how='all', inplace=True)
     except Exception as e:
-        print(e)
+        logger.info(e)
         return html.Div([
             'There was an error processing this file.'
         ])
@@ -51,18 +54,18 @@ def parse_contents_df(contents, filename, date):
     decoded = base64.b64decode(content_string)
     try:
         if 'csv' in filename:
-            print("CSV uploaded")
+            logger.info("CSV uploaded")
             # Assume that the user uploaded a CSV file
             df = pd.read_csv(
                 io.StringIO(decoded.decode('utf-8')))
-            print("CSV successfully read")
+            logger.info("CSV successfully read")
         elif 'xls' in filename:
-            print("XLS uploaded")
+            logger.info("XLS uploaded")
             # Assume that the user uploaded an excel file
             df = pd.read_excel(io.BytesIO(decoded))
-            print("XLS successfully read")
+            logger.info("XLS successfully read")
     except Exception as e:
-        print(e)
+        logger.info(e)
         return html.Div([
             'There was an error processing this file.'
         ])
@@ -84,13 +87,13 @@ def parse_file_contents(contents, filename):
 
     try:
         if 'csv' in filename:
-            print("CSV uploaded")
+            logger.info("CSV uploaded")
             df = pd.read_csv(io.StringIO(decoded.decode('utf-8')))
-            print("CSV successfully read")
+            logger.info("CSV successfully read")
         elif 'xls' in filename:
-            print("XLS uploaded")
+            logger.info("XLS uploaded")
             df = pd.read_excel(io.BytesIO(decoded))
-            print("XLS successfully read")
+            logger.info("XLS successfully read")
         else:
             raise ValueError("Unsupported file format")
 
@@ -98,7 +101,7 @@ def parse_file_contents(contents, filename):
         df.dropna(axis=0, how='all', inplace=True)
 
     except Exception as e:
-        print(e)
+        logger.error(e)
         return None
 
     return df

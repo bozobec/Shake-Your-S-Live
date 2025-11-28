@@ -4,6 +4,9 @@ import jwt
 import numpy as np
 
 from src.Utils.dates import YEAR_OFFSET, date_formatting
+from src.Utils.RastLogger import get_default_logger
+
+logger = get_default_logger()
 
 
 MIN_DATEPICKER_INDEX = 4  # For a given dataset, this is the minimum below which no date can be selected
@@ -32,7 +35,7 @@ def datepicker_limit(dataset_df):
         return min_history_datepicker, max_history_datepicker, date_value_datepicker, dataset_df_formatted
     else:
         # Return default values or handle as needed in case of an error
-        print("An error occured while calculating the min & max of the datepicker")
+        logger.info("An error occured while calculating the min & max of the datepicker")
         return "", "", "", [], []
 
 

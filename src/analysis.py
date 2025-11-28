@@ -6,6 +6,9 @@ import numpy_financial as npf
 from sympy import Symbol, solve
 
 from src.Utils.mathematics import logisticfunction
+from src.Utils.RastLogger import get_default_logger
+
+logger = get_default_logger()
 
 
 def discrete_growth_rate(users, dates):
@@ -65,7 +68,7 @@ def time_to_population(k, r, p0, pt):
     try:
         t = 1 / r * math.log(pt * (k - p0) / (p0 * (k - pt)))
     except ValueError:
-        print("Invalid input values. Ensure (pt * (k - p0)) / (p0 * (k - pt)) is greater than 0.")
+        logger.info("Invalid input values. Ensure (pt * (k - p0)) / (p0 * (k - pt)) is greater than 0.")
         return 50.0
     return t
 

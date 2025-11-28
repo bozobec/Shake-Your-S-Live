@@ -7,6 +7,10 @@ from sklearn import linear_model
 
 from src.analysis import discrete_growth_rate, discrete_user_interval
 
+from src.Utils.RastLogger import get_default_logger
+
+logger = get_default_logger()
+
 
 def logisticfunction(k, r, p0, dates):
     """
@@ -24,8 +28,8 @@ def logisticfunction(k, r, p0, dates):
             y[i] = (k * p0 * np.exp(r * dates[i])) / (k + p0 * (np.exp(r * dates[i]) - 1))
         except:
             y[i] = 0
-            print("Log function could not be computed with the following parameters")
-            print("k", k, "r", r, "p0", p0)
+            logger.info("Log function could not be computed with the following parameters")
+            logger.info("k", k, "r", r, "p0", p0)
     return y
 
 
