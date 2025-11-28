@@ -1,41 +1,18 @@
-from dash import html, register_page  #, callback # If you need callbacks, import it here.
 # -*- coding: utf-8 -*-
 # Run this app with `python app.py` and
 # visit http://127.0.0.1:8050/ in your web browser.
-import dash
-import dash_mantine_components as dmc
-from dash import Dash, html, dcc, callback, dash_table
-from dash import callback
-from dash.dependencies import Input, Output, State
-import pandas as pd
-import numpy as np
-import plotly.graph_objects as go
-import dataAPI
-import main
+
+from datetime import date
+
 import dash_bootstrap_components as dbc
-#import datetime
-from datetime import datetime, timedelta, date
-import math
-from plotly.subplots import make_subplots
-from dash_iconify import DashIconify
-import time
-from dash.exceptions import PreventUpdate
-import random
 import dash_daq as daq
-#from dash_extensions import DeferScript
-from functools import lru_cache
-from components.analysis_card import analysis_card
-from components.hype_meter_card import hype_meter_card, card_welcome, card_dashboard
-from components.valuation_card import valuation_card
-from components.growth_card import growth_card
-from components.revenue_card import revenue_card
-from components.product_maturity_card import product_maturity_card
-from components.growth_rate_card import growth_rate_card
-from components.functionalities_card import functionalities_card
-from components.ranking_card import table_hype_card
-from components.quadrant_card import quadrant_card
-from components.stored_data import stored_data
-import os
+import dash_mantine_components as dmc
+import pandas as pd
+import plotly.graph_objects as go
+from dash import html, dcc
+from dash import register_page
+from dash_iconify import DashIconify
+
 
 register_page(
     __name__,
