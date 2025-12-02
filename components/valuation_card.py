@@ -50,7 +50,7 @@ valuation_card = dmc.Card(
             mb={"base": 5, "sm": "xs"},  # tighter on mobile
         )
     ],
-    id="section-2",
+    id="section-3",
     style={'display': 'none'},
     withBorder=True,
     shadow="sm",

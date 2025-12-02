@@ -54,24 +54,45 @@ hype_meter_bootstrap_price = dbc.Progress(
     style={"height": "30px", "borderRadius": "0px"},
 )
 
+config_graph_with_toolbar = {
+    'displayModeBar': False,
+    'scrollZoom': False,
+    'displaylogo': False,
+    'modeBarButtonsToRemove': ['zoom', 'zoomIn', 'zoomOut', 'pan', 'lasso', 'select','autoScale', 'resetScale'],
+    'toImageButtonOptions': {
+            'format': 'svg', # one of png, svg, jpeg, webp
+            'filename': 'RAST_Growth',
+            'height': 735,
+            'width': 1050,
+            'scale': 1 # Multiply title/legend/axis/canvas sizes by this factor
+          },
+}
+
+#graph = dcc.Graph(id='hyped-ranking-graph-company', config=config_graph_with_toolbar)
+
 # Valuation message (left side)
 valuation_message = dmc.Alert(
     children=[
         dmc.Text(
-            "This analysis shows the relationship between market cap, intrinsic value, and hype. "
-            "Adjust the parameters to see how they affect the overall valuation.",
+            "Loading...",
             size="sm",
             id="valuation-content"
         ),
         dmc.Space(h="xs"),
         dmc.List(
             [
-                dmc.ListItem("Hype score, base case = 0.98", id="hype-score-text"),
-                dmc.ListItem("Growth score", id="growth-score-text"),
+                dmc.ListItem("Hype score: Oups, couldn't load it", id="hype-score-text"),
+                dmc.ListItem("Growth score: Oups, couldn't load it", id="growth-score-text"),
             ],
             size="sm",
             spacing="xs",
         ),
+        dmc.Space(h="xs"),
+        dmc.Text(
+            "Loading...",
+            size="sm",
+            id="growth-content"
+        )
     ],
     id="valuation-message",
     title="Valuation Overview",
@@ -374,6 +395,8 @@ card2 = dmc.Card(
         'backgroundColor': 'white'
     }
 )
+
+# Card containing the welcome components when no company is selected
 
 card_welcome = dmc.Container(
             children=[

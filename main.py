@@ -570,6 +570,41 @@ def hype_meter_indicator_values(hype_ratio):
         indicator_text = "Super hyped!"
     return indicator_color, indicator_text
 
+# Function defining the color and the text of the hype meter indicator, depending on the size of the hype compared to
+# the total market cap. The color changes the outline of the badge while the text changes its value
+def hype_meter_indicator_values_new(hype_score):
+    if hype_score > 2.5:
+        badge_color = "red"
+        badge_label = "Super hyped"
+    elif hype_score > 1.5:
+        badge_color = "orange"
+        badge_label = "Mildly hyped"
+    elif hype_score > 1:
+        badge_color = "yellow"
+        badge_label = "Marginally hyped"
+    elif hype_score > 0:
+        badge_color = "green"
+        badge_label = "Fairly priced"
+    else:
+        badge_color = "teal"
+        badge_label = "Undervalued"
+    return badge_color, badge_label
+
+def growth_meter_indicator_values(growth_score):
+    if growth_score > 0.5:
+        badge_color_growth = "teal"
+        badge_label_growth = "Massive growth"
+    elif growth_score > 0.3:
+        badge_color_growth = "green"
+        badge_label_growth = "Strong growth"
+    elif growth_score > 0.1:
+        badge_color_growth = "yellow"
+        badge_label_growth = "Limited growth"
+    else:
+        badge_color_growth = "red"
+        badge_label_growth = "Poor growth"
+    return badge_color_growth, badge_label_growth
+
 def parse_contents(contents, filename, date):
     content_type, content_string = contents.split(',')
 
@@ -777,4 +812,3 @@ def cleans_high_valuations(df, column):
             df_copy.loc[current_idx, column] = previous_high_valuation
 
     return df_copy
-

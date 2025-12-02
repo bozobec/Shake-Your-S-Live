@@ -69,4 +69,4 @@ quadrant_card = dmc.Card(children=[
     dcc.Graph(id='hyped-ranking-graph', config=config_graph_with_toolbar),
     login_overlay_chart,
     ],
-    withBorder=True, shadow='lg', radius='md', id='section-8')
+    withBorder=True, shadow='lg', radius='md', id='section-9')

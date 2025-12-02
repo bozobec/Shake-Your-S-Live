@@ -40,7 +40,7 @@ revenue_card = dmc.Card(
             mb={"base": 5, "sm": "xs"},  # tighter on mobile
         ),
     ],
-    id="section-4",
+    id="section-5",
     #style={'visibility': 'hidden'},
     style={'display': 'none'},
     withBorder=True,

@@ -20,6 +20,7 @@ from dash_iconify import DashIconify
 import time
 from dash.exceptions import PreventUpdate
 import urllib.parse
+import copy
 import plotly.io as pio
 import io
 from flask import send_file, request, jsonify, send_from_directory, Flask
@@ -50,7 +51,7 @@ from components.functionalities_card import functionalities_card
 from components.ranking_card import table_hype_card
 from components.quadrant_card import quadrant_card
 from components.stored_data import stored_data
-
+from components.company_quadrant_card import company_quadrant_card
 t1 = time.perf_counter(), time.process_time()
 
 # Load environment variables from .env file
@@ -107,13 +108,13 @@ server = app.server
 
 sections = [
     {"id": "section-1", "title": "Current Situation", "subtitle": "", "color": "blue", "icon": "mdi:bullseye"},
-    {"id": "section-2", "title": "Valuation history", "subtitle": "", "color": "orange", "icon": "tabler:pig-money"},
-    {"id": "section-3", "title": "Growth", "subtitle": "", "color": "purple", "icon": "streamline-sharp:decent-work-and-economic-growth"},
-    {"id": "section-4", "title": "Revenue", "subtitle": "", "color": "purple", "icon": "fa6-solid:money-check-dollar"},
-    {"id": "section-5", "title": "Product Maturity", "subtitle": "", "color": "red", "icon": "healthicons:old-man-outline"},
-    {"id": "section-6", "title": "Growth rate", "subtitle": "", "color": "yellow", "icon": "material-symbols-light:biotech-outline-rounded"},
-    {"id": "section-7", "title": "Ranking", "subtitle": "Logged in only", "color": "yellow", "icon": "solar:ranking-line-duotone"},
-    {"id": "section-8", "title": "Quadrant", "subtitle": "Logged in only", "color": "yellow", "icon": "carbon:quadrant-plot"},
+    {"id": "section-2", "title": "Quadrant", "subtitle": "", "color": "yellow", "icon": "carbon:quadrant-plot"},
+    {"id": "section-3", "title": "Valuation history", "subtitle": "", "color": "orange", "icon": "tabler:pig-money"},
+    {"id": "section-4", "title": "Growth", "subtitle": "", "color": "purple", "icon": "streamline-sharp:decent-work-and-economic-growth"},
+    {"id": "section-5", "title": "Revenue", "subtitle": "", "color": "purple", "icon": "fa6-solid:money-check-dollar"},
+    {"id": "section-6", "title": "Product Maturity", "subtitle": "", "color": "red", "icon": "healthicons:old-man-outline"},
+    {"id": "section-7", "title": "Growth rate", "subtitle": "", "color": "yellow", "icon": "material-symbols-light:biotech-outline-rounded"},
+    {"id": "section-8", "title": "Ranking", "subtitle": "Logged in only", "color": "yellow", "icon": "solar:ranking-line-duotone"},
 ]
 
 dropdown = dmc.Select(
@@ -254,11 +255,19 @@ layout_one_column = dmc.AppShell(
                             style={"padding": "8px 12px", "borderRadius": "4px"},
                         ),
                         dmc.NavLink(
+                            label="Quadrant",
+                            description="",
+                            leftSection=DashIconify(icon="carbon:quadrant-plot", height=16),
+                            href="#section-2",
+                            id="link-section-2",
+                            style={"padding": "8px 12px", "borderRadius": "4px"},
+                        ),
+                        dmc.NavLink(
                             label="Valuation history",
                             description="",
                             leftSection=DashIconify(icon="tabler:pig-money", height=16),
-                            href="#section-2",
-                            id="link-section-2",
+                            href="#section-3",
+                            id="link-section-3",
                             style={"padding": "8px 12px", "borderRadius": "4px"},
                         ),
                         dmc.NavLink(
@@ -266,24 +275,24 @@ layout_one_column = dmc.AppShell(
                             description="",
                             leftSection=DashIconify(icon="streamline-sharp:decent-work-and-economic-growth",
                                                     height=16),
-                            href="#section-3",
-                            id="link-section-3",
+                            href="#section-4",
+                            id="link-section-4",
                             style={"padding": "8px 12px", "borderRadius": "4px"},
                         ),
                         dmc.NavLink(
                             label="Revenue",
                             description="",
                             leftSection=DashIconify(icon="fa6-solid:money-check-dollar", height=16),
-                            href="#section-4",
-                            id="link-section-4",
+                            href="#section-5",
+                            id="link-section-5",
                             style={"padding": "8px 12px", "borderRadius": "4px"},
                         ),
                         dmc.NavLink(
                             label="Product Maturity",
                             description="",
                             leftSection=DashIconify(icon="healthicons:old-man-outline", height=16),
-                            href="#section-5",
-                            id="link-section-5",
+                            href="#section-6",
+                            id="link-section-6",
                             style={"padding": "8px 12px", "borderRadius": "4px"},
                         ),
                         dmc.NavLink(
@@ -291,22 +300,14 @@ layout_one_column = dmc.AppShell(
                             description="",
                             leftSection=DashIconify(icon="material-symbols-light:biotech-outline-rounded",
                                                     height=16),
-                            href="#section-6",
-                            id="link-section-6",
+                            href="#section-7",
+                            id="link-section-7",
                             style={"padding": "8px 12px", "borderRadius": "4px"},
                         ),
                         dmc.NavLink(
                             label="Ranking",
                             description="Logged in only",
                             leftSection=DashIconify(icon="solar:ranking-line-duotone", height=16),
-                            href="/ranking",
-                            id="link-section-7",
-                            style={"padding": "8px 12px", "borderRadius": "4px"},
-                        ),
-                        dmc.NavLink(
-                            label="Quadrant",
-                            description="Logged in only",
-                            leftSection=DashIconify(icon="carbon:quadrant-plot", height=16),
                             href="/ranking",
                             id="link-section-8",
                             style={"padding": "8px 12px", "borderRadius": "4px"},
@@ -329,13 +330,13 @@ layout_one_column = dmc.AppShell(
                                                     id="homepage-cards",
                                                     children=[
                                                         hype_meter_card,
+                                                        company_quadrant_card,
                                                         analysis_card,
                                                         valuation_card,
                                                         growth_card,
                                                         revenue_card,
                                                         product_maturity_card,
                                                         growth_rate_card,
-                                                        #dmc.Space(h=600),
                                                     ],
                                                     gap="md",
                                                     p="md",
@@ -928,10 +929,13 @@ def toggle_page_layout(pathname, search):
 @app.callback(
     Output('all-companies-information', 'data'),
     Output(component_id='hyped-ranking-graph', component_property='figure'),  # Update graph 1
+    Output(component_id='hyped-ranking-graph-company', component_property='figure'),  # Update graph 1
     Output(component_id='hyped-table-industry', component_property='data'),  # Update graph 1
+    Output(component_id='valuation-category', component_property='data'),  # Update graph 1
+    Input(component_id='dataset-selection', component_property='value'),
     Input('url', 'pathname'), # Triggered once when the page is loaded
 )
-def initialize_data(href):
+def initialize_data(dropdown_selection, path):
     # ---- Performance assessment
     t2 = time.perf_counter(), time.process_time()
     print(f" Time to launch the app (before the first callback")
@@ -939,6 +943,9 @@ def initialize_data(href):
     print(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
     print("Loading company information")
 
+    # Stopping callback if no company has been selected or if not in the ranking page
+    if dropdown_selection is None and path != '/ranking':
+        raise PreventUpdate
 
     # Load or compute data
     df_all_companies_information = dataAPI.get_hyped_companies_data()
@@ -962,7 +969,7 @@ def initialize_data(href):
     #companies = ["Company A", "Company B", "Company C", "Company D"]
     companies = df_all_companies_information["Company Name"].tolist()
     growth_score = df_all_companies_information["Growth Score"].tolist()
-    hype_score = df_all_companies_information["Hype Score"]
+    hype_score = df_all_companies_information["Hype Score"] + 3
 
 
     # Shift to make all positive, then log
@@ -974,30 +981,45 @@ def initialize_data(href):
 
 
     # Midpoints for quadrants (here using 0.5, adjust if needed, 1.386 for y because log1p(1+2)
-    x_mid, y_mid = 0.5, 1.386
-    y1= max(hype_score_log)
+    #x_mid, y_mid = 0.5, 1.386
+    #x_mid, y_mid = 0.5, max(hype_score)/2
+    y_min= min(hype_score)
+    y1= max(hype_score)
+    y_mid = np.sqrt(y_min * y1)
+    x_mid = 0.3
+
+    # Convert to log10 exponents for positioning
+    log_y_min = np.log10(y_min)
+    log_y_max = np.log10(y1)
+    log_y_mid = np.log10(y_mid)
+
+    # Calculate annotation positions as EXPONENTS (not actual values)
+    # Top annotations: 85% up from mid to max in log space
+    log_y_top = log_y_mid + 0.95 * (log_y_max - log_y_mid)
+
+    # Bottom annotations: 85% down from mid to min in log space
+    log_y_bottom = log_y_mid - 0.85 * (log_y_mid - log_y_min)
+
+    fig_company = copy.deepcopy(fig)
+
+    # Annotations
+    # Ranking graph
 
     # Add quadrant lines
-    fig.add_shape(type="line", x0=x_mid, x1=x_mid, y0=0, y1=y1,
-                  line=dict(dash="dash", width=2, color="black"))
-    fig.add_shape(type="line", x0=0, x1=1, y0=y_mid, y1=y_mid,
-                  line=dict(dash="dash", width=2, color="black"))
+    fig.add_shape(type="line", x0=x_mid, x1=x_mid, y0=y_min, y1=y1, line=dict(dash="dash", width=2, color="black"))
+    fig.add_shape(type="line", x0=0, x1=1, y0=y_mid, y1=y_mid, line=dict(dash="dash", width=2, color="black"))
 
     # Optional: Add shaded quadrants
-    fig.add_shape(type="rect", x0=x_mid, x1=1, y0=y_mid, y1=y1,
-                  fillcolor="lightgray", opacity=0.2, line_width=0)
-    fig.add_shape(type="rect", x0=0, x1=x_mid, y0=y_mid, y1=y1,
-                  fillcolor="white", opacity=0.2, line_width=0)
-    fig.add_shape(type="rect", x0=0, x1=x_mid, y0=0, y1=y_mid,
-                  fillcolor="lightgray", opacity=0.2, line_width=0)
-    fig.add_shape(type="rect", x0=x_mid, x1=1, y0=0, y1=y_mid,
-                  fillcolor="#FFD000", opacity=0.2, line_width=0)
+    fig.add_shape(type="rect", x0=x_mid, x1=1, y0=y_mid, y1=y1, fillcolor="lightgray", opacity=0.2, line_width=0)
+    fig.add_shape(type="rect", x0=0, x1=x_mid, y0=y_mid, y1=y1, fillcolor="white", opacity=0.2, line_width=0)
+    fig.add_shape(type="rect", x0=0, x1=x_mid, y0=y_min, y1=y_mid, fillcolor="lightgray", opacity=0.2, line_width=0)
+    fig.add_shape(type="rect", x0=x_mid, x1=1, y0=y_min, y1=y_mid, fillcolor="#FFD000", opacity=0.2, line_width=0)
 
-    # Add quadrant labels
-    fig.add_annotation(x=0.75, y=y1-0.05, text=" Hot & hyped ", showarrow=False, font=dict(size=12), bgcolor="#F862F0")
-    fig.add_annotation(x=0.25, y=y1-0.05, text="<b> Bubble zone </b>", showarrow=False, font=dict(size=12), bgcolor="#F862F0")
-    fig.add_annotation(x=0.25, y=0.05, text=" Steady, Forgotten ", showarrow=False, font=dict(size=12), bgcolor="#F862F0")
-    fig.add_annotation(x=0.75, y=0.05, text="<b> Undervalued gems </b>", showarrow=False, font=dict(size=12), bgcolor="#FED100")
+    # Add quadrant labels - position them in log space
+    fig.add_annotation(x=0.65, y=log_y_top, text=" Hot & hyped ", showarrow=False, font=dict(size=12), bgcolor="#F862F0")
+    fig.add_annotation(x=0.15, y=log_y_top, text="<b> Bubble zone </b>", showarrow=False, font=dict(size=12), bgcolor="#F862F0")
+    fig.add_annotation(x=0.15, y=log_y_bottom, text=" Steady, Forgotten ", showarrow=False, font=dict(size=12), bgcolor="#F862F0")
+    fig.add_annotation(x=0.65, y=log_y_bottom, text="<b> Undervalued gems </b>", showarrow=False, font=dict(size=12), bgcolor="#FED100")
 
     # Marking points as gold and bolded if in the "undervalued gems", otherwise as purple
     marker_colors = [
@@ -1013,10 +1035,31 @@ def initialize_data(href):
     # Alternate text positions to try to limit overlapping
     text_positions = ['top center' if i % 2 == 0 else 'bottom center' for i in range(len(growth_score))]
 
+
+    # Layout tweaks
+    fig.update_layout(
+        xaxis=dict(
+            title="Growth potential",
+            range=[0, 1],
+        ),
+        yaxis=dict(
+            title="Hype level (log scale)",
+            type="log",
+        ),
+        plot_bgcolor="white",
+        margin=go.layout.Margin(
+            l=0,  # left margin
+            r=0,  # right margin
+            b=0,  # bottom margin
+            t=20,  # top margin
+        ),
+    )
+
+
     # Add scatter points with labels
     fig.add_trace(go.Scatter(
         x=growth_score,
-        y=hype_score_log,
+        y=hype_score,
         mode="markers+text",
         text=companies,
         textposition=text_positions,
@@ -1028,34 +1071,140 @@ def initialize_data(href):
         )
     ))
 
-    # Layout tweaks
-    fig.update_layout(
-        #title="Hype-Growth quadrant",
-        xaxis=dict(
-            title="Growth potential",
-            range=[0, 1],
-            #fixedrange=True
-        ),
-        yaxis=dict(
-            title="Hype level",
-            #fixedrange=True,
-            #type="log",  # 🔹 log scale
-            #autorange=True  # auto-fit the range
-        ),
-        plot_bgcolor="white",
-    #dragmode=False,
-        #clickmode=None,
-        #config = {'scrollZoom': False},
-        margin=go.layout.Margin(
-            l=0,  # left margin
-            r=0,  # right margin
-            b=0,  # bottom margin
-            t=20,  # top margin
-        ),
-        #width=700, height=600
-    )
 
-    return all_companies_information_store, fig, industry_list,
+    # Company-Specific quadrant
+
+    df_all_companies_information.set_index("Company Name")
+
+    if dropdown_selection is not None:
+
+        try:
+            growth_score_company = df_all_companies_information[df_all_companies_information['Company Name'] == dropdown_selection]['Growth Score'].iloc[0]
+            hype_score_company = df_all_companies_information[df_all_companies_information['Company Name'] == dropdown_selection]['Hype Score'].iloc[0]+3
+            company_logo_href = df_all_companies_information[df_all_companies_information['Company Name'] == dropdown_selection]['Company Logo'].iloc[0]
+
+            company_logo = html.Img(
+                src=company_logo_href,
+                style={
+                    'width': '20px',
+                    'height': '20px',
+                    'marginRight': '8px',
+                    'verticalAlign': 'middle'
+                }
+            )
+        except KeyError:
+            raise ValueError(f"Company '{dropdown_selection}' not found in the quadrant dataframe")
+
+        # Add quadrant lines
+        fig_company.add_shape(type="line", x0=x_mid, x1=x_mid, y0=y_min, y1=y1,
+                              line=dict(dash="dash", width=2, color="#868786"))
+        fig_company.add_shape(type="line", x0=0, x1=1, y0=y_mid, y1=y_mid,
+                              line=dict(dash="dash", width=2, color="#868786"))
+
+        # Add quadrant labels - position them in log space
+        fig_company.add_annotation(x=0.65, y=log_y_top, text=" Hot & hyped ", showarrow=False, font=dict(size=12),
+                           bgcolor="#E2E2E2")
+        fig_company.add_annotation(x=0.15, y=log_y_top, text=" Bubble zone ", showarrow=False, font=dict(size=12),
+                           bgcolor="#E2E2E2")
+        fig_company.add_annotation(x=0.15, y=log_y_bottom, text=" Steady, Forgotten ", showarrow=False, font=dict(size=12),
+                           bgcolor="#E2E2E2")
+        fig_company.add_annotation(x=0.65, y=log_y_bottom, text=" Undervalued gems ", showarrow=False,
+                           font=dict(size=12), bgcolor="#E2E2E2")
+
+        if growth_score_company<x_mid and hype_score_company<y_mid:
+            valuation_category = "lowGrowth_lowHype"
+            fig_company.add_shape(type="rect", x0=0, x1=x_mid, y0=y_min, y1=y_mid, fillcolor="#9493FC", opacity=0.2,
+                          line_width=0)
+            fig_company.add_annotation(x=0.15, y=log_y_bottom, text=" <b> Steady, Forgotten </b> ", showarrow=False,
+                                       font=dict(size=12),
+                                       bgcolor="#F862F0")
+        elif growth_score_company>x_mid and hype_score_company<y_mid:
+            valuation_category = "highGrowth_lowHype"
+            fig_company.add_shape(type="rect", x0=x_mid, x1=1, y0=y_min, y1=y_mid, fillcolor="#FFD000", opacity=0.2,
+                          line_width=0)
+            fig_company.add_annotation(x=0.65, y=log_y_bottom, text=" <b> Undervalued gems </b> ", showarrow=False,
+                                       font=dict(size=12),
+                                       bgcolor="#FED100")
+        elif growth_score_company<x_mid and hype_score_company>y_mid:
+            valuation_category = "lowGrowth_highHype"
+            fig_company.add_shape(type="rect", x0=0, x1=x_mid, y0=y_mid, y1=y1, fillcolor="#FB4040", opacity=0.2, line_width=0)
+            fig_company.add_annotation(x=0.15, y=log_y_top, text=" <b> Bubble Zone </b> ", showarrow=False,
+                                       font=dict(size=12),
+                                       bgcolor="#F862F0")
+        else:
+            valuation_category = "highGrowth_highHype"
+            fig_company.add_shape(type="rect", x0=x_mid, x1=1, y0=y_mid, y1=y1, fillcolor="#9493FC", opacity=0.2,
+                          line_width=0)
+            fig_company.add_annotation(x=0.65, y=log_y_top, text=" <b> Hot & hyped </b> ", showarrow=False, font=dict(size=12),
+                                       bgcolor="#F862F0")
+        # Add scatter points with labels
+        fig_company.add_trace(go.Scatter(
+            x=growth_score,
+            y=hype_score,
+            hoverinfo="none",
+            name=dropdown_selection,
+            mode="markers+text",
+            textfont=dict(size=8),
+            marker=dict(
+                size=10,
+                color="#F2E5FF",
+                line=dict(width=2, color="white")
+            )
+        ))
+
+        # Position of the company label depending on where it is positioned in the quadrant
+
+        if hype_score_company > 12:
+            label_position = 'bottom center'
+        elif hype_score_company > 12 and growth_score_company<0.1:
+            label_position = 'bottom right'
+        elif growth_score_company < 0.1:
+            label_position = 'middle right'
+        elif growth_score_company < 0.1 and hype_score_company<1.2:
+            label_position = 'top right'
+        elif hype_score_company <1.2:
+            label_position = 'top center'
+        else:
+            label_position = 'top center'
+
+        # Add scatter point of the company with label
+        fig_company.add_trace(go.Scatter(
+            x=[growth_score_company],
+            y=[hype_score_company],
+            mode="markers+text",
+            text=dropdown_selection,
+            textposition=label_position,
+            textfont=dict(size=12, family="Arial Black"),
+            marker=dict(
+                size=15,
+                color="#F862F0",
+                line=dict(width=4, color="white")
+            ),
+        ))
+
+        # Update the figure layout
+        fig_company.update_layout(
+            # Remove margins
+            margin=dict(l=0, r=0, t=0, b=0),
+
+            # Hide legend
+            showlegend=False,
+            xaxis=dict(
+                title="Growth potential",
+                range=[0, 1],
+                #type="log"
+            ),
+            yaxis=dict(
+                title="Hype level (log scale)",
+                type="log",
+            ),
+            plot_bgcolor="white",
+        )
+    else:
+        fig_company = fig
+        valuation_category = ""
+
+    return all_companies_information_store, fig, fig_company, industry_list, valuation_category
 
 
 # Callback to enable the slider if "Custom" is selected
@@ -1068,6 +1217,7 @@ def initialize_data(href):
     Output("loading-overlay", "visible"),
     Output("loading-overlay-welcome", "visible", allow_duplicate=True),
     Output("loading-overlay2", "visible"),
+    Output("loading-overlay-quadrant", "visible"),
 
     [Input("dataset-selection", "value"),
     Input("scenarios-picker", "value")], prevent_initial_call=True)
@@ -1075,9 +1225,9 @@ def enable_slider(selection, scenario_value):
     visible_style = {"display": "block"}
     invisible_style = {"display": "hidden"}
     if scenario_value == "Nerd mode":
-        return False, False, False, False, visible_style, True, True, True
+        return False, False, False, False, visible_style, True, True, True, True
     else:
-        return True, True, True, True, invisible_style, True, True, False
+        return True, True, True, True, invisible_style, True, True, False, False
 
 # Callback displaying the functionalities & graph cards, and hiding the text
 @app.callback(
@@ -1090,16 +1240,17 @@ def enable_slider(selection, scenario_value):
     Output("loader-general", "style", allow_duplicate=True),
     Output("loading-overlay", "visible", allow_duplicate=True),
     Output("loading-overlay2", "visible", allow_duplicate=True),
+    Output("loading-overlay-quadrant", "visible", allow_duplicate=True),
     Output("loading-overlay-welcome", "visible", allow_duplicate=True),
     Output("homepage-cards", "style", allow_duplicate=True),
     Output("section-1", "style", allow_duplicate=True),
     Output("card-welcome", 'style'),
-    Output("section-2", "style", allow_duplicate=True),
     Output("section-3", "style", allow_duplicate=True),
     Output("section-4", "style", allow_duplicate=True),
     Output("section-5", "style", allow_duplicate=True),
     Output("section-6", "style", allow_duplicate=True),
     Output("section-7", "style", allow_duplicate=True),
+    Output("section-8", "style", allow_duplicate=True),
     Output("navbar", "style", allow_duplicate=True), # showing navbar
     Input(component_id='dataset-selection', component_property='value'),
     [State('launch-counter', 'data')]
@@ -1114,7 +1265,7 @@ def show_cards(data, launch_counter):
         print("Displaying the graph hihi")
         navbar_state = {"width": 250, "breakpoint": "sm", "style": {}}
         navbar_state["style"] = {"display": "block"}
-        return {'display': 'block'}, launch_counter, False, False, False, False, show_card, True, True, True, display_card, display_card, hide_graph_card, \
+        return {'display': 'block'}, launch_counter, False, False, False, False, show_card, True, True, True, True, display_card, display_card, hide_graph_card, \
             display_card, display_card, display_card, display_card, display_card, show_card, \
             {"visibility": "visible"}
 
@@ -1138,6 +1289,7 @@ def show_cards(data, launch_counter):
     Output("graph-title", "children"),
     Output("growth-card-title", "children"),
     Output("revenue-card-title", "children"),
+    #Output("company-quadrant-card", "children"),
     #Output("graph-subtitle", "children"),
     Output(component_id='profit-margin', component_property='style'),  # Show/hide depending on company or not
     Output(component_id='discount-rate', component_property='style'),  # Show/hide depending on company or not
@@ -1160,6 +1312,7 @@ def show_cards(data, launch_counter):
     Output("loading-overlay", "visible", allow_duplicate=True),
     Output("loading-overlay2", "visible", allow_duplicate=True),
     Output("loading-overlay-welcome", "visible", allow_duplicate=True),
+    Output("loading-overlay-quadrant", "visible", allow_duplicate=True),
     #Output(component_id='market-cap-tab', component_property='style'),  # Hides Market cap tab if other data is selected
     Output(component_id='symbol-dataset', component_property='data'),  # Hides Market cap tab if other data is selected
     Output(component_id='max-net-margin', component_property='data'),  # Stores the max net margin opf the selected company
@@ -1227,13 +1380,13 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
             title_summary_card = dropdown_value + "'s current valuation in short" + " ($" + symbol_company + ")"
             company_description = dropdown_value + " is a " + description_company.lower()
             title_valuation_card = dropdown_value + "'s valuation over time"
-            title_growth_card = dropdown_value + "'s " + key_unit + " growth over time"
+            title_growth_card = dropdown_value + "'s " + key_unit + " over time"
             title_revenue_card = "Revenue per " + key_unit
         else:
             title_summary_card = dropdown_value + "'s current valuation in short"
             company_description = ""
             title_valuation_card = dropdown_value
-            title_growth_card = dropdown_value + "'s " + key_unit + " growth over time"
+            title_growth_card = dropdown_value + "'s " + key_unit + " over time"
             title_revenue_card = "Revenue per " + key_unit
 
         title_image = dmc.Group([dropdown_value, dmc.Image(
@@ -1377,7 +1530,7 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
             show_company_functionalities, show_company_functionalities, show_company_functionalities, \
             show_company_functionalities, text_profit_margin, text_best_profit_margin, marks_profit_margin_slider, \
             total_assets, users_revenue_regression, \
-            initial_sliders_values, source_string, True, True, hide_loader, display_loading_overlay, display_loading_overlay, symbol_company, max_net_margin, company_logo_link_src
+            initial_sliders_values, source_string, True, True, hide_loader, display_loading_overlay, display_loading_overlay, display_loading_overlay, symbol_company, max_net_margin, company_logo_link_src
     except Exception as e:
         print(f"Error fetching or processing dataset: {str(e)}")
         raise PreventUpdate
@@ -1535,7 +1688,16 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
     # Here we take a simple 0.5 weight, different weight could be given to the headroom or core
     GS = 0.5*g/r_ref_global+0.5*h
 
-    growth_score_text = f"Growth score: {GS:.2f}"
+    #growth_score_text = f"Growth score: {GS:.2f}"
+
+    badge_color_growth, badge_label_growth = main.growth_meter_indicator_values(GS)
+    growth_score_text = dmc.Group([
+        f"Growth score: {GS:.2f}",
+        dmc.Badge(badge_label_growth, size="xs", variant="outline", color=badge_color_growth)
+    ], gap="md")
+
+
+
 
     print("GS")
     print(GS)
@@ -2840,6 +3002,7 @@ def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, arpu_grow
     Output("loading-overlay", "visible", allow_duplicate=True),
     Output("loading-overlay2", "visible", allow_duplicate=True),
     Output("loading-overlay-welcome", "visible", allow_duplicate=True),
+    Output("loading-overlay-quadrant", "visible", allow_duplicate=True),
     Input(component_id='users-dates-formatted', component_property='data'),
     Input(component_id='total-assets', component_property='data'),
     Input(component_id='users-dates-raw', component_property='data'),
@@ -3023,7 +3186,8 @@ def historical_valuation_calculation(df_formatted, total_assets, df_raw, latest_
     print(f" Performance of the valuation over time")
     print(f" Real time: {t2[0] - t1[0]:.2f} seconds")
     print(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
-    return False, df_valuation_over_time_dict, hide_loader, display_loading_overlay, display_loading_overlay, display_loading_overlay
+    return False, df_valuation_over_time_dict, hide_loader, display_loading_overlay, display_loading_overlay, \
+        display_loading_overlay, display_loading_overlay
 
 
 @app.callback(
@@ -3032,17 +3196,23 @@ def historical_valuation_calculation(df_formatted, total_assets, df_raw, latest_
     Output(component_id='valuation-graph-message', component_property='children'),
     Output(component_id='valuation-graph-message', component_property='color'),
     Output(component_id='valuation-graph-message', component_property='title'),
+    Output(component_id='quadrant-company-message', component_property='children'),
+    Output(component_id='quadrant-company-message', component_property='color'),
+    Output(component_id='quadrant-company-message', component_property='title'),
     Output(component_id="valuation-message", component_property="title"),
     Output(component_id="valuation-content", component_property="children"),
     Output(component_id="valuation-message", component_property="color"),
     Output(component_id="accordion-valuation", component_property="icon"),
     Output(component_id="hype-score", component_property="data"), # hype score storage
     Output(component_id="hype-score-text", component_property="children"), #hype score text
+    Output(component_id="growth-content", component_property="children"), #hype score text
     Output("loading-overlay", "visible", allow_duplicate=True),
     Output("loading-overlay2", "visible", allow_duplicate=True),
     Output("loading-overlay-welcome", "visible", allow_duplicate=True),
+    Output("loading-overlay-quadrant", "visible", allow_duplicate=True),
 
     Input(component_id='valuation-over-time', component_property='data'),
+    Input(component_id='graph-unit', component_property='data'),  # Getting the Unit used
     State(component_id='date-picker', component_property='value'),  # Take date-picker date
     State(component_id='users-dates-formatted', component_property='data'),
     State(component_id='total-assets', component_property='data'),
@@ -3053,10 +3223,12 @@ def historical_valuation_calculation(df_formatted, total_assets, df_raw, latest_
     State(component_id='dataset-selection', component_property='value'),  # Stores the name of the dataset selected
     Input(component_id="current-valuation-calculated", component_property="data"),
     State(component_id='max-net-margin', component_property='data'),
+    State(component_id='valuation-category', component_property='data'),  # Take date-picker date
     prevent_initial_call=True,
 )
-def graph_valuation_over_time(valuation_over_time_dict, date_picked, df_formatted, total_assets, df_raw,
-                              latest_market_cap, df_sorted, current_arpu, company_sign, current_valuation, max_net_margin):
+def graph_valuation_over_time(valuation_over_time_dict, unit_metric, date_picked, df_formatted, total_assets, df_raw,
+                              latest_market_cap, df_sorted, current_arpu, company_sign, current_valuation,
+                              max_net_margin, valuation_category):
     if not latest_market_cap:  # if latest market cap doesn't exist, none of this callback is triggered
         raise PreventUpdate
     print("Graph Valuation Start")
@@ -3100,7 +3272,14 @@ def graph_valuation_over_time(valuation_over_time_dict, date_picked, df_formatte
     print(latest_market_cap)
     print(low_scenario_valuation[-1])
     print(high_scenario_valuation[-1])
-    hype_score_text = f"Hype score: {hype_score:.2f}"  # Formatted text for hype meter
+    hype_score_text_old = f"Hype score: {hype_score:.2f}"  # Formatted text for hype meter
+    badge_color, badge_label = main.hype_meter_indicator_values_new(hype_score)
+    #badge_color_growth, badge_label_growth = main.growth_meter_indicator_values(growth_score)
+    hype_score_text = dmc.Group([
+        f"Hype score: {hype_score:.2f}",
+        dmc.Badge(badge_label, size="xs", variant="outline", color=badge_color)
+    ], gap="md")
+
     # Append today's date and latest market cap
     today_date = date.today()
     market_cap_array = np.append(market_cap_array, latest_market_cap * 1e6)
@@ -3333,11 +3512,19 @@ def graph_valuation_over_time(valuation_over_time_dict, date_picked, df_formatte
     else:
         # Messages in the accordion
         valuation_accordion_title = company_symbol + " is overvalued"
-        valuation_accordion_message = company_symbol + "'s current price is above our highest estimate. " \
-                                                       "To justify it, they'd need a  " + \
-                                      f"{profit_margin_needed *100:.1f}% " + \
-                                      "profit margin, even though they could theoretically aim at best at " + f"~{max_profit_margin:.0f}%... " \
-                                                                                         f"So yeah, a bit of a stretch."
+        valuation_accordion_message = dmc.Text(
+            children=[
+                company_symbol,
+                "'s current price is ",
+                dmc.Text(" above our highest estimate. ", span=True, c="black", fw=600),
+                "To justify it, they' need a ",
+                f"{profit_margin_needed * 100:.1f}% ",
+                "profit margin, even though they could theoretically aim at best at ",
+                f"~{max_profit_margin:.0f}%... ",
+                f"So yeah, a bit of a stretch."
+            ]
+        )
+
         # Messages right above the graph
         valuation_graph_title = "How well did our model perform over time?"
         valuation_graph_message = "The purple line shows " + company_symbol + "s price (market cap) over time. The yellow zone is our confidence " \
@@ -3349,13 +3536,107 @@ def graph_valuation_over_time(valuation_over_time_dict, date_picked, df_formatte
         valuation_graph_color = "yellow"
         valuation_icon_color = DashIconify(icon="radix-icons:rocket", color=dmc.DEFAULT_THEME["colors"]["yellow"][6],
                                            width=20)
+
+    if valuation_category == "lowGrowth_lowHype":
+        quadrant_title = "Low Growth, Low Hype"
+        quadrant_message = dmc.Text(
+            children=[company_symbol,
+                      " belongs to the",
+                      dmc.Text(" 'Steady, Forgotten' ", span=True, c="black", fw=600),
+                      " category, which means that it is not overvalued, nor is it showing crazy growth. "
+                      " It can be considered a safe (boring?) investment: no major upside nor downside in the mid-term should be expected."
+                      ],
+            size="sm",
+            fw=300,
+        )
+        quadrant_color = "yellow"
+        growth_description = dmc.Text(
+            children=[
+                "But there is probably ",
+                dmc.Text(" no big upside ", span=True, c="black", fw=600),
+                " to expect in the future given the low growth of ",
+                unit_metric,
+                "."
+            ]
+        )
+    elif valuation_category == "highGrowth_lowHype":
+        quadrant_title = "Strong Growth, Low Hype"
+        quadrant_message = dmc.Text(
+            children=[company_symbol,
+                      " belongs to the VIP ",
+                      dmc.Text(" 'Undervalued gems' ", span=True, c="#C58400", fw=600),
+                      " club, which means that it is not overvalued, AND it is showing very solid growth. "
+                      " If no other red flags exist (such as high debt, or recent public scandal related to ",
+                      company_symbol,
+                      "), then the",
+                      dmc.Text(" price could very likely rise in the mid-term.", span=True, c="#black", fw=600),
+                      ],
+            size="sm",
+            fw=300,
+        )
+        quadrant_color = "green"
+        growth_description = dmc.Text(
+            children=[
+                "Combined with the strong growth of ",
+                dmc.Text(unit_metric, fs="italic", span=True),
+                dmc.Text(" a big upside ", span=True, c="black", fw=600),
+                " could be expected in the future.",
+            ]
+        )
+    elif valuation_category == "lowGrowth_highHype":
+        quadrant_title = "Low Growth, Strong Hype"
+        quadrant_message = dmc.Text(
+            children=[company_symbol,
+                      " belongs to the unwanted ",
+                      dmc.Text(" 'Bubble zone'", span=True, c="#480404", fw=600),
+                      ". Why? Well because it's showing high hype with limited growth in terms of ",
+                      dmc.Text(unit_metric, fs="italic", span=True),
+                      ". The longer ",
+                      company_symbol,
+                      " takes to generate more money per ", unit_metric, ", the greater the risk of a sharp drop in its stock price."
+                      ],
+            size="sm",
+            fw=300,
+        )
+        quadrant_color = "#FB4040"
+        growth_description = dmc.Text(
+            children=[
+                "Given the limited growth of ",
+                dmc.Text(unit_metric, fs="italic", span=True),
+                dmc.Text(", a maaaassive change ", span=True, c="black", fw=600),
+                " should happen in the near future to justify the current value.",
+            ]
+        )
+    else:
+        quadrant_title = "High Growth, High Hype"
+        quadrant_message = dmc.Text(
+            children=[company_symbol,
+                      " belongs to the ",
+                      dmc.Text(" 'Hot & hyped' ", span=True, c="#480404", fw=600),
+                      " zone. Its hype is strong, but so is its growth in terms of ",
+                      dmc.Text(unit_metric, fs="italic", span=True),
+                      ". Which such a growth, the hype can live a while longer. But the price is likely to drop at the first sign of weakness."
+                      ],
+            size="sm",
+            fw=300,
+        )
+        quadrant_color = "yellow"
+        growth_description = dmc.Text(
+            children=[
+                "BUT, the growth of ",
+                dmc.Text(unit_metric, fs="italic", span=True),
+                dmc.Text(" is so ridiculously strong", span=True, c="black", fw=600),
+                " that the hype may last for a while!",
+            ]
+        )
+
     print("Valuation graph printed")
     t2 = time.perf_counter(), time.process_time()
     print(f" Performance of the valuation graph over time")
     print(f" Real time: {t2[0] - t1[0]:.2f} seconds")
     print(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
-    return fig_valuation, valuation_graph_message, valuation_graph_color, valuation_graph_title, valuation_accordion_title, \
-        valuation_accordion_message, valuation_graph_color, valuation_icon_color, hype_score, hype_score_text, False, False, False,
+    return fig_valuation, valuation_graph_message, valuation_graph_color, valuation_graph_title, quadrant_message, quadrant_color, quadrant_title, valuation_accordion_title, \
+        valuation_accordion_message, valuation_graph_color, valuation_icon_color, hype_score, hype_score_text, growth_description, False, False, False, False,
 
 
 # Callback resetting enabling the reset button
@@ -3381,9 +3662,9 @@ def update_table(df_all_companies, hype_choice, industries, logged_in):
     t1 = time.perf_counter(), time.process_time()
 
     # Blocks the process for dev
-    #IS_PRODUCTION = os.getenv("IS_PRODUCTION") == "true"  # Setup in heroku 'heroku config:set IS_PRODUCTION=true'
-    #if IS_PRODUCTION is False:
-    #    return no_update  # nothing to do
+    IS_PRODUCTION = os.getenv("IS_PRODUCTION") == "true"  # Setup in heroku 'heroku config:set IS_PRODUCTION=true'
+    if IS_PRODUCTION is False:
+        return no_update  # nothing to do
 
     # If dropdown hasn't been used yet, set a default
     if hype_choice is None:
@@ -3458,44 +3739,17 @@ def update_table(df_all_companies, hype_choice, industries, logged_in):
 
         # Determine badge color and label -> To-do: apply the function in .main to this -> done, replace it by main.hype_meter_indicator_values
         # badge_color, badge_label = main.hype_meter_indicator_values(hype_score)
-        if hype_score > 2.5:
-            badge_color = "red"
-            badge_label = "Super hyped"
-        elif hype_score > 1.5:
-            badge_color = "orange"
-            badge_label = "Mildly hyped"
-        elif hype_score > 1:
-            badge_color = "yellow"
-            badge_label = "Marginally hyped"
-        elif hype_score > 0:
-            badge_color = "green"
-            badge_label = "Fairly priced"
-        else:
-            badge_color = "teal"
-            badge_label = "Undervalued"
+
+        badge_color, badge_label = main.hype_meter_indicator_values_new(hype_score)
 
         # Determine growth badge color and label -> To-do: apply the function in .main to this
-        if growth_score > 0.5:
-            badge_color_growth = "teal"
-            badge_label_growth = "Massive growth"
-        elif growth_score > 0.3:
-            badge_color_growth = "green"
-            badge_label_growth = "Strong growth"
-        elif hype_score > 0.1:
-            badge_color_growth = "yellow"
-            badge_label_growth = "Limited growth"
-        else:
-            badge_color_growth = "red"
-            badge_label_growth = "Poor growth"
+        badge_color_growth, badge_label_growth = main.growth_meter_indicator_values(growth_score)
 
         row = html.Tr([
             html.Td(
                 dmc.Tooltip(
                     DashIconify(icon=industry_type_icon, width=15),
                     label=industry_type,
-                    #transition="slide-down",
-                    #transitionDuration=300,
-                    #multiline=True,
                 ),
                 #ta="center",
                 style={"ta": "center"}
@@ -3593,26 +3847,5 @@ def save_imported_data(submit_clicks, df):
         raise PreventUpdate
 '''
 
-# Download Graph functionality
-'''
-@app.callback(
-    Output("download-chart", "data"),
-    Input("download-graph-button", "n_clicks"),
-    Input("main-graph1", "figure"),
-    prevent_initial_call=True
-)
-def download_chart(n_clicks, main_graph):
-    # Create an in-memory file for the chart
-    fig_test = go.Figure()
-    img_buffer = io.BytesIO()
-    export = fig_test.write_image("fig_test", format="png", scale=2, engine='kaleido')  # High-quality PNG
-    img_buffer.seek(0)
-
-    # Return file for download
-    return dcc.send_file(
-        export,
-        #download_name="chart.png"
-    )
-'''
 if __name__ == '__main__':
     app.run_server(debug=True)
