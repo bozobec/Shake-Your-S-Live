@@ -41,7 +41,7 @@ product_maturity_card = dmc.Card(
             mb={"base": 5, "sm": "xs"},  # tighter on mobile
         ),
     ],
-    id="section-5",
+    id="section-6",
     #style={'visibility': 'hidden'},
     style={'display': 'none'},
     withBorder=True,

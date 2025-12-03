@@ -42,7 +42,7 @@ growth_rate_card = dmc.Card(
             mb={"base": 5, "sm": "xs"},  # tighter on mobile
         ),
     ],
-    id="section-6",
+    id="section-7",
     #style={'visibility': 'hidden'},
     style={'display': 'none'},
     withBorder=True,

@@ -38,6 +38,150 @@ def datepicker_limit(dataset_df):
         logger.info("An error occured while calculating the min & max of the datepicker")
         return "", "", "", [], []
 
+# Function defining the color and the text of the hype meter indicator, depending on the size of the hype compared to
+# the total market cap. The color changes the outline of the badge while the text changes its value
+def hype_meter_indicator_values(hype_ratio):
+    if hype_ratio <= 0: # if hype ratio is smaller than 10%
+        indicator_color = "teal"
+        indicator_text = "Undervalued!"
+    elif hype_ratio < 0.1: # if hype ratio is smaller than 10%
+        indicator_color = "orange"
+        indicator_text = "Marginally Hyped"
+    elif hype_ratio < 0.15: # if hype ratio is smaller than 15%
+        indicator_color = "orange"
+        indicator_text = "Moderately Hyped"
+    elif hype_ratio < 0.2: # if hype ratio is smaller than 20%
+        indicator_color = "orange"
+        indicator_text = "Strongly Hyped"
+    else: # if hype ratio is higher than 20%
+        indicator_color = "red"
+        indicator_text = "Super hyped!"
+    return indicator_color, indicator_text
+
+# Function defining the color and the text of the hype meter indicator, depending on the size of the hype compared to
+# the total market cap. The color changes the outline of the badge while the text changes its value
+def hype_meter_indicator_values_new(hype_score):
+    if hype_score > 2.5:
+        badge_color = "red"
+        badge_label = "Super hyped"
+    elif hype_score > 1.5:
+        badge_color = "orange"
+        badge_label = "Mildly hyped"
+    elif hype_score > 1:
+        badge_color = "yellow"
+        badge_label = "Marginally hyped"
+    elif hype_score > 0:
+        badge_color = "green"
+        badge_label = "Fairly priced"
+    else:
+        badge_color = "teal"
+        badge_label = "Undervalued"
+    return badge_color, badge_label
+
+def growth_meter_indicator_values(growth_score):
+    if growth_score > 0.5:
+        badge_color_growth = "teal"
+        badge_label_growth = "Massive growth"
+    elif growth_score > 0.3:
+        badge_color_growth = "green"
+        badge_label_growth = "Strong growth"
+    elif growth_score > 0.1:
+        badge_color_growth = "yellow"
+        badge_label_growth = "Limited growth"
+    else:
+        badge_color_growth = "red"
+        badge_label_growth = "Poor growth"
+    return badge_color_growth, badge_label_growth
+
+def parse_contents(contents, filename, date):
+    content_type, content_string = contents.split(',')
+
+    decoded = base64.b64decode(content_string)
+    try:
+        if 'csv' in filename:
+            print("CSV uploaded")
+            # Assume that the user uploaded a CSV file
+            df = pd.read_csv(
+                io.StringIO(decoded.decode('utf-8')))
+            print("CSV successfully read")
+        elif 'xls' in filename:
+            print("XLS uploaded")
+            # Assume that the user uploaded an excel file
+            df = pd.read_excel(io.BytesIO(decoded))
+            print("XLS successfully read")
+        # Remove empty rows
+        df.dropna(axis=0, how='all', inplace=True)
+    except Exception as e:
+        print(e)
+        return html.Div([
+            'There was an error processing this file.'
+        ])
+
+    return html.Div([
+        html.H5(filename),
+        html.H6(datetime.fromtimestamp(date)),
+
+        dash_table.DataTable(
+            df.to_dict('records'),
+            [{'name': i, 'id': i} for i in df.columns]
+        ),
+
+        html.Hr(),  # horizontal line
+
+    ])
+
+def parse_contents_df(contents, filename, date):
+    content_type, content_string = contents.split(',')
+
+    decoded = base64.b64decode(content_string)
+    try:
+        if 'csv' in filename:
+            print("CSV uploaded")
+            # Assume that the user uploaded a CSV file
+            df = pd.read_csv(
+                io.StringIO(decoded.decode('utf-8')))
+            print("CSV successfully read")
+        elif 'xls' in filename:
+            print("XLS uploaded")
+            # Assume that the user uploaded an excel file
+            df = pd.read_excel(io.BytesIO(decoded))
+            print("XLS successfully read")
+    except Exception as e:
+        print(e)
+        return html.Div([
+            'There was an error processing this file.'
+        ])
+        # Remove empty rows
+        df.dropna(axis=0, how='all', inplace=True)
+
+    return df
+
+
+# Improved function for parsing file contents
+def parse_file_contents(contents, filename):
+    content_type, content_string = contents.split(',')
+    decoded = base64.b64decode(content_string)
+
+    try:
+        if 'csv' in filename:
+            print("CSV uploaded")
+            df = pd.read_csv(io.StringIO(decoded.decode('utf-8')))
+            print("CSV successfully read")
+        elif 'xls' in filename:
+            print("XLS uploaded")
+            df = pd.read_excel(io.BytesIO(decoded))
+            print("XLS successfully read")
+        else:
+            raise ValueError("Unsupported file format")
+
+        # Remove empty rows
+        df.dropna(axis=0, how='all', inplace=True)
+
+    except Exception as e:
+        print(e)
+        return None
+
+    return df
 
 def get_industry_icon(industry: str) -> str:
     """
@@ -126,5 +270,44 @@ def replace_inf_with_previous_2(df, column):
         # Takes the highest value between the previous high valuation OR the current low one +20%
         df_copy.loc[idx, column] = prev_scenario_value
         # If less than 2 rows back, leave as inf or handle differently
+
+    return df_copy
+
+
+def cleans_high_valuations(df, column):
+    """
+    Check if every second value (high valuation) is smaller than the previous one (low valuation).
+    If it is, replace it with the previous value * 1.2.
+
+    Parameters:
+    -----------
+    df : pandas.DataFrame
+        The dataframe to modify
+    column : str
+        The name of the column to check and adjust values
+
+    Returns:
+    --------
+    pandas.DataFrame
+        DataFrame with adjusted values
+    """
+    # Create a copy to avoid modifying the original
+    df_copy = df.copy()
+
+    # Iterate through every second row starting from index 1 (second row)
+    for i in range(1, len(df_copy), 2):
+        current_idx = df_copy.index[i]
+        previous_idx = df_copy.index[i - 1]
+        previous_high_valuation_idx = df_copy.index[i - 2]
+
+        current_value = df_copy.loc[current_idx, column]
+        previous_value = df_copy.loc[previous_idx, column]
+
+        previous_high_valuation = df_copy.loc[previous_high_valuation_idx, column]
+
+        # Check if current value is smaller than previous value
+        if current_value < previous_value:
+            # Replace with previous value * 1.2
+            df_copy.loc[current_idx, column] = previous_high_valuation
 
     return df_copy

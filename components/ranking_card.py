@@ -87,4 +87,4 @@ table_hype_card = dmc.Card(children=[
         ]
     ),
     login_overlay_table,
-], withBorder=True, shadow='lg', radius='md', id='section-7')
+], withBorder=True, shadow='lg', radius='md', id='section-8')
