@@ -1,24 +1,27 @@
 # -*- coding: utf-8 -*-
 # Run this app with `python app.py` and
 # visit http://127.0.0.1:8050/ in your web browser
-import dash
-import dash_mantine_components as dmc
-from dash import Dash, html, dcc, register_page, callback_context, no_update, clientside_callback
-from dash import callback
-from dash.dependencies import Input, Output, State
-import pandas as pd
-import numpy as np
-import plotly.graph_objects as go
-import dataAPI
-import main
-import dash_bootstrap_components as dbc
-# import datetime
-from datetime import datetime, timedelta, date
+import json
 import math
-from plotly.subplots import make_subplots
-from dash_iconify import DashIconify
+import os
 import time
+import urllib.parse
+from datetime import datetime, timedelta, date
+
+import dash
+import dash_bootstrap_components as dbc
+import dash_mantine_components as dmc
+import jwt
+import numpy as np
+import pandas as pd
+import plotly.graph_objects as go
+import requests
+import stripe
+from dash import callback
+from dash import html, dcc, callback_context, no_update, clientside_callback
+from dash.dependencies import Input, Output, State
 from dash.exceptions import PreventUpdate
+from dash_iconify import DashIconify
 import urllib.parse
 import copy
 import plotly.io as pio
@@ -26,31 +29,38 @@ import io
 from flask import send_file, request, jsonify, send_from_directory, Flask
 import base64
 from dateutil.relativedelta import relativedelta
-from scipy.stats import mstats
-from posthog import Posthog
-import random
-import jwt
-import requests
-import os
 from dotenv import load_dotenv
-import stripe
-import json
-from components.navbar import navbar
+from flask import request, jsonify, send_from_directory
+from plotly.subplots import make_subplots
+from posthog import Posthog
+
+import dataAPI
+import main
+import src.ParametersDataFrame
+import src.Utils.Logistics
+import src.Utils.dates
+import src.Utils.mathematics
+import src.analysis
+from components.analysis_card import analysis_card
+from components.functionalities_card import functionalities_card
 from components.graph_layouts import layout_main_graph, layout_revenue_graph, layout_growth_rate_graph, \
     layout_product_maturity_graph
-from components.offcanvas import offcanvas
-from components.analysis_card import analysis_card
-from components.selecting_card import selecting_card, labels
-from components.hype_meter_card import hype_meter_card, card_welcome, card_dashboard
-from components.valuation_card import valuation_card
 from components.growth_card import growth_card
-from components.revenue_card import revenue_card
-from components.product_maturity_card import product_maturity_card
 from components.growth_rate_card import growth_rate_card
-from components.functionalities_card import functionalities_card
-from components.ranking_card import table_hype_card
+from components.hype_meter_card import hype_meter_card, card_welcome
+from components.offcanvas import offcanvas
+from components.product_maturity_card import product_maturity_card
 from components.quadrant_card import quadrant_card
+from components.ranking_card import table_hype_card
+from components.revenue_card import revenue_card
+from components.selecting_card import selecting_card, labels
 from components.stored_data import stored_data
+from components.valuation_card import valuation_card
+from src.Utils.RastLogger import get_default_logger
+from src.Utils.dates import YEAR_OFFSET
+
+logger = get_default_logger()
+
 from components.company_quadrant_card import company_quadrant_card
 t1 = time.perf_counter(), time.process_time()
 
@@ -61,9 +71,9 @@ load_dotenv()
 
 # Retrieve secrets
 AIRTABLE_API_KEY = os.getenv("AIRTABLE_API_KEY")
-print("Airtable key loaded:", bool(AIRTABLE_API_KEY))
+logger.info(f"Airtable key loaded: {bool(AIRTABLE_API_KEY)}")
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
-print("Stripe key loaded:", bool(stripe.api_key))
+logger.info(f"Stripe key loaded: {bool(stripe.api_key)}")
 
 pd.set_option('display.max_rows', 200)
 #APP_TITLE = "RAST"
@@ -97,7 +107,6 @@ with open("index.html") as f:
 # ---------------------------------------------------------------------------
 
 # Constants for the calculation
-YEAR_OFFSET = 1970  # The year "zero" for all the calculations
 MIN_DATE_INDEX = 5  # Defines the minimum year below which no date can be picked in the datepicker
 YEARS_DCF = 15  # Amount of years taken into account for DCF calculation
 
@@ -531,10 +540,10 @@ theme={
 
 # Pick the right url depending on the environment (first one is prod, stored on heroku, second is dev)
 CLERK_JWKS_URL = os.getenv("https://clerk.rast.guru/.well-known/jwks.json", "https://happy-skylark-73.clerk.accounts.dev/.well-known/jwks.json")
-print("clerk jwks")
-print(CLERK_JWKS_URL)
+logger.info("clerk jwks")
+logger.info(CLERK_JWKS_URL)
 jwks = requests.get(CLERK_JWKS_URL).json()
-print("Flask routes:", [r.rule for r in app.server.url_map.iter_rules()])
+logger.info(f"Flask routes: {[r.rule for r in app.server.url_map.iter_rules()]}")
 
 
 # ----------------------------------------------------------------------------------
@@ -542,7 +551,7 @@ print("Flask routes:", [r.rule for r in app.server.url_map.iter_rules()])
 #Adding sitemap and robots
 @server.route("/sitemap.xml")
 def send_sitemap():
-    print("Sitemap route accessed!")  # Debug line
+    logger.info("Sitemap route accessed!")  # Debug line
     return send_from_directory("static", "sitemap.xml")
 @server.route("/robots.txt")
 def send_robots():
@@ -748,7 +757,7 @@ def update_login_state(bridge_content):
     try:
         state = json.loads(bridge_content)
     except json.JSONDecodeError:
-        print("Failed to parse login-state-bridge content:", bridge_content)
+        logger.info(f"Failed to parse login-state-bridge content: {bridge_content}")
         return no_update
 
     # Extract logged_in and user_id
@@ -779,7 +788,7 @@ def update_login_state(bridge_content):
         if prev_value == new_data:
             return no_update
 
-    print("Updating login-state to:", logged_in, user_id)
+    logger.info(f"Updating login-state to: {logged_in} for user: {user_id}")
     return logged_in, user_id
 
 @app.callback(
@@ -938,10 +947,10 @@ def toggle_page_layout(pathname, search):
 def initialize_data(dropdown_selection, path):
     # ---- Performance assessment
     t2 = time.perf_counter(), time.process_time()
-    print(f" Time to launch the app (before the first callback")
-    print(f" Real time: {t2[0] - t1[0]:.2f} seconds")
-    print(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
-    print("Loading company information")
+    logger.info(f" Time to launch the app (before the first callback")
+    logger.info(f" Real time: {t2[0] - t1[0]:.2f} seconds")
+    logger.info(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
+    logger.info("Loading company information")
 
     # Stopping callback if no company has been selected or if not in the ranking page
     if dropdown_selection is None and path != '/ranking':
@@ -962,8 +971,8 @@ def initialize_data(dropdown_selection, path):
             "value": industry,
             "label": f"{industry}",
         })
-    print("List of industries")
-    print(industry_list)
+    logger.info("List of industries")
+    logger.info(industry_list)
     # Creates the graph mapping companies
     # Example company data
     #companies = ["Company A", "Company B", "Company C", "Company D"]
@@ -1262,7 +1271,7 @@ def show_cards(data, launch_counter):
         show_card = {'visibility': 'visible'}
         hide_graph_card = {'display': 'none'}
         display_card = {'display': 'block'}
-        print("Displaying the graph hihi")
+        logger.info("Displaying the graph hihi")
         navbar_state = {"width": 250, "breakpoint": "sm", "style": {}}
         navbar_state["style"] = {"display": "block"}
         return {'display': 'block'}, launch_counter, False, False, False, False, show_card, True, True, True, True, display_card, display_card, hide_graph_card, \
@@ -1270,7 +1279,7 @@ def show_cards(data, launch_counter):
             {"visibility": "visible"}
 
     else:
-        print("Card already displayed", launch_counter)
+        logger.info(f"Card already displayed {launch_counter}")
         raise PreventUpdate
 
 
@@ -1328,8 +1337,8 @@ def show_cards(data, launch_counter):
 )
 def set_history_size(dropdown_value, imported_df, df_all_companies):
     t1 = time.perf_counter(), time.process_time()
-    print("Is it prod?")
-    print(IS_PRODUCTION)
+    logger.info("Is it prod?")
+    logger.info(IS_PRODUCTION)
     """
     Posthog event
     """
@@ -1406,15 +1415,15 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
         users_dates_dict = df.to_dict(orient='records')
 
         # Process & format df. The dates in a panda serie of format YYYY-MM-DD are transformed to a decimal yearly array
-        dates = np.array(main.date_formatting(df["Date"]))
+        dates = np.array(src.Utils.dates.date_formatting(df["Date"]))
         dates_formatted = dates + YEAR_OFFSET
         dates_unformatted = np.array(df["Date"])
         users_formatted = np.array(df["Users"]).astype(float) * 1000000
 
 
-        print("Basisnetmargin")
-        print(type(max_net_margin))
-        print(max_net_margin)
+        logger.info("Basisnetmargin")
+        logger.info(type(max_net_margin))
+        logger.info(max_net_margin)
 
         # Logic to be used when implementing changing the ARPU depending on the date picked
         # date_last_quarter = main.previous_quarter_calculation().strftime("%Y-%m-%d")
@@ -1433,9 +1442,9 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
                     total_assets = 0
                 else:
                     yearly_revenue, total_assets = dataAPI.get_previous_quarter_revenue(symbol_company)  # Getting with API
-                print("Latest yearly revenue & total assets fetched")
+                logger.info("Latest yearly revenue & total assets fetched")
             except Exception as e:
-                print("Error fetching revenue & total assets, standard value assigned")
+                logger.info("Error fetching revenue & total assets, standard value assigned")
                 total_assets = 1000
             filtered_revenue_df = df[df["Revenue"] != 0]  # Getting rid of the revenue != 0
             quarterly_revenue = np.array(filtered_revenue_df["Revenue"]) * 1_000_000  # Getting in database
@@ -1446,8 +1455,8 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
             sorted_indices = np.argsort(users_correlation)
             users_correlation_sorted = users_correlation[sorted_indices]
             revenue_correlation_sorted = revenue_correlation[sorted_indices]
-            users_revenue_regression = main.linear_regression(users_correlation_sorted,
-                                                              revenue_correlation_sorted)
+            users_revenue_regression = src.Utils.mathematics.linear_regression(users_correlation_sorted,
+                                                                               revenue_correlation_sorted)
 
             # Profit margin text and marks
             profit_margin_array = np.array(df["Profit Margin"])
@@ -1507,8 +1516,8 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
         max_history_datepicker = current_date.date().isoformat()
         date_value_datepicker = max_history_datepicker # Sets the value of the datepicker as the max date
         # current_date = dates_formatted[-1]
-        print("Other data", min_history_datepicker, max_dataset_date, max_history_datepicker_date,
-              max_history_datepicker, date_value_datepicker)
+        logger.info(f"Other data : { min_history_datepicker = }; { max_dataset_date = };" +
+                    f" { max_history_datepicker_date = }; { max_history_datepicker = }; { date_value_datepicker= }; ")
 
         # Discount Rate
         value_discount_rate_slider = 5
@@ -1522,9 +1531,9 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
                                   'slider_discount_rate': value_discount_rate_slider}
 
         t2 = time.perf_counter(), time.process_time()
-        print(f" Calculation of the different sliders")
-        print(f" Real time: {t2[0] - t1[0]:.2f} seconds")
-        print(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
+        logger.info(f" Calculation of the different sliders")
+        logger.info(f" Real time: {t2[0] - t1[0]:.2f} seconds")
+        logger.info(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
         return min_history_datepicker, max_history_datepicker, date_value_datepicker, users_dates_dict, \
             users_dates_formatted_dict, y_legend_title, title_summary_card, company_description, title_valuation_card, title_growth_card, title_revenue_card, \
             show_company_functionalities, show_company_functionalities, show_company_functionalities, \
@@ -1532,7 +1541,7 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
             total_assets, users_revenue_regression, \
             initial_sliders_values, source_string, True, True, hide_loader, display_loading_overlay, display_loading_overlay, display_loading_overlay, symbol_company, max_net_margin, company_logo_link_src
     except Exception as e:
-        print(f"Error fetching or processing dataset: {str(e)}")
+        logger.info(f"Error fetching or processing dataset: {str(e)}")
         raise PreventUpdate
 
 
@@ -1585,19 +1594,19 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
 # Analysis to load the different scenarios (low & high) when a dropdown value is selected
 def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
               users_revenue_correlation, key_unit, df_raw, initial_slider_values, symbol_dataset, max_net_margin):
-    print("Starting scenarios calculation")
+    logger.info("Starting scenarios calculation")
     t1 = time.perf_counter(), time.process_time()
-    date_picked_formatted = main.date_formatting_from_string(date_picked)
-    print("datedate")
+    date_picked_formatted = src.Utils.dates.date_formatting_from_string(date_picked)
+    logger.info("datedate")
     df_dataset = pd.DataFrame(df_dataset_dict)
-    print("DF_dataset_first", df_dataset)
+    logger.info(f"DF_dataset_first {df_dataset}")
     if dropdown_value is None:
         raise PreventUpdate
     # Dates array definition from dictionary
     dates_raw = np.array([entry['Date'] for entry in df_raw])
     dates_new = np.array([entry['Date'] for entry in df_dataset_dict])
     dates = dates_new - 1970
-    data_len = len(main.get_earlier_dates(dates, date_picked_formatted - 1970))
+    data_len = len(src.Utils.dates.get_earlier_dates(dates, date_picked_formatted - 1970))
     # Users are taken from the database and multiply by a million
     users_new = np.array([entry['Users'] for entry in df_dataset_dict])
     users_original = users_new.astype(float) * 1000000
@@ -1613,27 +1622,27 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
     users = users_original
     # Resizing of the dataset taking into account the date picked
     history_value_formatted = date_picked_formatted - 1970  # New slider: Puts back the historical value to the format for computations
-    dates_actual = main.get_earlier_dates(dates, history_value_formatted)
+    dates_actual = src.Utils.dates.get_earlier_dates(dates, history_value_formatted)
     current_users_array = users_new * 1e6
     current_users = current_users_array[closest_index]
 
     # All parameters are calculated by ignoring data 1 by 1, taking the history reference as the end point
-    df_full = main.parameters_dataframe(dates[0:data_len],
+    df_full = src.ParametersDataFrame.parameters_dataframe(dates[0:data_len],
                                         users[0:data_len])  # Dataframe containing all parameters with all data ignored
-    print("df_full", df_full)
-    df_sorted = main.parameters_dataframe_cleaning(df_full, users[
+    logger.info(f"{df_full = }")
+    df_sorted = src.ParametersDataFrame.parameters_dataframe_cleaning(df_full, users[
                                                             0:data_len])  # Dataframe where inadequate scenarios are eliminated
-    print("df_sorted", df_sorted)
+    logger.info(f"{df_sorted = }")
 
     if df_sorted.empty:
-        print("No good scenario could be calculated")
-        df_sorted = main.parameters_dataframe_cleaning_minimal(df_full, users[0:data_len])
+        logger.info("No good scenario could be calculated")
+        df_sorted = src.ParametersDataFrame.parameters_dataframe_cleaning_minimal(df_full, users[0:data_len])
         if df_sorted.empty:
-            print("No good scenario AT ALL could be calculated, all kind of scenarios are considered")
+            logger.info("No good scenario AT ALL could be calculated, all kind of scenarios are considered")
             df_sorted = df_full
     else:
-        print("Successful scenarios exist")
-    print("df_sorted", df_sorted)
+        logger.info("Successful scenarios exist")
+    logger.info(f"{df_sorted = }")
     df_sorted_dict = df_sorted.to_dict(orient='records')  # Transforming it to dict to be stored
     if dropdown_value is None:  # Exception for when dropdown is not selected yet, initializing df
         df = df_full
@@ -1699,11 +1708,11 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
 
 
 
-    print("GS")
-    print(GS)
+    logger.info("GS")
+    logger.info(GS)
 
     # Growth Rate
-    rd = main.discrete_growth_rate(users[0:data_len], dates[0:data_len] + 1970)
+    rd = src.analysis.discrete_growth_rate(users[0:data_len], dates[0:data_len] + 1970)
     average_rd = sum(rd[-3:])/3
 
     # Growth Rate Graph message
@@ -1807,40 +1816,40 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
         plateau_high_growth = f"{k_scenarios[-1] / 1e6:.1f} M"
     else:
         plateau_high_growth = f"{k_scenarios[-1] / 1e9:.1f} B"
-    time_high_growth = main.time_to_population(k_scenarios[-1], r_scenarios[-1], p0_scenarios[-1],
-                                               k_scenarios[-1] * 0.9) + 1970
+    time_high_growth = src.analysis.time_to_population(k_scenarios[-1], r_scenarios[-1], p0_scenarios[-1],
+                                                       k_scenarios[-1] * 0.9) + 1970
     # Low Growth
     if k_scenarios[0] < 1e9:
         plateau_low_growth = f"{k_scenarios[0] / 1e6:.1f} M"
     else:
         plateau_low_growth = f"{k_scenarios[0] / 1e9:.1f} B"
-    time_high_growth = main.time_to_population(k_scenarios[0], r_scenarios[0], p0_scenarios[0],
-                                               k_scenarios[0] * 0.9) + 1970
+    time_high_growth = src.analysis.time_to_population(k_scenarios[0], r_scenarios[0], p0_scenarios[0],
+                                                       k_scenarios[0] * 0.9) + 1970
     # Best Growth
     if k_scenarios[highest_r2_index] < 1e9:
         plateau_best_growth = f"{k_scenarios[highest_r2_index] / 1e6:.1f} M"
     else:
         plateau_best_growth = f"{k_scenarios[highest_r2_index] / 1e9:.1f} B"
 
-    time_best_growth = main.time_to_population(k_scenarios[highest_r2_index],
-                                               r_scenarios[highest_r2_index],
-                                               p0_scenarios[highest_r2_index],
-                                               k_scenarios[highest_r2_index] * 0.95) + 1970
+    time_best_growth = src.analysis.time_to_population(k_scenarios[highest_r2_index],
+                                                       r_scenarios[highest_r2_index],
+                                                       p0_scenarios[highest_r2_index],
+                                                       k_scenarios[highest_r2_index] * 0.95) + 1970
 
     # Plateau Accordion
     if diff_r2lin_log > 0.1:
         plateau_message_title = "The revenue is unlikely to stop growing before " + \
-                                main.string_formatting_to_date(time_high_growth)
+                                src.Utils.dates.string_formatting_to_date(time_high_growth)
         plateau_message_body = "Given the likelihood of exponential growth in the foreseeable " \
                                "future, the high growth scenario is likely with 95% of its plateau at " + \
-                               str(plateau_high_growth) + " users which should happen in " + main.string_formatting_to_date(
+                               str(plateau_high_growth) + " users which should happen in " + src.Utils.dates.string_formatting_to_date(
             time_high_growth) + ". If overvalued, the company's hype can remain a while until the revenue stop growing."
     else:
-        plateau_message_title = "Plateau could be reached in " + main.string_formatting_to_date(time_best_growth) \
+        plateau_message_title = "Plateau could be reached in " + src.Utils.dates.string_formatting_to_date(time_best_growth) \
                                 + " with " + str(plateau_best_growth) + " users"
         plateau_message_body = "Given the likelihood of a stable growth in the foreseeable " \
                                "future, the best growth scenario is likely to reach 95% of its plateau in " \
-                               + main.string_formatting_to_date(time_best_growth) + " with " + str(
+                               + src.Utils.dates.string_formatting_to_date(time_best_growth) + " with " + str(
             plateau_best_growth) + " users"
     # Plateau message color
     if time_best_growth < date_picked_formatted:
@@ -1888,9 +1897,9 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
     percentage_limit_label = 0.1
     max_limit_slider_label = data_ignored_array[int(len(data_ignored_array) * (1-percentage_limit_label))]
     min_limit_slider_label = data_ignored_array[int(len(data_ignored_array)*percentage_limit_label)]
-    print(max_limit_slider_label)
-    print(min_limit_slider_label)
-    print(highest_r2_index)
+    logger.info(max_limit_slider_label)
+    logger.info(min_limit_slider_label)
+    logger.info(highest_r2_index)
     # Slider max definition
     if k_scenarios[-1] >= 1_000_000_000:  # If the max value of the slider is over 1 B
         if highest_r2_index >= max_limit_slider_label:  # If the best = max, then display them side by side
@@ -1969,9 +1978,9 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
             latest_market_cap = dataAPI.get_marketcap(symbol_company)
             if latest_market_cap is None:
                 raise ValueError("Market cap returned None")
-            print("Latest_market_cap", latest_market_cap)
+            logger.info(f"{latest_market_cap = }")
         except Exception as e:
-            print("Couldn't fetch latest market cap, assigning DB value")
+            logger.info("Couldn't fetch latest market cap, assigning DB value")
             latest_market_cap = df_dataset.loc[closest_index, 'Market Cap'] * 1e3
         if new_date_str == dates_raw[-1]:
             current_market_cap = latest_market_cap  # Sets valuation if symbol exists
@@ -1987,7 +1996,7 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
         current_arpu = sum(quarterly_revenue[-4:] / current_users_array[closest_index-4:closest_index])
         printed_current_arpu = f"{current_arpu:.0f} $ (current arpu)"  # formatting
         first_arpu = quarterly_revenue[0] / current_users_array[0]
-        print("FirstARPU", first_arpu)
+        logger.info(f"FirstARPU = {first_arpu}")
         #arpu_growth_calculated = current_arpu/(first_arpu * (dates[data_len] - dates[3]))
         marks_profit_margin_slider = []
         if current_annual_profit_margin > 1:
@@ -2011,9 +2020,9 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
 
     # Plateau Accordion
     try:
-        arpu_needed = main.arpu_for_valuation(k_scenarios[highest_r2_index], r_scenarios[highest_r2_index],
-                                              p0_scenarios[highest_r2_index], 0.2, 0.05, 10,
-                                              current_market_cap * 1000000)
+        arpu_needed = src.analysis.arpu_for_valuation(k_scenarios[highest_r2_index], r_scenarios[highest_r2_index],
+                                                      p0_scenarios[highest_r2_index], 0.2, 0.05, 10,
+                                                      current_market_cap * 1000000)
     except Exception as e:
         arpu_needed = 0
 
@@ -2102,9 +2111,9 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
         growth_slider_value = no_update
 
     t2 = time.perf_counter(), time.process_time()
-    print(f" Definition of the messages in analysis and above the graphs")
-    print(f" Real time: {t2[0] - t1[0]:.2f} seconds")
-    print(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
+    logger.info(f" Definition of the messages in analysis and above the graphs")
+    logger.info(f" Real time: {t2[0] - t1[0]:.2f} seconds")
+    logger.info(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
     return initial_slider_values, \
         ["valuation"], plateau_message_title, plateau_message_body, plateau_message_color, plateau_icon_color, \
         correlation_message_title, correlation_message_body, \
@@ -2162,10 +2171,10 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
 
     # Profit Margin Array
     profit_margin_array = np.array([entry['Profit Margin'] for entry in df_dataset_dict])
-    print("ProfitMargin", profit_margin_array)
+    logger.info(f"ProfitMargin {profit_margin_array}")
 
     # Gets the date selected from the new date picker
-    date_picked_formatted = main.date_formatting_from_string(date_picked_formatted_original)
+    date_picked_formatted = src.Utils.dates.date_formatting_from_string(date_picked_formatted_original)
     history_value = date_picked_formatted
     history_value_graph = datetime.strptime(date_picked_formatted_original, "%Y-%m-%d")
     # Extract the x-coordinate for the vertical line
@@ -2174,12 +2183,12 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     # Calculating the length of historical values to be considered in the plots
     # history_value_formatted = history_value[0] - 1970  # Puts back the historical value to the format for computations
     history_value_formatted = date_picked_formatted - 1970  # New slider: Puts back the historical value to the format for computations
-    dates_actual = main.get_earlier_dates(dates, history_value_formatted)
+    dates_actual = src.Utils.dates.get_earlier_dates(dates, history_value_formatted)
     data_len = len(dates_actual)  # length of the dataset to consider for retrofitting
     users_actual = users[0:data_len]
 
-    print("Selected date", date_picked_formatted)
-    print(graph_unit)
+    logger.info(f"Selected date {date_picked_formatted}")
+    logger.info(graph_unit)
 
     # If selecting all possible scenarios,  Creation of the arrays of parameters
     k_scenarios = np.array([entry['K'] for entry in df_scenarios_dict])
@@ -2196,7 +2205,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     r = r_scenarios[row_selected]
     p0 = p0_scenarios[row_selected]
     moving_average = moving_average_scenarios[row_selected]
-    print("movingaverage", moving_average)
+    logger.info(f"{moving_average = }")
     r_squared_showed = np.round(rsquared_scenarios[row_selected], 3)
     number_ignored_data = int(number_ignored_data_scenarios[row_selected])
 
@@ -2226,10 +2235,10 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
             {"value": value_section, "color": "LightGrey", "tooltip": "Computation issue"},
         ]
 
-    print("Value Ring", value_section, r_squared_showed)
+    logger.info(f"Value Ring: {value_section = }, {r_squared_showed = }")
 
     highest_r2_index = np.argmax(rsquared_scenarios)
-    print("HIGHEST", highest_r2_index)
+    logger.info(f"HIGHEST {highest_r2_index}")
 
     # Graph message
 
@@ -2240,12 +2249,12 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
         plateau_selected_growth = f"{k_scenarios[data_slider] / 1e6:.1f} M"
     else:
         plateau_selected_growth = f"{k_scenarios[data_slider] / 1e9:.1f} B"
-    time_selected_growth = main.time_to_population(k_scenarios[data_slider],
-                                                   r_scenarios[data_slider],
-                                                   p0_scenarios[data_slider],
-                                                   k_scenarios[data_slider] * 0.9) + 1970
+    time_selected_growth = src.analysis.time_to_population(k_scenarios[data_slider],
+                                                           r_scenarios[data_slider],
+                                                           p0_scenarios[data_slider],
+                                                           k_scenarios[data_slider] * 0.9) + 1970
 
-    today_time = main.date_formatting_from_string(datetime.today().strftime('%Y-%m-%d'))
+    today_time = src.Utils.dates.date_formatting_from_string(datetime.today().strftime('%Y-%m-%d'))
     if time_selected_growth < today_time:
         past_tense = " started approaching 90% of its peak in "
     else:
@@ -2258,8 +2267,8 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
         "fast growth at first, then a gradual slowdown.\n" \
         " With the selected growth, the",
         dmc.Text(" plateau ", span=True, c="#953BF6") ,past_tense,
-        dmc.Text(main.string_formatting_to_date(time_selected_growth) + ", projected at " \
-                    + str(plateau_selected_growth) + " " + str(graph_unit), span=True, c="#953BF6"),
+        dmc.Text(src.Utils.dates.string_formatting_to_date(time_selected_growth) + ", projected at " \
+                 + str(plateau_selected_growth) + " " + str(graph_unit), span=True, c="#953BF6"),
         ],
         size="sm",
         fw=300,
@@ -2313,7 +2322,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     )
     # Update layout to customize the annotation
     if k_scenarios[-1] > users_raw[-1]:
-        range_y = [0, main.logisticfunction(k_scenarios[-1], r_scenarios[-1], p0_scenarios[-1], [60])[0] * 1.3]
+        range_y = [0, src.Utils.Logistics.logisticfunction(k_scenarios[-1], r_scenarios[-1], p0_scenarios[-1], [60])[0] * 1.3]
     else:
         range_y = [0, users_raw[-1] * 1.2]
 
@@ -2322,7 +2331,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
         annotations=[
             dict(
                 x=(x_coordinate + relativedelta(months=9)).strftime("%Y-%m-%d"),
-                y=0.6 * main.logisticfunction(k_scenarios[-1], r_scenarios[-1], p0_scenarios[-1], [60]),
+                y=0.6 * src.Utils.Logistics.logisticfunction(k_scenarios[-1], r_scenarios[-1], p0_scenarios[-1], [60]),
                 text="F O R E C A S T",
                 showarrow=False,
                 font=dict(size=8, color="black"),
@@ -2348,14 +2357,14 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     # Calculate date_end using the formula date_b + 2 * (date_b - date_a)
     date_end = date_b + (date_b - date_a)
 
-    date_end_formatted = main.date_formatting_from_string(date_end.strftime("%Y-%m-%d"))
+    date_end_formatted = src.Utils.dates.date_formatting_from_string(date_end.strftime("%Y-%m-%d"))
 
     # Add S-curve - S-Curve the user can play with
     x = np.linspace(dates[0], float(date_end_formatted) - 1970, num=50)
 
 
     x_scenarios = np.linspace(dates_actual[-1], float(date_end_formatted) - 1970, num=50) # changed
-    y_predicted = main.logisticfunction(k, r, p0, x_scenarios)
+    y_predicted = src.Utils.Logistics.logisticfunction(k, r, p0, x_scenarios)
     # Generate x_dates array
     x_dates = np.linspace(date_a.timestamp(), date_end.timestamp(), num=50)
     x_dates_scenarios = np.linspace(date_b_actual.timestamp(), date_end.timestamp(), num=50) # changed
@@ -2379,19 +2388,19 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
 
     # Low growth scenario
     # x = np.linspace(dates[-1], dates[-1] * 2 - dates[0], num=50)
-    y_trace = main.logisticfunction(k_scenarios[0], r_scenarios[0], p0_scenarios[0], x_scenarios)
+    y_trace = src.Utils.Logistics.logisticfunction(k_scenarios[0], r_scenarios[0], p0_scenarios[0], x_scenarios)
     formatted_y_values = [
         f"{y:.3f}" if y < 1e6 else f"{y / 1e6:.3f} M" if y < 1e9 else f"{y / 1e9:.3f} B"
         for y in y_trace
     ]
     fig_main.add_trace(go.Scatter(name="Low Growth", x=x_dates_scenarios,
-                                  y=main.logisticfunction(k_scenarios[0], r_scenarios[0], p0_scenarios[0], x_scenarios),
+                                  y=src.Utils.Logistics.logisticfunction(k_scenarios[0], r_scenarios[0], p0_scenarios[0], x_scenarios),
                                   mode='lines',
                                   line=dict(color='#C58400', width=0.5), showlegend=False, text=formatted_y_values,
                                   hovertemplate=hovertemplate_maingraph)),
     # fig.add_trace(go.Line(name="Predicted S Curve", x=x + 1970,
     # y=main.logisticfunction(k_scenarios[1], r_scenarios[1], p0_scenarios[1], x), mode="lines"))
-    y_trace = main.logisticfunction(k_scenarios[-1], r_scenarios[-1], p0_scenarios[-1], x_scenarios)
+    y_trace = src.Utils.Logistics.logisticfunction(k_scenarios[-1], r_scenarios[-1], p0_scenarios[-1], x_scenarios)
     formatted_y_values = [
         f"{y:.3f}" if y < 1e6 else f"{y / 1e6:.3f} M" if y < 1e9 else f"{y / 1e9:.3f} B"
         for y in y_trace
@@ -2407,9 +2416,9 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
 
     # Filling the area of possible scenarios
     x_area = np.append(x, np.flip(x))  # Creating one array made of two Xs
-    y_area_low = main.logisticfunction(k_scenarios[0], r_scenarios[0], p0_scenarios[0], x_scenarios)  # Low growth array
-    y_area_high = main.logisticfunction(k_scenarios[-1], r_scenarios[-1], p0_scenarios[-1],
-                                        np.flip(x_scenarios))  # High growth array
+    y_area_low = src.Utils.Logistics.logisticfunction(k_scenarios[0], r_scenarios[0], p0_scenarios[0], x_scenarios)  # Low growth array
+    y_area_high = src.Utils.Logistics.logisticfunction(k_scenarios[-1], r_scenarios[-1], p0_scenarios[-1],
+                                                       np.flip(x_scenarios))  # High growth array
     y_area = np.append(y_area_low, y_area_high)
     dates_area = np.append(x_dates_scenarios, np.flip(x_dates_scenarios))
     fig_main.add_trace(go.Scatter(x=dates_area,
@@ -2438,8 +2447,8 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
             layer="above"  # Place the image above the plot elements
         )
     )
-    print("Userbase Graph printed")
-    print("Image created")
+    logger.info("Userbase Graph printed")
+    logger.info("Image created")
 
     x1 = np.linspace(dates[-1] + 0.25, dates[-1] + 10, num=10)
     # Add predicted bars
@@ -2450,38 +2459,38 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
 
     fig_second = go.Figure(layout=layout_growth_rate_graph)
     fig_second.update_xaxes(range=[0, users[-1] * 1.1], title=graph_unit)  # Fixing the size of the X axis with users max + 10%
-    dates_moved, users_moved = main.moving_average_smoothing(dates, users, moving_average)
+    dates_moved, users_moved = src.Utils.mathematics.moving_average_smoothing(dates, users, moving_average)
 
     #Defining the min as zero or less if the minimum is negative
-    if min(main.discrete_growth_rate(users_moved, dates_moved + 1970)-0.05) > 0:
+    if min(src.analysis.discrete_growth_rate(users_moved, dates_moved + 1970) - 0.05) > 0:
         fig_second.update_yaxes(range=[0,
-                                       max(main.discrete_growth_rate(users_moved, dates_moved + 1970)+0.05)])
+                                       max(src.analysis.discrete_growth_rate(users_moved, dates_moved + 1970) + 0.05)])
     else:
-        fig_second.update_yaxes(range=[min(main.discrete_growth_rate(users_moved, dates_moved + 1970) - 0.05),
-                                       max(main.discrete_growth_rate(users_moved, dates_moved + 1970) + 0.05)])
+        fig_second.update_yaxes(range=[min(src.analysis.discrete_growth_rate(users_moved, dates_moved + 1970) - 0.05),
+                                       max(src.analysis.discrete_growth_rate(users_moved, dates_moved + 1970) + 0.05)])
     fig_second.add_trace(
         go.Scatter(name="Discrete Growth Rate Smoothened by moving average: " + str(moving_average),
-                x = main.discrete_user_interval(users_moved),
-                y = main.discrete_growth_rate(users_moved, dates_moved + 1970), mode = "markers", line = dict(color='#F963F1')
+                   x = src.analysis.discrete_user_interval(users_moved),
+                   y = src.analysis.discrete_growth_rate(users_moved, dates_moved + 1970), mode ="markers", line = dict(color='#F963F1')
                    ))
-    print(users, dates + 1970)
-    print(main.discrete_growth_rate(users, dates + 1970))
+    logger.info(f"{users = } - {dates + 1970}")
+    logger.info(src.analysis.discrete_growth_rate(users, dates + 1970))
     # Add trace of the regression
     fig_second.add_trace(
-        go.Scatter(name="Regression", x=main.discrete_user_interval(users),
-                   y=-r / k * main.discrete_user_interval(users) + r, mode="lines", line=dict(color='#953AF6')))
+        go.Scatter(name="Regression", x=src.analysis.discrete_user_interval(users),
+                   y=-r / k * src.analysis.discrete_user_interval(users) + r, mode="lines", line=dict(color='#953AF6')))
 
     if number_ignored_data > 0:
         fig_second.add_trace(
-            go.Scatter(name="Ignored Data Points", x=main.discrete_user_interval(users_moved[0:number_ignored_data]),
-                       y=main.discrete_growth_rate(users_moved[0:number_ignored_data], dates_moved[0:number_ignored_data] + 1970),
+            go.Scatter(name="Ignored Data Points", x=src.analysis.discrete_user_interval(users_moved[0:number_ignored_data]),
+                       y=src.analysis.discrete_growth_rate(users_moved[0:number_ignored_data], dates_moved[0:number_ignored_data] + 1970),
                        mode="markers", line=dict(color='#808080')))
 
     # Changes the color of the scatters after the date considered
     if data_len < len(dates):
         fig_second.add_trace(
-            go.Scatter(name="Discrete Growth Rate", x=main.discrete_user_interval(users[data_len:]),
-                       y=main.discrete_growth_rate(users[data_len:], dates[data_len:] + 1970),
+            go.Scatter(name="Discrete Growth Rate", x=src.analysis.discrete_user_interval(users[data_len:]),
+                       y=src.analysis.discrete_growth_rate(users[data_len:], dates[data_len:] + 1970),
                        mode="markers", line=dict(color='#e6ecf5')))
 
     # Adding RAST logo
@@ -2524,9 +2533,9 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     k_printed = int(np.rint(k) / pow(10, 6))
     k_printed = "{:,} M".format(k_printed)
     # PLATEAU: Time when the plateau is reached, assuming the plateau is "reached" when p(t)=95%*K
-    print(p0)
+    logger.info(p0)
     if p0 > 2.192572e-11:
-        t_plateau = main.time_to_population(k, r, p0, 0.95 * k) + 1970
+        t_plateau = src.analysis.time_to_population(k, r, p0, 0.95 * k) + 1970
         month_plateau = math.ceil((t_plateau - int(t_plateau)) * 12)
         if month_plateau == 0: # sometimes month_plateau is 0, quick fix to be improved
             month_plateau=1
@@ -2534,7 +2543,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
         date_plateau = datetime(year_plateau, month_plateau, 1).date()
         date_plateau_displayed = date_plateau.strftime("%b, %Y")
         t_plateau_displayed = 'Year {:.1f}'.format(t_plateau)
-        print("Plateau calculated correctly")
+        logger.info("Plateau calculated correctly")
     else:
         date_plateau_displayed = "Plateau could not be calculated"
 
@@ -2564,7 +2573,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
         # Filter rows based on valid indices
         dates_revenue = dates_raw[valid_indices]
         users_revenue = users[valid_indices]
-        dates_revenue_actual = main.get_earlier_dates(dates[valid_indices], history_value_formatted)
+        dates_revenue_actual = src.Utils.dates.get_earlier_dates(dates[valid_indices], history_value_formatted)
         # users_revenue_actual = main.get_earlier_dates(users_revenue, history_value_formatted)
         data_len_revenue_array = dates_raw[data_len:]
         revenue = revenue[valid_indices]
@@ -2662,7 +2671,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
                                   secondary_y=True,
                                 fixedrange=True,
                                      )
-            print("Fig Revenue Printed")
+            logger.info("Fig Revenue Printed")
 
             # Adding RAST logo
             fig_revenue.add_layout_image(
@@ -2681,7 +2690,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
             )
 
         else:
-            print("No revenue to be added to the graph")
+            logger.info("No revenue to be added to the graph")
     else:
         fig_revenue = fig_main
 
@@ -2824,11 +2833,11 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
 
 
 
-    print("2. CALLBACK END")
+    logger.info("2. CALLBACK END")
     t2 = time.perf_counter(), time.process_time()
-    print(f" Creating graph")
-    print(f" Real time: {t2[0] - t1[0]:.2f} seconds")
-    print(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
+    logger.info(f" Creating graph")
+    logger.info(f" Real time: {t2[0] - t1[0]:.2f} seconds")
+    logger.info(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
     return fig_main, fig_revenue, fig_second, fig_product_maturity, sections, graph_message
 
 
@@ -2864,9 +2873,9 @@ def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, current_m
     printed_arpu = f"{arpu_needed:.0f} $. The current arpu " + f"({current_arpu:.0f} $)" + " should be multiplied by " + f"{arpu_difference:.2f}!"  # formatting
 
     t2 = time.perf_counter(), time.process_time()
-    print(f" Performance of the valuation over time")
-    print(f" Real time: {t2[0] - t1[0]:.2f} seconds")
-    print(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
+    logger.info(f" Performance of the valuation over time")
+    logger.info(f" Real time: {t2[0] - t1[0]:.2f} seconds")
+    logger.info(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
 
     return printed_arpu
 
@@ -2923,8 +2932,8 @@ def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, arpu_grow
 
     # Equity calculation
     current_customer_equity = users[-1] * current_arpu * profit_margin
-    future_customer_equity = main.net_present_value_arpu_growth(k_selected, r_selected, p0_selected, current_arpu,
-                                                                arpu_growth, profit_margin, discount_rate, YEARS_DCF)
+    future_customer_equity = src.analysis.net_present_value_arpu_growth(k_selected, r_selected, p0_selected, current_arpu,
+                                                                        arpu_growth, profit_margin, discount_rate, YEARS_DCF)
     # Quick fix, in case the future_customer_equity throws inf. It should be refactored by only relying on the
     # historical valuation function, instead of recalculating it here
     if future_customer_equity == float('inf'):
@@ -2983,11 +2992,11 @@ def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, arpu_grow
         price_tooltip = f"Price: ${current_market_cap / 1e9:.2f} B, the current valuation (or price) on the stock market."
     else:
         price_tooltip = f"Price: ${current_market_cap / 1e6:.2f} M, the current valuation (or price) on the stock market."
-    hype_indicator_color, hype_indicator_text = main.hype_meter_indicator_values(hype_ratio / 100)
+    hype_indicator_color, hype_indicator_text = src.analysis.hype_meter_indicator_values(hype_ratio / 100)
     t2 = time.perf_counter(), time.process_time()
-    print(f" Performance of the valuation over time")
-    print(f" Real time: {t2[0] - t1[0]:.2f} seconds")
-    print(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
+    logger.info(f" Performance of the valuation over time")
+    logger.info(f" Real time: {t2[0] - t1[0]:.2f} seconds")
+    logger.info(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
 
     return non_operating_assets_ratio, noa_tooltip, customer_equity_ratio, customer_equity_tooltip, intrinsic_value_ratio_rest, \
         hype_tooltip, price_tooltip, hype_indicator_color, hype_indicator_text, current_valuation, hype_ratio_progress, hype_indicator_color, hype_ratio_rest, \
@@ -3013,10 +3022,10 @@ def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, arpu_grow
 )
 def historical_valuation_calculation(df_formatted, total_assets, df_raw, latest_market_cap, max_net_margin,
                                      df_rawdataset_counter):
-    print("Dataset Flag")
-    print(max_net_margin)
-    print(type(max_net_margin))
-    print(df_rawdataset_counter)
+    logger.info("Dataset Flag")
+    logger.info(max_net_margin)
+    logger.info(type(max_net_margin))
+    logger.info(df_rawdataset_counter)
     # The entire callback is skipped if the current market cap = 0, i.e. if it is not a public company OR
     # if it was already calculated
     if latest_market_cap == 0 or df_rawdataset_counter == False:
@@ -3045,7 +3054,7 @@ def historical_valuation_calculation(df_formatted, total_assets, df_raw, latest_
     non_operating_assets = total_assets
     # df_valuation_over_time = pd.DataFrame(columns=columns)
     valuation_data = []
-    print("Iteration range", iteration_range)
+    logger.info(f"{iteration_range = }")
     if df_rawdataset_counter:  # calculates the historic of valuation only if the dataset has been updated
         for i in range(iteration_range[0], iteration_range[1]):
             dates_valuation = dates_original[:i]
@@ -3062,12 +3071,12 @@ def historical_valuation_calculation(df_formatted, total_assets, df_raw, latest_
             users = users_valuation
 
             # All parameters are calculated by ignoring data 1 by 1, taking the history reference as the end point
-            df_full = main.parameters_dataframe(dates,
-                                                users)  # Dataframe containing all parameters with all data ignored
+            df_full = src.ParametersDataFrame.parameters_dataframe(dates,
+                                                                   users)  # Dataframe containing all parameters with all data ignored
             if df_full.empty:
-                print("nonono scenario calculated at all")
-            df_sorted = main.parameters_dataframe_cleaning(df_full,
-                                                           users)  # Dataframe where inadequate scenarios are eliminated
+                logger.info("nonono scenario calculated at all")
+            df_sorted = src.ParametersDataFrame.parameters_dataframe_cleaning(df_full,
+                                                                              users)  # Dataframe where inadequate scenarios are eliminated
 
             if df_sorted.empty: # Smoothening data for cases where it doesn't work
                 # Smoothing the data
@@ -3076,20 +3085,20 @@ def historical_valuation_calculation(df_formatted, total_assets, df_raw, latest_
                 users = users_valuation
 
                 # All parameters are calculated by ignoring data 1 by 1, taking the history reference as the end point
-                df_full1 = main.parameters_dataframe(dates,
-                                                    users)  # Dataframe containing all parameters with all data ignored
-                df_sorted = main.parameters_dataframe_cleaning(df_full1,
-                                                               users)  # Dataframe where inadequate scenarios are eliminated
+                df_full1 = src.ParametersDataFrame.parameters_dataframe(dates,
+                                                                        users)  # Dataframe containing all parameters with all data ignored
+                df_sorted = src.ParametersDataFrame.parameters_dataframe_cleaning(df_full1,
+                                                                                  users)  # Dataframe where inadequate scenarios are eliminated
                 if df_sorted.empty:
-                    print("Cleaning it minimally")
-                    df_sorted = main.parameters_dataframe_cleaning_minimal(df_full, users)
-                    print("df_sorted_minimally", df_sorted)
+                    logger.info("Cleaning it minimally")
+                    df_sorted = src.ParametersDataFrame.parameters_dataframe_cleaning_minimal(df_full, users)
+                    logger.info(f"df_sorted_minimally {df_sorted}")
                     if df_sorted.empty:
                         df_sorted = df_full
-                        print("No scenario could be calculated, df used:", df_sorted)
+                        logger.info(f"No scenario could be calculated, df used: {df_sorted}")
                     #continue
             else:
-                print("Successful scenarios exist")
+                logger.info("Successful scenarios exist")
             # Number of scenarios to store
             i -= MIN_DATE_INDEX
 
@@ -3126,7 +3135,7 @@ def historical_valuation_calculation(df_formatted, total_assets, df_raw, latest_
             average_users_past_year = (users_valuation[-1] + users_valuation[-5]) / 2
             current_arpu = yearly_revenue_quarters / average_users_past_year
             num_iterations = 2
-            print("averageprofit")
+            logger.info("averageprofit")
             # Storing the data of two scenarios for a given date
             for j in range(num_iterations):
                 # If no scenario is found, 0 is appended. Later the 0 is transformed in the last known valuation
@@ -3140,10 +3149,10 @@ def historical_valuation_calculation(df_formatted, total_assets, df_raw, latest_
                     k_selected = df_sorted.at[j * (len(df_sorted) - 1), 'K']
                     r_selected = df_sorted.at[j * (len(df_sorted) - 1), 'r']
                     p0_selected = df_sorted.at[j * (len(df_sorted) - 1), 'p0']
-                    future_customer_equity = main.net_present_value_arpu_growth(k_selected, r_selected, p0_selected,
-                                                                                current_arpu, arpu_growth[j],
-                                                                                profit_margin[j], discount_rate[j],
-                                                                                YEARS_DCF)
+                    future_customer_equity = src.analysis.net_present_value_arpu_growth(k_selected, r_selected, p0_selected,
+                                                                                        current_arpu, arpu_growth[j],
+                                                                                        profit_margin[j], discount_rate[j],
+                                                                                        YEARS_DCF)
                     current_customer_equity = users_valuation[-1] * current_arpu * profit_margin[j]
                     total_valuation = future_customer_equity + current_customer_equity + non_operating_assets
                     # Check if this is the second iteration (j=1) and ensure it's higher than first
@@ -3174,14 +3183,14 @@ def historical_valuation_calculation(df_formatted, total_assets, df_raw, latest_
     #df_valuation_cleaned_second_time = main.cleans_high_valuations(df_valuation_cleaned, "Valuation")
     df_valuation_over_time_dict = df_valuation_cleaned.to_dict(orient='records') # Removing "inf" values
 
-    print("DF Valuation over time")
-    print(df_valuation_over_time)
+    logger.info("DF Valuation over time")
+    logger.info(df_valuation_over_time)
     hide_loader = {'display': 'none'}
     display_loading_overlay = False
 
-    print("DF Valuation over time")
-    print(df_valuation_over_time)
-    # print(df_valuation_over_time2)
+    logger.info("DF Valuation over time")
+    logger.info(df_valuation_over_time)
+    # logger.info(df_valuation_over_time2)
     t2 = time.perf_counter(), time.process_time()
     print(f" Performance of the valuation over time")
     print(f" Real time: {t2[0] - t1[0]:.2f} seconds")
@@ -3231,7 +3240,7 @@ def graph_valuation_over_time(valuation_over_time_dict, unit_metric, date_picked
                               max_net_margin, valuation_category):
     if not latest_market_cap:  # if latest market cap doesn't exist, none of this callback is triggered
         raise PreventUpdate
-    print("Graph Valuation Start")
+    logger.info("Graph Valuation Start")
     t1 = time.perf_counter(), time.process_time()
     dates_raw = np.array([entry['Date'] for entry in df_raw])
     dates_new = np.array([entry['Date'] for entry in df_formatted])
@@ -3242,9 +3251,9 @@ def graph_valuation_over_time(valuation_over_time_dict, unit_metric, date_picked
     # Valuation calculation
     non_operating_assets = total_assets
     df_valuation_over_time = pd.DataFrame(valuation_over_time_dict)
-    print("Df valuation")
-    print(latest_market_cap)
-    print(df_valuation_over_time)
+    logger.info("Df valuation")
+    logger.info(latest_market_cap)
+    logger.info(df_valuation_over_time)
     # Graph creation
 
     # Creating the plot of the market cap - valuations
@@ -3267,6 +3276,12 @@ def graph_valuation_over_time(valuation_over_time_dict, unit_metric, date_picked
 
     hype_score = (latest_market_cap*1e6 - low_scenario_valuation[-1]) / \
                  (high_scenario_valuation[-1] - low_scenario_valuation[-1])
+    logger.info("hype score calculation")
+    logger.info(hype_score)
+    logger.info(latest_market_cap)
+    logger.info(low_scenario_valuation[-1])
+    logger.info(high_scenario_valuation[-1])
+    hype_score_text = f"Hype score: {hype_score:.2f}"  # Formatted text for hype meter
     print("hype score calculation")
     print(hype_score)
     print(latest_market_cap)
@@ -3363,7 +3378,7 @@ def graph_valuation_over_time(valuation_over_time_dict, unit_metric, date_picked
                                        hovertemplate=hovertemplate_maingraph))
 
     # Current valuation
-    #print("Datata", date_picked, type(date_picked))
+    # logger.info(f"Datata {date_picked = }; {type(date_picked) = }")
     # date_obj = datetime.strptime(date_picked, '%Y-%m-%d')
     if current_valuation > high_scenario_valuation[-1]:
         color_dot = "#300541"
@@ -3483,8 +3498,8 @@ def graph_valuation_over_time(valuation_over_time_dict, unit_metric, date_picked
     r_high_valuation = df_sorted[-1]['r']
     p0_high_valuation = df_sorted[-1]['p0']
     try:
-        profit_margin_needed = main.profit_margin_for_valuation(k_high_valuation, r_high_valuation, p0_high_valuation,
-                                                                current_arpu, 0.05, 0.1, YEARS_DCF, non_operating_assets, latest_market_cap * 1000000)
+        profit_margin_needed = src.analysis.profit_margin_for_valuation(k_high_valuation, r_high_valuation, p0_high_valuation,
+                                                                        current_arpu, 0.05, 0.1, YEARS_DCF, non_operating_assets, latest_market_cap * 1000000)
     # Except to avoid errors
     except Exception as e:
         profit_margin_needed = max_net_margin*0.2
@@ -3779,12 +3794,12 @@ def update_table(df_all_companies, hype_choice, industries, logged_in):
         ])
         rows.append(row)
     body = [html.Tbody(rows)]
-    #print("Hyped table is")
-    #print(df_sorted)
+    #logger.info("Hyped table is")
+    #logger.info(df_sorted)
     t2 = time.perf_counter(), time.process_time()
-    print(f" Performance of the table update")
-    print(f" Real time: {t2[0] - t1[0]:.2f} seconds")
-    print(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
+    logger.info(f" Performance of the table update")
+    logger.info(f" Real time: {t2[0] - t1[0]:.2f} seconds")
+    logger.info(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
     return header + body
 
 
