@@ -1081,7 +1081,7 @@ def initialize_data(dropdown_selection, path):
     ))
 
 
-    # Company-Specific quadrant
+    # Company Specific quadrant
 
     df_all_companies_information.set_index("Company Name")
 
