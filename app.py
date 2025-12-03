@@ -1526,7 +1526,7 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
         hovertemplate_maingraph = "%{text}"
         y_legend_title = key_unit
 
-        # Initial_sliders_values
+        # Initial sliders values
         initial_sliders_values = {'slider_profit_margin': value_profit_margin_slider,
                                   'slider_discount_rate': value_discount_rate_slider}
 
