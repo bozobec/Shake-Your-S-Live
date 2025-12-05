@@ -107,7 +107,7 @@ with open("index.html") as f:
 # ---------------------------------------------------------------------------
 
 # Constants for the calculation
-MIN_DATE_INDEX = 5  # Defines the minimum year below which no date can be picked in the datepicker
+MIN_DATE_INDEX = 5  # Defines the minimum year below which no date can be picked in the datepicker!
 YEARS_DCF = 15  # Amount of years taken into account for DCF calculation
 
 # ---------------------------------------------------------------------------------
@@ -3532,7 +3532,7 @@ def graph_valuation_over_time(valuation_over_time_dict, unit_metric, date_picked
                 company_symbol,
                 "'s current price is ",
                 dmc.Text(" above our highest estimate. ", span=True, c="black", fw=600),
-                "To justify it, they' need a ",
+                "To justify it, they'd need a ",
                 f"{profit_margin_needed * 100:.1f}% ",
                 "profit margin, even though they could theoretically aim at best at ",
                 f"~{max_profit_margin:.0f}%... ",
