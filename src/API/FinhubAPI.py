@@ -195,6 +195,7 @@ if __name__ == '__main__':
 
     logger.info(f"{ finhub_api is finhub_api2 = }")
 
+    # ToDo: Handle this error more gracefully - NFLX
     netflix_isin = 'US64110L1061'
 
     finhub_api.get_marketcap(netflix_isin)
