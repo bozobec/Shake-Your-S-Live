@@ -299,9 +299,6 @@ card_1 = dmc.Card(
             order=5,
             style={
                 'fontFamily': 'ABCGravityUprightVariable-Trial, sans-serif',
-                #'fontWeight': 'bold',
-                #'marginBottom': '30px',
-                #'fontSize': '2.5rem'
             }
         ),
         dmc.Space(h=20),
@@ -322,6 +319,9 @@ card_1 = dmc.Card(
                             "paddingRight": "0px",
                             "paddingTop": "2px",
                             "paddingBottom": "2px",
+                            "borderWidth": "2px",
+                            "borderColor": "#953BF6",
+                            "boxShadow": "0 4px 4px -1px rgba(127, 17, 224, 0.3), 0 2px 4px -1px rgba(127, 17, 224, 0.2)",
                         },
                         leftSection=html.Img(
                                     src=company["logo"],

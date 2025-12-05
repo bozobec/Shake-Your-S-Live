@@ -77,7 +77,7 @@ company_quadrant_card = dmc.Card(children=[
                     dmc.Button(
                         "See all companies",
                         size="sm",
-                        color="black",
+                        #color="black",
                         leftSection=DashIconify(icon="carbon:quadrant-plot"),
                         variant="outline",
                         style={
