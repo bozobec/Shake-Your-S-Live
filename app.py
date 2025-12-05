@@ -87,7 +87,6 @@ dash._dash_renderer._set_react_version('18.2.0')
 app = dash.Dash(__name__,
                 external_stylesheets=[dbc.themes.LUX],
                 #external_stylesheets=[dbc.themes.MORPH], Nice stylesheet
-                #title=APP_TITLE,
                 use_pages=True,
                 url_base_pathname="/",
                 assets_ignore=clerk_script_ignored,
