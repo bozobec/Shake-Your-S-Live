@@ -8,7 +8,6 @@ from src.Utils.RastLogger import get_default_logger
 
 logger = get_default_logger()
 
-
 MIN_DATEPICKER_INDEX = 4  # For a given dataset, this is the minimum below which no date can be selected
 
 
@@ -38,29 +37,39 @@ def datepicker_limit(dataset_df):
         logger.info("An error occured while calculating the min & max of the datepicker")
         return "", "", "", [], []
 
-# Function defining the color and the text of the hype meter indicator, depending on the size of the hype compared to
-# the total market cap. The color changes the outline of the badge while the text changes its value
-def hype_meter_indicator_values(hype_ratio):
-    if hype_ratio <= 0: # if hype ratio is smaller than 10%
+
+def hype_meter_indicator_values(hype_ratio: float) -> (str, str):
+    """
+    Function defining the color and the text of the hype meter indicator, depending on the size of the hype compared to
+    the total market cap. The color changes the outline of the badge while the text changes its value
+    :param hype_ratio:
+    :return:
+    """
+    if hype_ratio <= 0.0:  # if hype ratio is smaller than 10%
         indicator_color = "teal"
         indicator_text = "Undervalued!"
-    elif hype_ratio < 0.1: # if hype ratio is smaller than 10%
+    elif hype_ratio < 0.1:  # if hype ratio is smaller than 10%
         indicator_color = "orange"
         indicator_text = "Marginally Hyped"
-    elif hype_ratio < 0.15: # if hype ratio is smaller than 15%
+    elif hype_ratio < 0.15:  # if hype ratio is smaller than 15%
         indicator_color = "orange"
         indicator_text = "Moderately Hyped"
-    elif hype_ratio < 0.2: # if hype ratio is smaller than 20%
+    elif hype_ratio < 0.2:  # if hype ratio is smaller than 20%
         indicator_color = "orange"
         indicator_text = "Strongly Hyped"
-    else: # if hype ratio is higher than 20%
+    else:  # if hype ratio is higher than 20%
         indicator_color = "red"
         indicator_text = "Super hyped!"
     return indicator_color, indicator_text
 
-# Function defining the color and the text of the hype meter indicator, depending on the size of the hype compared to
-# the total market cap. The color changes the outline of the badge while the text changes its value
-def hype_meter_indicator_values_new(hype_score):
+
+def hype_meter_indicator_values_new(hype_score: float) -> (str, str):
+    """
+    Function defining the color and the text of the hype meter indicator, depending on the size of the hype compared to
+    the total market cap. The color changes the outline of the badge while the text changes its value
+    :param hype_score:
+    :return:
+    """
     if hype_score > 2.5:
         badge_color = "red"
         badge_label = "Super hyped"
@@ -78,7 +87,13 @@ def hype_meter_indicator_values_new(hype_score):
         badge_label = "Undervalued"
     return badge_color, badge_label
 
-def growth_meter_indicator_values(growth_score):
+
+def growth_meter_indicator_values(growth_score: float) -> (str, str):
+    """
+    Returns badge_color and badge_label depending on growth score
+    :param growth_score:
+    :return: badge_color and badge_label depending on growth score
+    """
     if growth_score > 0.5:
         badge_color_growth = "teal"
         badge_label_growth = "Massive growth"
@@ -93,95 +108,6 @@ def growth_meter_indicator_values(growth_score):
         badge_label_growth = "Poor growth"
     return badge_color_growth, badge_label_growth
 
-def parse_contents(contents, filename, date):
-    content_type, content_string = contents.split(',')
-
-    decoded = base64.b64decode(content_string)
-    try:
-        if 'csv' in filename:
-            print("CSV uploaded")
-            # Assume that the user uploaded a CSV file
-            df = pd.read_csv(
-                io.StringIO(decoded.decode('utf-8')))
-            print("CSV successfully read")
-        elif 'xls' in filename:
-            print("XLS uploaded")
-            # Assume that the user uploaded an excel file
-            df = pd.read_excel(io.BytesIO(decoded))
-            print("XLS successfully read")
-        # Remove empty rows
-        df.dropna(axis=0, how='all', inplace=True)
-    except Exception as e:
-        print(e)
-        return html.Div([
-            'There was an error processing this file.'
-        ])
-
-    return html.Div([
-        html.H5(filename),
-        html.H6(datetime.fromtimestamp(date)),
-
-        dash_table.DataTable(
-            df.to_dict('records'),
-            [{'name': i, 'id': i} for i in df.columns]
-        ),
-
-        html.Hr(),  # horizontal line
-
-    ])
-
-def parse_contents_df(contents, filename, date):
-    content_type, content_string = contents.split(',')
-
-    decoded = base64.b64decode(content_string)
-    try:
-        if 'csv' in filename:
-            print("CSV uploaded")
-            # Assume that the user uploaded a CSV file
-            df = pd.read_csv(
-                io.StringIO(decoded.decode('utf-8')))
-            print("CSV successfully read")
-        elif 'xls' in filename:
-            print("XLS uploaded")
-            # Assume that the user uploaded an excel file
-            df = pd.read_excel(io.BytesIO(decoded))
-            print("XLS successfully read")
-    except Exception as e:
-        print(e)
-        return html.Div([
-            'There was an error processing this file.'
-        ])
-        # Remove empty rows
-        df.dropna(axis=0, how='all', inplace=True)
-
-    return df
-
-
-# Improved function for parsing file contents
-def parse_file_contents(contents, filename):
-    content_type, content_string = contents.split(',')
-    decoded = base64.b64decode(content_string)
-
-    try:
-        if 'csv' in filename:
-            print("CSV uploaded")
-            df = pd.read_csv(io.StringIO(decoded.decode('utf-8')))
-            print("CSV successfully read")
-        elif 'xls' in filename:
-            print("XLS uploaded")
-            df = pd.read_excel(io.BytesIO(decoded))
-            print("XLS successfully read")
-        else:
-            raise ValueError("Unsupported file format")
-
-        # Remove empty rows
-        df.dropna(axis=0, how='all', inplace=True)
-
-    except Exception as e:
-        print(e)
-        return None
-
-    return df
 
 def get_industry_icon(industry: str) -> str:
     """
