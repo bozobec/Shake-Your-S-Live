@@ -16,11 +16,17 @@ window.addEventListener("DOMContentLoaded", async () => {
       const user = Clerk.user;
       const isLoggedIn = !!user;
 
-      // ✅ Directly push to Dash — no need for hidden div polling!
+      // Get billing info from Clerk/Stripe
+      const hasFreePlan = isLoggedIn ? Clerk.session.checkAuthorization({ plan: 'free_user' }) : false;
+      const hasProPlan = isLoggedIn ? Clerk.session.checkAuthorization({ plan: 'pro_user' }) : false;
+
+      // ✅ Push to Dash including billing info
       dash_clientside.set_props("login-state-bridge", {
         children: JSON.stringify({
           logged_in: isLoggedIn,
           user_id: user ? user.id : null,
+          has_free_plan: hasFreePlan,
+          has_pro_plan: hasProPlan,
         })
       });
 
@@ -70,6 +76,33 @@ window.addEventListener("DOMContentLoaded", async () => {
         extra.appendChild(extraBtn);
         }
     }
+
+        // ✨ Billing: Function to mount pricing table
+    function mountPricingTable(elementId) {
+      const pricingTableDiv = document.getElementById(elementId);
+      if (pricingTableDiv) {
+        Clerk.mountPricingTable(pricingTableDiv);
+      }
+    }
+
+    // ✨ Billing: Function to check if user has a plan
+    function checkPlan(planName) {
+      if (!Clerk.session) return false;
+      return Clerk.session.checkAuthorization({ plan: planName });
+    }
+
+    // ✨ Billing: Function to check if user has a feature
+    function checkFeature(featureName) {
+      if (!Clerk.session) return false;
+      return Clerk.session.checkAuthorization({ feature: featureName });
+    }
+
+    // Make functions available globally for Dash callbacks
+    window.clerkBilling = {
+      mountPricingTable,
+      checkPlan,
+      checkFeature
+    };
 
     // Initial check
     await updateAppState();

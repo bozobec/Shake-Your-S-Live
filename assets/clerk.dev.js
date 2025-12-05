@@ -20,7 +20,6 @@ window.addEventListener("DOMContentLoaded", async () => {
       const hasFreePlan = isLoggedIn ? Clerk.session.checkAuthorization({ plan: 'free_user' }) : false;
       const hasProPlan = isLoggedIn ? Clerk.session.checkAuthorization({ plan: 'pro_user' }) : false;
 
-
       // ✅ Push to Dash including billing info
       dash_clientside.set_props("login-state-bridge", {
         children: JSON.stringify({
