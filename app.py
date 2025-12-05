@@ -748,7 +748,7 @@ clientside_callback(
     Output('login-state', 'data'),
     Output('user-id', 'data'),
     Input("login-state-bridge", "children"),
-    prevent_initial_call=True,  # optional: avoid firing on page load if empty
+    prevent_initial_call=True,  # avoid firing on page load if empty
 )
 def update_login_state(bridge_content):
     if not bridge_content:

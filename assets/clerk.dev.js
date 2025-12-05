@@ -16,7 +16,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       const user = Clerk.user;
       const isLoggedIn = !!user;
 
-      // Get billing info
+      // Get billing info from Clerk/Stripe
       const hasFreePlan = isLoggedIn ? Clerk.session.checkAuthorization({ plan: 'free_user' }) : false;
       const hasProPlan = isLoggedIn ? Clerk.session.checkAuthorization({ plan: 'pro_user' }) : false;
 
