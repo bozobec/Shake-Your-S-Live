@@ -2,7 +2,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   const publishableKey = "pk_live_Y2xlcmsucmFzdC5ndXJ1JA"; // the prod key
 
   const script = document.createElement("script");
-  script.src = "https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js";
+  script.src = "https://cdn.jsdelivr.net/npm/@clerk/clerk-js@5.111.0/dist/clerk.browser.js";
   script.async = true;
   script.setAttribute("data-clerk-publishable-key", publishableKey);
 

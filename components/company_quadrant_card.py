@@ -79,6 +79,12 @@ company_quadrant_card = dmc.Card(children=[
                         size="sm",
                         color="black",
                         leftSection=DashIconify(icon="carbon:quadrant-plot"),
+                        variant="outline",
+                        style={
+                            "borderWidth": "2px",
+                            "borderColor": "#953BF6",
+                            "boxShadow": "0 4px 10px -1px rgba(127, 17, 224, 0.3), 0 2px 10px -1px rgba(127, 17, 224, 0.2)",
+                        }
                     ),
                     href="/ranking"
                 )
