@@ -63,29 +63,28 @@ from src.Utils.dates import YEAR_OFFSET
 logger = get_default_logger()
 
 from components.company_quadrant_card import company_quadrant_card
+
 t1 = time.perf_counter(), time.process_time()
 
 # Load environment variables from .env file
 load_dotenv()
-
-
 
 # Retrieve secrets
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 logger.info(f"Stripe key loaded: {bool(stripe.api_key)}")
 
 pd.set_option('display.max_rows', 200)
-#APP_TITLE = "RAST"
+# APP_TITLE = "RAST"
 
 IS_PRODUCTION = os.getenv("IS_PRODUCTION") == "true"  # Setup in heroku 'heroku config:set IS_PRODUCTION=true'
-clerk_script_ignored = r"clerk\.dev\.js" if IS_PRODUCTION else r"clerk\.prod\.js" # if production, ignores clerk.dev.js
+clerk_script_ignored = r"clerk\.dev\.js" if IS_PRODUCTION else r"clerk\.prod\.js"  # if production, ignores clerk.dev.js
 
 dash._dash_renderer._set_react_version('18.2.0')
 
-
 app = dash.Dash(__name__,
                 external_stylesheets=[dbc.themes.LUX],
-                #external_stylesheets=[dbc.themes.MORPH], Nice stylesheet
+                # external_stylesheets=[dbc.themes.MORPH], Nice stylesheet
+
                 use_pages=True,
                 url_base_pathname="/",
                 assets_ignore=clerk_script_ignored,
@@ -93,8 +92,8 @@ app = dash.Dash(__name__,
 
 # Posthog settings
 posthog = Posthog(
-  project_api_key='phc_b1l76bi8dgph2LI23vhWTdSNkiL34y2dkholjYEC7gw',
-  host='https://eu.i.posthog.com',
+    project_api_key='phc_b1l76bi8dgph2LI23vhWTdSNkiL34y2dkholjYEC7gw',
+    host='https://eu.i.posthog.com',
     enable_exception_autocapture=True,
 )
 
@@ -129,8 +128,8 @@ dropdown = dmc.Select(
     id="dataset-selection",
     data=labels,
     leftSection=DashIconify(icon="icon-park-outline:search"),
-    #size="lg",
-    #style={"marginBottom": 10},
+    # size="lg",
+    # style={"marginBottom": 10},
     styles={
         "fontSize": "16px",  # Prevents iOS zoom
         "input": {
@@ -404,7 +403,6 @@ layout_one_column = dmc.AppShell(
         id="app-shell",
     ),
 
-
 layout_page_standard = dmc.AppShell(
     [
         dmc.AppShellHeader(
@@ -477,8 +475,8 @@ layout_page_standard = dmc.AppShell(
                 dcc.Location(id='url', refresh=False),
             ],
         ),
-        #dmc.AppShellAside("Aside", p="md"),
-        #dmc.AppShellFooter("Footer", p="md"),
+        # dmc.AppShellAside("Aside", p="md"),
+        # dmc.AppShellFooter("Footer", p="md"),
     ],
     header={"height": {"base": 48, "sm": 60, "lg": 76}},
     navbar={
@@ -487,8 +485,8 @@ layout_page_standard = dmc.AppShell(
         "collapsed": {"mobile": True},
         "withOverlay": False,  # 👈 disables full-screen overlay
         "style": {
-                "backgroundColor": "rgba(255, 255, 255, 0.7)",  # White with 70% opacity
-            }
+            "backgroundColor": "rgba(255, 255, 255, 0.7)",  # White with 70% opacity
+        }
     },
     withBorder=False,
     padding="md",
@@ -496,36 +494,36 @@ layout_page_standard = dmc.AppShell(
 )
 
 app.layout = dmc.MantineProvider(
-theme={
+    theme={
         "colors": {
             "primaryPurple": [
-                  "#F5F2F8",
-                  "#DED2EB",
-                  "#CAB2E3",
-                  "#B78EE1",
-                  "#A567E7",
-                  "#953AF6",
-                  "#8633DF",
-                  "#7933C3",
-                  "#6D3BA3",
-                  "#633E89",
-                  "#593F75",
-                  "#503D64"
-                ],
+                "#F5F2F8",
+                "#DED2EB",
+                "#CAB2E3",
+                "#B78EE1",
+                "#A567E7",
+                "#953AF6",
+                "#8633DF",
+                "#7933C3",
+                "#6D3BA3",
+                "#633E89",
+                "#593F75",
+                "#503D64"
+            ],
             "primaryGreen": [
-                  "#E0F0E0",
-                  "#BFE6C1",
-                  "#9DE39F",
-                  "#77E67A",
-                  "#4BF250",
-                  "#41DC46",
-                  "#3AC73E",
-                  "#40A743",
-                  "#438D45",
-                  "#437845",
-                  "#416742"
-                ]
-            },
+                "#E0F0E0",
+                "#BFE6C1",
+                "#9DE39F",
+                "#77E67A",
+                "#4BF250",
+                "#41DC46",
+                "#3AC73E",
+                "#40A743",
+                "#438D45",
+                "#437845",
+                "#416742"
+            ]
+        },
         "primaryColor": "primaryPurple",
         "fontFamily": "Basel, Arial, sans-serif",
         "headings": {
@@ -546,14 +544,17 @@ logger.info(f"Flask routes: {[r.rule for r in app.server.url_map.iter_rules()]}"
 
 # ----------------------------------------------------------------------------------
 
-#Adding sitemap and robots
+# Adding sitemap and robots
 @server.route("/sitemap.xml")
 def send_sitemap():
     logger.info("Sitemap route accessed!")  # Debug line
     return send_from_directory("static", "sitemap.xml")
+
+
 @server.route("/robots.txt")
 def send_robots():
     return send_from_directory("static", "robots.txt")
+
 
 # Login flow
 
@@ -586,7 +587,9 @@ def verify_token(token):
         return payload
     return None
 
+
 PUBLIC_PATHS = ["/", "/robots.txt", "/sitemap.xml", "/ranking"]
+
 
 @server.before_request
 def check_auth():
@@ -613,6 +616,7 @@ def check_auth():
     # attach plan info for convenience
     request.user_plan = claims.get("public_metadata", {}).get("plan", "free")
 
+
 @app.callback(
     Output("app-shell", "navbar"),
     Input("burger", "opened"),
@@ -621,6 +625,7 @@ def check_auth():
 def toggle_navbar(opened, navbar):
     navbar["collapsed"] = {"mobile": not opened}
     return navbar
+
 
 # Callback to close navbar when a navigation link is clicked (mobile only)
 @app.callback(
@@ -636,6 +641,7 @@ def close_navbar_on_click(*args):
     if args[-1]:  # If opened is True
         return False
     return no_update
+
 
 # Clientside callback for smooth scrolling and scroll spy
 clientside_callback(
@@ -741,6 +747,7 @@ clientside_callback(
     prevent_initial_call=False,
 )
 
+
 # Stores login state & user data and avoids update if login state has not changed
 @app.callback(
     Output('login-state', 'data'),
@@ -766,7 +773,7 @@ def update_login_state(bridge_content):
     new_data = {"logged_in": logged_in, "user_id": user_id}
 
     # 👉 Track login event in PostHog
-    #if logged_in and user_id:
+    # if logged_in and user_id:
     #    posthog.capture(
     #        distinct_id=user_id,
     #        event='user_logged_in',
@@ -775,7 +782,6 @@ def update_login_state(bridge_content):
     #        }
     #    )
     #
-
 
     # Access previous value if available to avoid unnecessary updates
     triggered = callback_context.triggered
@@ -789,6 +795,7 @@ def update_login_state(bridge_content):
     logger.info(f"Updating login-state to: {logged_in} for user: {user_id}")
     return logged_in, user_id
 
+
 @app.callback(
     Output("login-overlay-table", "style"),
     Output("login-overlay-chart", "style"),
@@ -797,25 +804,24 @@ def update_login_state(bridge_content):
 def toggle_overlay(logged_in):
     if not logged_in:  # False or None:
         style = {"display": "block",
-                "position": "absolute",
-                "top": 0,
-                "left": 0,
-                "width": "100%",
-                "height": "100%",
-                "backgroundColor": "rgba(0,0,0,0.6)",
-                "zIndex": 5,
-                "backdropFilter": "blur(2px)"}
+                 "position": "absolute",
+                 "top": 0,
+                 "left": 0,
+                 "width": "100%",
+                 "height": "100%",
+                 "backgroundColor": "rgba(0,0,0,0.6)",
+                 "zIndex": 5,
+                 "backdropFilter": "blur(2px)"}
         return style, style
         # skipping it if no dropdown value is selected to avoid firing it when starting
     posthog.capture(
-        #distinct_id='loggd',  # replace with real user/session ID
+        # distinct_id='loggd',  # replace with real user/session ID
         event='logged_in',
         properties={
             'logged_in': 'True',
         }
     )
     return {"display": "none"}, {"display": "none"}
-
 
 
 # ----------------------------------------------------------------------------------
@@ -844,8 +850,8 @@ def update_url(data_selection, current_pathname):
         return dash.no_update
     # Update the pathname with the selected dataset
 
-
     return f"?company={urllib.parse.quote(data_selection)}"
+
 
 # Callback to update the dropdown selection based on the URL.
 @app.callback(
@@ -873,16 +879,17 @@ def update_select_based_on_url(url_search, current_selected_dataset):
     # Update the dropdown value and clear the persistent URL dataset data
     return dataset_url, None
 
+
 # Callback to show/hide sections based on page
 @callback(
     [
-        Output("homepage-cards", "style"), # To hide the homepage cards
-        Output("functionalities-card", "style", allow_duplicate=True), # To hide the functionalities
-        Output("navbar", "style", allow_duplicate=True), # To hide the navbar
-        Output("dropdown-container", "style"), # To hide the dropdown
-        Output("ranking-grid", "style"), # To display the ranking
-        Output('card-welcome', "style", allow_duplicate=True), # To display the welcome card on homepage
-        ],
+        Output("homepage-cards", "style"),  # To hide the homepage cards
+        Output("functionalities-card", "style", allow_duplicate=True),  # To hide the functionalities
+        Output("navbar", "style", allow_duplicate=True),  # To hide the navbar
+        Output("dropdown-container", "style"),  # To hide the dropdown
+        Output("ranking-grid", "style"),  # To display the ranking
+        Output('card-welcome', "style", allow_duplicate=True),  # To display the welcome card on homepage
+    ],
     Input("url", "pathname"),
     Input("url", "search"),
     prevent_initial_call=True
@@ -896,15 +903,15 @@ def toggle_page_layout(pathname, search):
             {"display": "none"},  # Hide functionalities card
             {"display": "none"},  # Hide navbar
             {"display": "none"},  # Hide dropdown
-            {"display": "block"}, # ranking-grid
-            {"display": "none"}, # Hide card welcome
+            {"display": "block"},  # ranking-grid
+            {"display": "none"},  # Hide card welcome
         )
 
     # --- CASE 2: COMPANY PAGE ---------------------------------
     # If search begins with ?company=
     if search and "company=" in search:
         return (
-            {"display": "block"},   # homepage-cards
+            {"display": "block"},  # homepage-cards
             {"display": "block"},  # functionalities-card
             {"display": "block"},  # navbar
             {  # dropdown-container visible
@@ -913,7 +920,7 @@ def toggle_page_layout(pathname, search):
                 "maxWidth": {"lg": "80%"},
                 "display": "block"
             },
-            {"display": "none"},   # ranking-grid
+            {"display": "none"},  # ranking-grid
             {"display": "none"},  # Hide card welcome
         )
 
@@ -932,6 +939,7 @@ def toggle_page_layout(pathname, search):
         {"display": "block"},  # Show card welcome
     )
 
+
 # Callback loading and storing the company information
 @app.callback(
     Output('all-companies-information', 'data'),
@@ -940,7 +948,7 @@ def toggle_page_layout(pathname, search):
     Output(component_id='hyped-table-industry', component_property='data'),  # Update graph 1
     Output(component_id='valuation-category', component_property='data'),  # Update graph 1
     Input(component_id='dataset-selection', component_property='value'),
-    Input('url', 'pathname'), # Triggered once when the page is loaded
+    Input('url', 'pathname'),  # Triggered once when the page is loaded
 )
 def initialize_data(dropdown_selection, path):
     # ---- Performance assessment
@@ -974,25 +982,22 @@ def initialize_data(dropdown_selection, path):
     logger.info(industry_list)
     # Creates the graph mapping companies
     # Example company data
-    #companies = ["Company A", "Company B", "Company C", "Company D"]
+    # companies = ["Company A", "Company B", "Company C", "Company D"]
     companies = df_all_companies_information["Company Name"].tolist()
     growth_score = df_all_companies_information["Growth Score"].tolist()
     hype_score = df_all_companies_information["Hype Score"] + 3
 
-
     # Shift to make all positive, then log
     hype_score_log = np.log1p(hype_score + 2)  # +2 shifts so -1 becomes 1
-
 
     # Create figure
     fig = go.Figure()
 
-
     # Midpoints for quadrants (here using 0.5, adjust if needed, 1.386 for y because log1p(1+2)
-    #x_mid, y_mid = 0.5, 1.386
-    #x_mid, y_mid = 0.5, max(hype_score)/2
-    y_min= min(hype_score)
-    y1= max(hype_score)
+    # x_mid, y_mid = 0.5, 1.386
+    # x_mid, y_mid = 0.5, max(hype_score)/2
+    y_min = min(hype_score)
+    y1 = max(hype_score)
     y_mid = np.sqrt(y_min * y1)
     x_mid = 0.3
 
@@ -1043,7 +1048,6 @@ def initialize_data(dropdown_selection, path):
     # Alternate text positions to try to limit overlapping
     text_positions = ['top center' if i % 2 == 0 else 'bottom center' for i in range(len(growth_score))]
 
-
     # Layout tweaks
     fig.update_layout(
         xaxis=dict(
@@ -1063,7 +1067,6 @@ def initialize_data(dropdown_selection, path):
         ),
     )
 
-
     # Add scatter points with labels
     fig.add_trace(go.Scatter(
         x=growth_score,
@@ -1078,7 +1081,6 @@ def initialize_data(dropdown_selection, path):
             line=dict(width=2, color="white")
         )
     ))
-
 
     # Company-Specific quadrant
 
@@ -1119,31 +1121,33 @@ def initialize_data(dropdown_selection, path):
         fig_company.add_annotation(x=0.65, y=log_y_bottom, text=" Undervalued gems ", showarrow=False,
                            font=dict(size=12), bgcolor="#E2E2E2")
 
-        if growth_score_company<x_mid and hype_score_company<y_mid:
+        if growth_score_company < x_mid and hype_score_company < y_mid:
             valuation_category = "lowGrowth_lowHype"
             fig_company.add_shape(type="rect", x0=0, x1=x_mid, y0=y_min, y1=y_mid, fillcolor="#9493FC", opacity=0.2,
-                          line_width=0)
+                                  line_width=0)
             fig_company.add_annotation(x=0.15, y=log_y_bottom, text=" <b> Steady, Forgotten </b> ", showarrow=False,
                                        font=dict(size=12),
                                        bgcolor="#F862F0")
-        elif growth_score_company>x_mid and hype_score_company<y_mid:
+        elif growth_score_company > x_mid and hype_score_company < y_mid:
             valuation_category = "highGrowth_lowHype"
             fig_company.add_shape(type="rect", x0=x_mid, x1=1, y0=y_min, y1=y_mid, fillcolor="#FFD000", opacity=0.2,
-                          line_width=0)
+                                  line_width=0)
             fig_company.add_annotation(x=0.65, y=log_y_bottom, text=" <b> Undervalued gems </b> ", showarrow=False,
                                        font=dict(size=12),
                                        bgcolor="#FED100")
-        elif growth_score_company<x_mid and hype_score_company>y_mid:
+        elif growth_score_company < x_mid and hype_score_company > y_mid:
             valuation_category = "lowGrowth_highHype"
-            fig_company.add_shape(type="rect", x0=0, x1=x_mid, y0=y_mid, y1=y1, fillcolor="#FB4040", opacity=0.2, line_width=0)
+            fig_company.add_shape(type="rect", x0=0, x1=x_mid, y0=y_mid, y1=y1, fillcolor="#FB4040", opacity=0.2,
+                                  line_width=0)
             fig_company.add_annotation(x=0.15, y=log_y_top, text=" <b> Bubble Zone </b> ", showarrow=False,
                                        font=dict(size=12),
                                        bgcolor="#F862F0")
         else:
             valuation_category = "highGrowth_highHype"
             fig_company.add_shape(type="rect", x0=x_mid, x1=1, y0=y_mid, y1=y1, fillcolor="#9493FC", opacity=0.2,
-                          line_width=0)
-            fig_company.add_annotation(x=0.65, y=log_y_top, text=" <b> Hot & hyped </b> ", showarrow=False, font=dict(size=12),
+                                  line_width=0)
+            fig_company.add_annotation(x=0.65, y=log_y_top, text=" <b> Hot & hyped </b> ", showarrow=False,
+                                       font=dict(size=12),
                                        bgcolor="#F862F0")
         # Add scatter points with labels
         fig_company.add_trace(go.Scatter(
@@ -1164,13 +1168,13 @@ def initialize_data(dropdown_selection, path):
 
         if hype_score_company > 12:
             label_position = 'bottom center'
-        elif hype_score_company > 12 and growth_score_company<0.1:
+        elif hype_score_company > 12 and growth_score_company < 0.1:
             label_position = 'bottom right'
         elif growth_score_company < 0.1:
             label_position = 'middle right'
-        elif growth_score_company < 0.1 and hype_score_company<1.2:
+        elif growth_score_company < 0.1 and hype_score_company < 1.2:
             label_position = 'top right'
-        elif hype_score_company <1.2:
+        elif hype_score_company < 1.2:
             label_position = 'top center'
         else:
             label_position = 'top center'
@@ -1200,7 +1204,7 @@ def initialize_data(dropdown_selection, path):
             xaxis=dict(
                 title="Growth potential",
                 range=[0, 1],
-                #type="log"
+                # type="log"
             ),
             yaxis=dict(
                 title="Hype level (log scale)",
@@ -1228,7 +1232,7 @@ def initialize_data(dropdown_selection, path):
     Output("loading-overlay-quadrant", "visible"),
 
     [Input("dataset-selection", "value"),
-    Input("scenarios-picker", "value")], prevent_initial_call=True)
+     Input("scenarios-picker", "value")], prevent_initial_call=True)
 def enable_slider(selection, scenario_value):
     visible_style = {"display": "block"}
     invisible_style = {"display": "hidden"}
@@ -1236,6 +1240,7 @@ def enable_slider(selection, scenario_value):
         return False, False, False, False, visible_style, True, True, True, True
     else:
         return True, True, True, True, invisible_style, True, True, False, False
+
 
 # Callback displaying the functionalities & graph cards, and hiding the text
 @app.callback(
@@ -1259,7 +1264,7 @@ def enable_slider(selection, scenario_value):
     Output("section-6", "style", allow_duplicate=True),
     Output("section-7", "style", allow_duplicate=True),
     Output("section-8", "style", allow_duplicate=True),
-    Output("navbar", "style", allow_duplicate=True), # showing navbar
+    Output("navbar", "style", allow_duplicate=True),  # showing navbar
     Input(component_id='dataset-selection', component_property='value'),
     [State('launch-counter', 'data')]
     , prevent_initial_call=True
@@ -1297,8 +1302,8 @@ def show_cards(data, launch_counter):
     Output("graph-title", "children"),
     Output("growth-card-title", "children"),
     Output("revenue-card-title", "children"),
-    #Output("company-quadrant-card", "children"),
-    #Output("graph-subtitle", "children"),
+    # Output("company-quadrant-card", "children"),
+    # Output("graph-subtitle", "children"),
     Output(component_id='profit-margin', component_property='style'),  # Show/hide depending on company or not
     Output(component_id='discount-rate', component_property='style'),  # Show/hide depending on company or not
     Output(component_id='section-1', component_property='style'),  # Show/hide hypemetercard depending on company or not
@@ -1308,11 +1313,11 @@ def show_cards(data, launch_counter):
     # Change the text below the profit margin slider
     Output(component_id='range-profit-margin', component_property='marks'),
     # Adds a mark to the slider if the profit margin > 0
-    #Output(component_id='range-profit-margin', component_property='value'),
+    # Output(component_id='range-profit-margin', component_property='value'),
     # Sets the value to the current profit margin
     Output(component_id='total-assets', component_property='data'),  # Stores the current assets
     Output(component_id='users-revenue-correlation', component_property='data'),  # Stores the correlation between
-    #Output(component_id='range-discount-rate', component_property='value'),
+    # Output(component_id='range-discount-rate', component_property='value'),
     Output(component_id='initial-sliders-values', component_property='data'),  # Stores the default slider values
     Output(component_id='data-source', component_property='children'),  # Stores the source of the data shown
     Output(component_id='data-selection-counter', component_property='data'),  # Flags that the data has changed
@@ -1321,9 +1326,10 @@ def show_cards(data, launch_counter):
     Output("loading-overlay2", "visible", allow_duplicate=True),
     Output("loading-overlay-welcome", "visible", allow_duplicate=True),
     Output("loading-overlay-quadrant", "visible", allow_duplicate=True),
-    #Output(component_id='market-cap-tab', component_property='style'),  # Hides Market cap tab if other data is selected
+    # Output(component_id='market-cap-tab', component_property='style'),  # Hides Market cap tab if other data is selected
     Output(component_id='symbol-dataset', component_property='data'),  # Hides Market cap tab if other data is selected
-    Output(component_id='max-net-margin', component_property='data'),  # Stores the max net margin opf the selected company
+    Output(component_id='max-net-margin', component_property='data'),
+    # Stores the max net margin opf the selected company
     Output('company-logo', 'src'),
 
     # the chosen KPI and the revenue
@@ -1336,8 +1342,7 @@ def show_cards(data, launch_counter):
 )
 def set_history_size(dropdown_value, imported_df, df_all_companies):
     t1 = time.perf_counter(), time.process_time()
-    logger.info("Is it prod?")
-    logger.info(IS_PRODUCTION)
+    logger.info(f"{IS_PRODUCTION = }")
     """
     Posthog event
     """
@@ -1360,8 +1365,8 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
             df = pd.DataFrame(imported_df)
             key_unit = df.columns[1]
             data_source = "Import"
-            df.columns = ['Date', 'Users'] # Renaming the columns the same way as Airtable
-            symbol_company = "N/A" # By default, imported data are not "Financial" data
+            df.columns = ['Date', 'Users']  # Renaming the columns the same way as Airtable
+            symbol_company = "N/A"  # By default, imported data are not "Financial" data
             df['Revenue'] = 0
         else:
             key_unit = df.loc[0, 'Unit']
@@ -1398,16 +1403,10 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
             title_growth_card = dropdown_value + "'s " + key_unit + " over time"
             title_revenue_card = "Revenue per " + key_unit
 
-        title_image = dmc.Group([dropdown_value, dmc.Image(
-            src="https://upload.wikimedia.org/wikipedia/commons/6/69/Airbnb_Logo_B%C3%A9lo.svg", h=10)])
-        subtitle = "Explore " + str(dropdown_value) + "'s Historical " + key_unit + " data (Bars) used to calculate the valuation and future growth " \
-                                                                                    "projections. Customize " \
-                                                                                    "predictions with the slider in the 'Valuation Drivers' section and adjust " \
-                                                                                    "the forecast start date using the datepicker."
-
         # Creating the source string for the graph
         if data_source == "Financial Report":
-            source_string = "Data Source: " + dropdown_value + " Quarterly " + str(data_source) + " | Forecast: rast.guru"
+            source_string = "Data Source: " + dropdown_value + " Quarterly " + str(
+                data_source) + " | Forecast: rast.guru"
         else:
             source_string = "Data Source: " + str(data_source)
 
@@ -1420,7 +1419,6 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
         dates_unformatted = np.array(df["Date"])
         users_formatted = np.array(df["Users"]).astype(float) * 1000000
 
-
         logger.info("Basisnetmargin")
         logger.info(type(max_net_margin))
         logger.info(max_net_margin)
@@ -1432,8 +1430,8 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
         # Check whether it is a public company: Market cap fetching & displaying profit margin,
         # discount rate and arpu for Companies
         if symbol_company != "N/A":
-            hide_loader = {'display': ''} # keep on showing the loader
-            display_loading_overlay = False # keep on showing the loading overlay
+            hide_loader = {'display': ''}  # keep on showing the loader
+            display_loading_overlay = False  # keep on showing the loading overlay
             show_company_functionalities = {'display': ''}  # Style component showing the fin. function.
             tab_selected = "1"  # show the first tab i.e. the valuation one
             try:
@@ -1443,8 +1441,8 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
                 else:
                     yearly_revenue, total_assets = FinhubAPI().get_previous_quarter_revenue(symbol_company)  # Getting with API
                 logger.info("Latest yearly revenue & total assets fetched")
-            except Exception as e:
-                logger.info("Error fetching revenue & total assets, standard value assigned")
+            except:
+                logger.exception("Error fetching revenue & total assets, standard value assigned")
                 total_assets = 1000
             filtered_revenue_df = df[df["Revenue"] != 0]  # Getting rid of the revenue != 0
             quarterly_revenue = np.array(filtered_revenue_df["Revenue"]) * 1_000_000  # Getting in database
@@ -1488,7 +1486,7 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
             display_loading_overlay = False  # keep on showing the loading overlay
             total_assets = 0
             show_company_functionalities = {'display': 'none'}
-            tab_selected = "2" # show the second tab i.e. the Growth one
+            tab_selected = "2"  # show the second tab i.e. the Growth one
             users_revenue_regression = 0
             text_profit_margin = ""
             value_profit_margin_slider = 5.0
@@ -1511,10 +1509,9 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
         max_dataset_date = datetime.strptime(dates_unformatted[-1], "%Y-%m-%d")  # Fetching the last date of the dataset
         max_history_datepicker_date = max_dataset_date + timedelta(
             days=6)  # Adding one day to the max, to include all dates
-        #max_history_datepicker = max_history_datepicker_date.strftime("%Y-%m-%d")
         current_date = datetime.now()
         max_history_datepicker = current_date.date().isoformat()
-        date_value_datepicker = max_history_datepicker # Sets the value of the datepicker as the max date
+        date_value_datepicker = max_history_datepicker  # Sets the value of the datepicker as the max date
         # current_date = dates_formatted[-1]
         logger.info(f"Other data : { min_history_datepicker = }; { max_dataset_date = };" +
                     f" { max_history_datepicker_date = }; { max_history_datepicker = }; { date_value_datepicker= }; ")
@@ -1535,13 +1532,13 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
         logger.info(f" Real time: {t2[0] - t1[0]:.2f} seconds")
         logger.info(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
         return min_history_datepicker, max_history_datepicker, date_value_datepicker, users_dates_dict, \
-            users_dates_formatted_dict, y_legend_title, title_summary_card, company_description, title_valuation_card, title_growth_card, title_revenue_card, \
-            show_company_functionalities, show_company_functionalities, show_company_functionalities, \
-            show_company_functionalities, text_profit_margin, text_best_profit_margin, marks_profit_margin_slider, \
-            total_assets, users_revenue_regression, \
-            initial_sliders_values, source_string, True, True, hide_loader, display_loading_overlay, display_loading_overlay, display_loading_overlay, symbol_company, max_net_margin, company_logo_link_src
-    except Exception as e:
-        logger.info(f"Error fetching or processing dataset: {str(e)}")
+               users_dates_formatted_dict, y_legend_title, title_summary_card, company_description, title_valuation_card, title_growth_card, title_revenue_card, \
+               show_company_functionalities, show_company_functionalities, show_company_functionalities, \
+               show_company_functionalities, text_profit_margin, text_best_profit_margin, marks_profit_margin_slider, \
+               total_assets, users_revenue_regression, \
+               initial_sliders_values, source_string, True, True, hide_loader, display_loading_overlay, display_loading_overlay, display_loading_overlay, symbol_company, max_net_margin, company_logo_link_src
+    except:
+        logger.exception(f"Error fetching or processing dataset")
         raise PreventUpdate
 
 
@@ -1578,7 +1575,7 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
     Output("range-arpu-growth", "value", allow_duplicate=True),
     Output("range-discount-rate", "value", allow_duplicate=True),
     Output("range-profit-margin", "value", allow_duplicate=True),
-    Output(component_id="growth-score-text", component_property="children"), #hype score text
+    Output(component_id="growth-score-text", component_property="children"),  # hype score text
 
     Input(component_id='dataset-selection', component_property='value'),  # Take dropdown value
     Input(component_id='date-picker', component_property='value'),  # Take date-picker date
@@ -1589,7 +1586,7 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
     Input(component_id='users-dates-raw', component_property='data'),
     Input(component_id='initial-sliders-values', component_property='data'),
     State(component_id='symbol-dataset', component_property='data'),
-    State(component_id='max-net-margin', component_property='data'), # Max net margin opf the selected company
+    State(component_id='max-net-margin', component_property='data'),  # Max net margin opf the selected company
     prevent_initial_call=True)
 # Analysis to load the different scenarios (low & high) when a dropdown value is selected
 def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
@@ -1616,8 +1613,7 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
     current_revenue_array = current_revenue_array[:closest_index + 1]
     research_and_development = np.array(df_dataset['Research_And_Development'])
     current_research_and_development = research_and_development[:closest_index + 1]
-    share_research_and_development = current_research_and_development/current_revenue_array * 100
-
+    share_research_and_development = current_research_and_development / current_revenue_array * 100
 
     users = users_original
     # Resizing of the dataset taking into account the date picked
@@ -1681,23 +1677,23 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
     # Per-capita (normalized) growth today: g = r(1−u); penetration: u=N/K - (N(t) = current users (or your key driver))
     # For the calculation, we take the best potential growth scenario, not the most probable one
     # g is high if the company has speed (high r) and headroom (low u)
-    u = users[-1]/k_scenarios[-1]
+    u = users[-1] / k_scenarios[-1]
 
     # Core, stage-aware momentum (dimensionless)
-    g = r_scenarios[-1]*(1-u)
+    g = r_scenarios[-1] * (1 - u)
 
     # Headroom (dimensionless) - captures how far they are from saturation regardless of speed
-    h = 1-u
+    h = 1 - u
 
     # Calculation of a reference r, by winsorizing at 5 - 95 pct -> it should be done across ALL companies
-    #r_wins = mstats.winsorize(r_scenarios, limits=[0.05, 0.05])  # returns numpy masked array
+    # r_wins = mstats.winsorize(r_scenarios, limits=[0.05, 0.05])  # returns numpy masked array
     r_ref_global = 0.4
 
     # Growth score calculation (early rocket: low u, high r): BIG GS | tired incumbent (high u, low r): low GS
     # Here we take a simple 0.5 weight, different weight could be given to the headroom or core
-    GS = 0.5*g/r_ref_global+0.5*h
+    GS = 0.5 * g / r_ref_global + 0.5 * h
 
-    #growth_score_text = f"Growth score: {GS:.2f}"
+    # growth_score_text = f"Growth score: {GS:.2f}"
 
     badge_color_growth, badge_label_growth = main.growth_meter_indicator_values(GS)
     growth_score_text = dmc.Group([
@@ -1705,15 +1701,12 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
         dmc.Badge(badge_label_growth, size="xs", variant="outline", color=badge_color_growth)
     ], gap="md")
 
-
-
-
     logger.info("GS")
     logger.info(GS)
 
     # Growth Rate
     rd = src.analysis.discrete_growth_rate(users[0:data_len], dates[0:data_len] + 1970)
-    average_rd = sum(rd[-3:])/3
+    average_rd = sum(rd[-3:]) / 3
 
     # Growth Rate Graph message
     if average_rd < 0.1:
@@ -1895,8 +1888,8 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
 
     # Defining the upper/lower limit after which the star is displayed right next to the label
     percentage_limit_label = 0.1
-    max_limit_slider_label = data_ignored_array[int(len(data_ignored_array) * (1-percentage_limit_label))]
-    min_limit_slider_label = data_ignored_array[int(len(data_ignored_array)*percentage_limit_label)]
+    max_limit_slider_label = data_ignored_array[int(len(data_ignored_array) * (1 - percentage_limit_label))]
+    min_limit_slider_label = data_ignored_array[int(len(data_ignored_array) * percentage_limit_label)]
     logger.info(max_limit_slider_label)
     logger.info(min_limit_slider_label)
     logger.info(highest_r2_index)
@@ -1956,7 +1949,6 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
                 {"value": data_ignored_array[-1], "label": f"{k_scenarios[-1] / 1000:.0f}K"},
             ]
 
-
     # Financial Values Calculation
 
     # Calculating the date picked (removing one day that is added previously
@@ -1992,12 +1984,12 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
         quarterly_revenue = filtered_revenue * 1_000_000  # Getting in database
         yearly_revenue_quarters = sum(quarterly_revenue[-4:])
         average_users_past_year = (current_users + current_users_array[closest_index - 4]) / 2
-        #current_arpu = yearly_revenue_quarters / average_users_past_year
-        current_arpu = sum(quarterly_revenue[-4:] / current_users_array[closest_index-4:closest_index])
+        # current_arpu = yearly_revenue_quarters / average_users_past_year
+        current_arpu = sum(quarterly_revenue[-4:] / current_users_array[closest_index - 4:closest_index])
         printed_current_arpu = f"{current_arpu:.0f} $ (current arpu)"  # formatting
         first_arpu = quarterly_revenue[0] / current_users_array[0]
         logger.info(f"FirstARPU = {first_arpu}")
-        #arpu_growth_calculated = current_arpu/(first_arpu * (dates[data_len] - dates[3]))
+        # arpu_growth_calculated = current_arpu/(first_arpu * (dates[data_len] - dates[3]))
         marks_profit_margin_slider = []
         if current_annual_profit_margin > 1:
             value_profit_margin_slider = float(current_annual_profit_margin)
@@ -2041,14 +2033,13 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
                                                                                                                                                                        "net profit margin."
         valuation_message_color = "green"
         valuation_icon_color = DashIconify(icon="radix-icons:rocket", color=dmc.DEFAULT_THEME["colors"]["green"][6],
-                                         width=20)
+                                           width=20)
     else:
         valuation_message_title = "Valuation not applicable"
         valuation_message_body = "The valuation information is only relevant for companies"
         valuation_message_color = "gray"
         valuation_icon_color = DashIconify(icon="radix-icons:rocket", color=dmc.DEFAULT_THEME["colors"]["gray"][6],
                                            width=20)
-
 
     # Initial ARPU Growth definition
     arpu_growth = 5
@@ -2115,13 +2106,13 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
     logger.info(f" Real time: {t2[0] - t1[0]:.2f} seconds")
     logger.info(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
     return initial_slider_values, \
-        ["valuation"], plateau_message_title, plateau_message_body, plateau_message_color, plateau_icon_color, \
-        correlation_message_title, correlation_message_body, \
-        correlation_message_color, correlation_icon_color, product_maturity_accordion_title, product_maturity_accordion_body,\
-        product_maturity_accordion_color, product_maturity_accordion_icon_color, df_sorted_dict, slider_max_value, marks_slider, current_arpu, hype_market_cap, \
-        current_market_cap, latest_market_cap, growth_rate_graph_message1, growth_rate_graph_color, \
-        product_maturity_graph_message, product_maturity_graph_message_color, revenue_graph_message, \
-        revenue_graph_message_color, growth_slider_value, arpu_growth_slider_value, discount_rate_slider_value, profit_margin_slider_value, growth_score_text
+           ["valuation"], plateau_message_title, plateau_message_body, plateau_message_color, plateau_icon_color, \
+           correlation_message_title, correlation_message_body, \
+           correlation_message_color, correlation_icon_color, product_maturity_accordion_title, product_maturity_accordion_body, \
+           product_maturity_accordion_color, product_maturity_accordion_icon_color, df_sorted_dict, slider_max_value, marks_slider, current_arpu, hype_market_cap, \
+           current_market_cap, latest_market_cap, growth_rate_graph_message1, growth_rate_graph_color, \
+           product_maturity_graph_message, product_maturity_graph_message_color, revenue_graph_message, \
+           revenue_graph_message_color, growth_slider_value, arpu_growth_slider_value, discount_rate_slider_value, profit_margin_slider_value, growth_score_text
 
 
 @app.callback([
@@ -2259,17 +2250,17 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
         past_tense = " started approaching 90% of its peak in "
     else:
         past_tense = " will be approaching 90% of its peak as of "
-    graph_message = dmc.Text(children =[
+    graph_message = dmc.Text(children=[
         dmc.Text("The pink bars ", span=True, c="#F862F0"),
-        "show how "+ dropdown_value +"’s " + graph_unit + " (the key revenue driver) have grown over time. ",
+        "show how " + dropdown_value + "’s " + graph_unit + " (the key revenue driver) have grown over time. ",
         dmc.Text("The yellow zone ", span=True, c="#C48501"), "is our forecast range, " \
-        "showing how this driver should evolve in the future. These drivers follow an S-curve: " \
-        "fast growth at first, then a gradual slowdown.\n" \
-        " With the selected growth, the",
-        dmc.Text(" plateau ", span=True, c="#953BF6") ,past_tense,
+                                                              "showing how this driver should evolve in the future. These drivers follow an S-curve: " \
+                                                              "fast growth at first, then a gradual slowdown.\n" \
+                                                              " With the selected growth, the",
+        dmc.Text(" plateau ", span=True, c="#953BF6"), past_tense,
         dmc.Text(src.Utils.dates.string_formatting_to_date(time_selected_growth) + ", projected at " \
                  + str(plateau_selected_growth) + " " + str(graph_unit), span=True, c="#953BF6"),
-        ],
+    ],
         size="sm",
         fw=300,
     )
@@ -2297,7 +2288,8 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     # Line linking the historical data for smoothing the legend hover
     fig_main.add_trace(go.Scatter(name="Historical data", x=dates_raw,
                                   y=y_predicted, mode='lines', opacity=0,
-                                  marker_color='#FFA8FB', text=formatted_y_values, hovertemplate=hovertemplate_maingraph))
+                                  marker_color='#FFA8FB', text=formatted_y_values,
+                                  hovertemplate=hovertemplate_maingraph))
     # Highlight points not considered for the approximation
     fig_main.add_trace(
         go.Bar(name="Data omitted", x=dates_raw[0:number_ignored_data], y=users[0:number_ignored_data],
@@ -2322,7 +2314,8 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     )
     # Update layout to customize the annotation
     if k_scenarios[-1] > users_raw[-1]:
-        range_y = [0, src.Utils.Logistics.logisticfunction(k_scenarios[-1], r_scenarios[-1], p0_scenarios[-1], [60])[0] * 1.3]
+        range_y = [0, src.Utils.Logistics.logisticfunction(k_scenarios[-1], r_scenarios[-1], p0_scenarios[-1], [60])[
+            0] * 1.3]
     else:
         range_y = [0, users_raw[-1] * 1.2]
 
@@ -2340,7 +2333,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
         ],
         yaxis=dict(
             title=graph_unit,
-            range= range_y
+            range=range_y
         ),
         margin=dict(t=40, b=10, l=5, r=5),
     )
@@ -2348,11 +2341,11 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     # Prediction, S-Curves
 
     date_a = datetime.strptime(dates_raw[0], "%Y-%m-%d")
-    #date_b = datetime.strptime(dates_raw[-1], "%Y-%m-%d")
+    # date_b = datetime.strptime(dates_raw[-1], "%Y-%m-%d")
     date_b = datetime.strptime(dates_raw[-1], "%Y-%m-%d")
 
-    #date_b_actual = history_value_graph  # Date including the datepicker
-    date_b_actual = datetime.strptime(dates_raw[data_len-1], "%Y-%m-%d")
+    # date_b_actual = history_value_graph  # Date including the datepicker
+    date_b_actual = datetime.strptime(dates_raw[data_len - 1], "%Y-%m-%d")
 
     # Calculate date_end using the formula date_b + 2 * (date_b - date_a)
     date_end = date_b + (date_b - date_a)
@@ -2362,16 +2355,13 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     # Add S-curve - S-Curve the user can play with
     x = np.linspace(dates[0], float(date_end_formatted) - 1970, num=50)
 
-
-    x_scenarios = np.linspace(dates_actual[-1], float(date_end_formatted) - 1970, num=50) # changed
+    x_scenarios = np.linspace(dates_actual[-1], float(date_end_formatted) - 1970, num=50)  # changed
     y_predicted = src.Utils.Logistics.logisticfunction(k, r, p0, x_scenarios)
     # Generate x_dates array
     x_dates = np.linspace(date_a.timestamp(), date_end.timestamp(), num=50)
-    x_dates_scenarios = np.linspace(date_b_actual.timestamp(), date_end.timestamp(), num=50) # changed
+    x_dates_scenarios = np.linspace(date_b_actual.timestamp(), date_end.timestamp(), num=50)  # changed
     x_dates = [datetime.fromtimestamp(timestamp) for timestamp in x_dates]
     x_dates_scenarios = [datetime.fromtimestamp(timestamp) for timestamp in x_dates_scenarios]
-
-
 
     formatted_y_values = [
         f"{y:.3f}" if y < 1e6 else f"{y / 1e6:.3f} M" if y < 1e9 else f"{y / 1e9:.3f} B"
@@ -2394,7 +2384,8 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
         for y in y_trace
     ]
     fig_main.add_trace(go.Scatter(name="Low Growth", x=x_dates_scenarios,
-                                  y=src.Utils.Logistics.logisticfunction(k_scenarios[0], r_scenarios[0], p0_scenarios[0], x_scenarios),
+                                  y=src.Utils.Logistics.logisticfunction(k_scenarios[0], r_scenarios[0],
+                                                                         p0_scenarios[0], x_scenarios),
                                   mode='lines',
                                   line=dict(color='#C58400', width=0.5), showlegend=False, text=formatted_y_values,
                                   hovertemplate=hovertemplate_maingraph)),
@@ -2416,7 +2407,8 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
 
     # Filling the area of possible scenarios
     x_area = np.append(x, np.flip(x))  # Creating one array made of two Xs
-    y_area_low = src.Utils.Logistics.logisticfunction(k_scenarios[0], r_scenarios[0], p0_scenarios[0], x_scenarios)  # Low growth array
+    y_area_low = src.Utils.Logistics.logisticfunction(k_scenarios[0], r_scenarios[0], p0_scenarios[0],
+                                                      x_scenarios)  # Low growth array
     y_area_high = src.Utils.Logistics.logisticfunction(k_scenarios[-1], r_scenarios[-1], p0_scenarios[-1],
                                                        np.flip(x_scenarios))  # High growth array
     y_area = np.append(y_area_low, y_area_high)
@@ -2458,10 +2450,11 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     # -------------------------------------------------------
 
     fig_second = go.Figure(layout=layout_growth_rate_graph)
-    fig_second.update_xaxes(range=[0, users[-1] * 1.1], title=graph_unit)  # Fixing the size of the X axis with users max + 10%
+    fig_second.update_xaxes(range=[0, users[-1] * 1.1],
+                            title=graph_unit)  # Fixing the size of the X axis with users max + 10%
     dates_moved, users_moved = src.Utils.mathematics.moving_average_smoothing(dates, users, moving_average)
 
-    #Defining the min as zero or less if the minimum is negative
+    # Defining the min as zero or less if the minimum is negative
     if min(src.analysis.discrete_growth_rate(users_moved, dates_moved + 1970) - 0.05) > 0:
         fig_second.update_yaxes(range=[0,
                                        max(src.analysis.discrete_growth_rate(users_moved, dates_moved + 1970) + 0.05)])
@@ -2470,8 +2463,9 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
                                        max(src.analysis.discrete_growth_rate(users_moved, dates_moved + 1970) + 0.05)])
     fig_second.add_trace(
         go.Scatter(name="Discrete Growth Rate Smoothened by moving average: " + str(moving_average),
-                   x = src.analysis.discrete_user_interval(users_moved),
-                   y = src.analysis.discrete_growth_rate(users_moved, dates_moved + 1970), mode ="markers", line = dict(color='#F963F1')
+                   x=src.analysis.discrete_user_interval(users_moved),
+                   y=src.analysis.discrete_growth_rate(users_moved, dates_moved + 1970), mode="markers",
+                   line=dict(color='#F963F1')
                    ))
     logger.info(f"{users = } - {dates + 1970}")
     logger.info(src.analysis.discrete_growth_rate(users, dates + 1970))
@@ -2482,8 +2476,10 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
 
     if number_ignored_data > 0:
         fig_second.add_trace(
-            go.Scatter(name="Ignored Data Points", x=src.analysis.discrete_user_interval(users_moved[0:number_ignored_data]),
-                       y=src.analysis.discrete_growth_rate(users_moved[0:number_ignored_data], dates_moved[0:number_ignored_data] + 1970),
+            go.Scatter(name="Ignored Data Points",
+                       x=src.analysis.discrete_user_interval(users_moved[0:number_ignored_data]),
+                       y=src.analysis.discrete_growth_rate(users_moved[0:number_ignored_data],
+                                                           dates_moved[0:number_ignored_data] + 1970),
                        mode="markers", line=dict(color='#808080')))
 
     # Changes the color of the scatters after the date considered
@@ -2511,7 +2507,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     fig_second.add_shape(
         type="line",
         x0=0,
-        x1=users[-1]*1.1,
+        x1=users[-1] * 1.1,
         y0=0,
         y1=0,
         line=dict(color="black", width=1, dash="dot")
@@ -2537,8 +2533,8 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     if p0 > 2.192572e-11:
         t_plateau = src.analysis.time_to_population(k, r, p0, 0.95 * k) + 1970
         month_plateau = math.ceil((t_plateau - int(t_plateau)) * 12)
-        if month_plateau == 0: # sometimes month_plateau is 0, quick fix to be improved
-            month_plateau=1
+        if month_plateau == 0:  # sometimes month_plateau is 0, quick fix to be improved
+            month_plateau = 1
         year_plateau = int(np.round(t_plateau, 0))
         date_plateau = datetime(year_plateau, month_plateau, 1).date()
         date_plateau_displayed = date_plateau.strftime("%b, %Y")
@@ -2569,7 +2565,6 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
                              year in range(years)]
         fig_revenue = make_subplots(specs=[[{"secondary_y": True}]])
 
-
         # Filter rows based on valid indices
         dates_revenue = dates_raw[valid_indices]
         users_revenue = users[valid_indices]
@@ -2589,14 +2584,14 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
                 name="Annual Revenue per User (arpu)",
                 x=x_revenue,
                 y=y_revenue,
-                #mode='lines',
+                # mode='lines',
                 marker_color='#953AF6',
                 opacity=0.8,
-                #showlegend=False,
+                # showlegend=False,
                 # text=formatted_y_values,
                 # hovertemplate=hovertemplate_maingraph
             ),
-                #secondary_y=True,
+                # secondary_y=True,
             )
             fig_revenue.add_trace(go.Scatter(
                 name="Future Annual Revenue per User (arpu)",
@@ -2608,7 +2603,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
                 showlegend=True,
                 text=formatted_y_values,
                 hovertemplate=hovertemplate_maingraph),
-                #secondary_y=True,
+                # secondary_y=True,
             )
             # Revenue past the selected date that are known [data_len:]
             fig_revenue.add_trace(go.Scatter(
@@ -2620,21 +2615,21 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
                 showlegend=False,
                 # text=formatted_y_values, #
                 hovertemplate=hovertemplate_maingraph),
-                #secondary_y=True,
+                # secondary_y=True,
             )
             fig_revenue.update_yaxes(range=[min(annual_revenue_per_user) * 0.9, max(annual_revenue_per_user) * 1.5],
-                                  title="Annual Revenue per " + graph_unit + " [$]",
-                                  color="#953AF6")
+                                     title="Annual Revenue per " + graph_unit + " [$]",
+                                     color="#953AF6")
             fig_revenue.add_trace(go.Scatter(
                 name="Profit Margin",
                 x=x_revenue,
                 y=profit_margin_array[valid_indices],
                 mode='lines',
-                #line_dash="dot",
+                # line_dash="dot",
                 marker=dict(color='#F963F1', size=4),
                 showlegend=True,
-                #text=formatted_y_values,
-                #hovertemplate=hovertemplate_maingraph
+                # text=formatted_y_values,
+                # hovertemplate=hovertemplate_maingraph
             ),
                 secondary_y=True,
             )
@@ -2664,12 +2659,12 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
                 ]
             )
 
-            fig_revenue.update_yaxes(range=[min(profit_margin_array)-abs(min(profit_margin_array)) * 0.1,
-                                            max_net_margin*1.2],
-                                  title_text="Profit Margin [%]",
-                                  color="#F963F1",
-                                  secondary_y=True,
-                                fixedrange=True,
+            fig_revenue.update_yaxes(range=[min(profit_margin_array) - abs(min(profit_margin_array)) * 0.1,
+                                            max_net_margin * 1.2],
+                                     title_text="Profit Margin [%]",
+                                     color="#F963F1",
+                                     secondary_y=True,
+                                     fixedrange=True,
                                      )
             logger.info("Fig Revenue Printed")
 
@@ -2694,7 +2689,6 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     else:
         fig_revenue = fig_main
 
-
     if symbol_company != "N/A":
         # Build chart containing the product maturity chart
         # -------------------------------------------------------
@@ -2709,11 +2703,11 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
         fig_product_maturity.add_shape(
             go.layout.Shape(
                 type="rect",
-                x0=(dates_research_and_development[0]-pd.DateOffset(months=6)).strftime('%Y-%m-%d'),
-                x1=(dates_research_and_development[-1]+pd.DateOffset(months=6)).strftime('%Y-%m-%d'),
+                x0=(dates_research_and_development[0] - pd.DateOffset(months=6)).strftime('%Y-%m-%d'),
+                x1=(dates_research_and_development[-1] + pd.DateOffset(months=6)).strftime('%Y-%m-%d'),
                 y0=0,
                 y1=10,
-                #xref="paper", yref="y",
+                # xref="paper", yref="y",
                 fillcolor="#4946F2",
                 opacity=0.3,
                 layer="below",
@@ -2782,7 +2776,8 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
         )
         # Add the annotation
         fig_product_maturity.add_annotation(
-            x=(dates_research_and_development[0] - pd.DateOffset(months=6)).strftime('%Y-%m-%d'),  # Align left within the rectangle
+            x=(dates_research_and_development[0] - pd.DateOffset(months=6)).strftime('%Y-%m-%d'),
+            # Align left within the rectangle
             y=(30 + 100) / 2,  # Center vertically within the rectangle
             xref="x",
             yref="y",
@@ -2791,11 +2786,11 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
             font=dict(color="#4946F2", size=12),
             align="left",
             xanchor="left",
-            #bgcolor="rgba(231, 245, 255, 0.8)"  # Matching background color for better visibility
+            # bgcolor="rgba(231, 245, 255, 0.8)"  # Matching background color for better visibility
         )
         # Add graph line
         formatted_y_values = [
-            f"{y:.2f}%"for y in share_research_and_development
+            f"{y:.2f}%" for y in share_research_and_development
         ]
         fig_product_maturity.add_trace(
             go.Scatter(name="R&D Share of Revenue [%]",
@@ -2805,13 +2800,13 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
                        hovertemplate=hovertemplate_maingraph,
                        mode="markers",
                        marker=dict(
-                            color="#FFD000",       # Fill color with some transparency (tomato color here)
-                            size=10,                              # Size of the markers
-                            line=dict(
-                                color="#C58400",         # Outline color (black in this example)
-                                width=1                           # Width of the outline
-                            )
-                        )
+                           color="#FFD000",  # Fill color with some transparency (tomato color here)
+                           size=10,  # Size of the markers
+                           line=dict(
+                               color="#C58400",  # Outline color (black in this example)
+                               width=1  # Width of the outline
+                           )
+                       )
                        ))
         # Adding RAST logo
         fig_product_maturity.add_layout_image(
@@ -2830,8 +2825,6 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
         )
     else:
         fig_product_maturity = fig_main
-
-
 
     logger.info("2. CALLBACK END")
     t2 = time.perf_counter(), time.process_time()
@@ -2892,9 +2885,10 @@ def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, current_m
     Output(component_id="hype-meter-indicator", component_property="color"),
     Output(component_id="hype-meter-indicator", component_property="children"),
     Output(component_id="current-valuation-calculated", component_property="data"),
-    Output(component_id="hype-meter-undervaluation-hype", component_property="value"),  # Progress 1 colored value (hype)
+    Output(component_id="hype-meter-undervaluation-hype", component_property="value"),
+    # Progress 1 colored value (hype)
     Output(component_id="hype-meter-undervaluation-hype", component_property="color"),  # Progress 1 color
-    Output(component_id="hype-meter-undervaluation-rest", component_property="value"), # Progress 1 white part
+    Output(component_id="hype-meter-undervaluation-rest", component_property="value"),  # Progress 1 white part
     Output(component_id="hype-meter-price", component_property="value"),
     Output(component_id="hype-meter-price-rest", component_property="value"),
     Output(component_id="hype-overvaluation-label", component_property="children"),
@@ -2913,7 +2907,8 @@ def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, current_m
         State(component_id='graph-unit', component_property='data')
     ], prevent_initial_call=True
 )
-def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, arpu_growth, current_market_cap, latest_market_cap, current_arpu,
+def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, arpu_growth, current_market_cap,
+                   latest_market_cap, current_arpu,
                    total_assets, df_dataset_dict, graph_unit):
     t1 = time.perf_counter(), time.process_time()
     # The entire callback is skipped if the current market cap = 0, i.e. if it is not a public company
@@ -2932,8 +2927,10 @@ def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, arpu_grow
 
     # Equity calculation
     current_customer_equity = users[-1] * current_arpu * profit_margin
-    future_customer_equity = src.analysis.net_present_value_arpu_growth(k_selected, r_selected, p0_selected, current_arpu,
-                                                                        arpu_growth, profit_margin, discount_rate, YEARS_DCF)
+    future_customer_equity = src.analysis.net_present_value_arpu_growth(k_selected, r_selected, p0_selected,
+                                                                        current_arpu,
+                                                                        arpu_growth, profit_margin, discount_rate,
+                                                                        YEARS_DCF)
     # Quick fix, in case the future_customer_equity throws inf. It should be refactored by only relying on the
     # historical valuation function, instead of recalculating it here
     if future_customer_equity == float('inf'):
@@ -2966,7 +2963,7 @@ def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, arpu_grow
         # Progress 1
         hype_ratio_progress = hype_ratio_absolute
         hype_ratio_rest = 100 - hype_ratio_absolute
-        hype_color_indicator = "#fa5252"    # red
+        hype_color_indicator = "#fa5252"  # red
         # Progress 2
         intrinsic_value_ratio_rest = 100 - (non_operating_assets_ratio + customer_equity_ratio)   # white part of the intrinsic value bar
         # Progress 3
@@ -2978,7 +2975,7 @@ def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, arpu_grow
         # Progress 1
         hype_ratio_progress = hype_ratio_absolute
         hype_ratio_rest = 100 - hype_ratio_absolute
-        hype_color_indicator = "#40c057"    # green
+        hype_color_indicator = "#40c057"  # green
         # Progress 2
         intrinsic_value_ratio_rest = 0.0
         # Progress 3
@@ -3034,11 +3031,11 @@ def historical_valuation_calculation(df_formatted, total_assets, df_raw, latest_
     dates_raw = np.array([entry['Date'] for entry in df_raw])
     dates_new = np.array([entry['Date'] for entry in df_formatted])
     revenue_df = np.array([entry['Revenue'] for entry in df_formatted])
-    max_net_margin = max_net_margin/100
+    max_net_margin = max_net_margin / 100
     profit_margin_df = np.array([entry['Profit Margin'] for entry in df_formatted])
     profit_margin_original = profit_margin_df / 100
     market_cap_df = np.array([entry['Market Cap'] for entry in df_formatted])
-    market_cap_original = market_cap_df*1e9
+    market_cap_original = market_cap_df * 1e9
     dates_original = dates_new - 1970
     # Users are taken from the database and multiplied by a million
     users_new = np.array([entry['Users'] for entry in df_formatted])
@@ -3066,7 +3063,7 @@ def historical_valuation_calculation(df_formatted, total_assets, df_raw, latest_
             profit_margin_valuation = profit_margin_original[:i]
 
             # Smoothing the data
-            #dates, users = main.moving_average_smoothing(dates_valuation, users_valuation, 1)
+            # dates, users = main.moving_average_smoothing(dates_valuation, users_valuation, 1)
             dates = dates_valuation
             users = users_valuation
 
@@ -3078,9 +3075,9 @@ def historical_valuation_calculation(df_formatted, total_assets, df_raw, latest_
             df_sorted = src.ParametersDataFrame.parameters_dataframe_cleaning(df_full,
                                                                               users)  # Dataframe where inadequate scenarios are eliminated
 
-            if df_sorted.empty: # Smoothening data for cases where it doesn't work
+            if df_sorted.empty:  # Smoothening data for cases where it doesn't work
                 # Smoothing the data
-                #dates1, users1 = main.moving_average_smoothing(dates_valuation, users_valuation, 4)
+                # dates1, users1 = main.moving_average_smoothing(dates_valuation, users_valuation, 4)
                 dates = dates_valuation
                 users = users_valuation
 
@@ -3096,7 +3093,7 @@ def historical_valuation_calculation(df_formatted, total_assets, df_raw, latest_
                     if df_sorted.empty:
                         df_sorted = df_full
                         logger.info(f"No scenario could be calculated, df used: {df_sorted}")
-                    #continue
+                    # continue
             else:
                 logger.info("Successful scenarios exist")
             # Number of scenarios to store
@@ -3107,16 +3104,16 @@ def historical_valuation_calculation(df_formatted, total_assets, df_raw, latest_
             profit_margin_previous_year = profit_margin_valuation[-4:]
             average_profit_margin = sum(profit_margin_previous_year) / 4
             if average_profit_margin <= 0:
-                #min_profit_margin = 0.01
+                # min_profit_margin = 0.01
                 min_profit_margin = max_net_margin * 0.8  # Taking 80% of the max profit margin as a lower scenario
-                #max_profit_margin = 0.1
+                # max_profit_margin = 0.1
                 max_profit_margin = max_net_margin
             else:
-                #min_profit_margin = average_profit_margin
-                min_profit_margin = max_net_margin*0.8
-                #max_profit_margin = average_profit_margin + 0.05
-                #max_profit_margin = max(profit_margin_valuation) + 0.05
-                max_profit_margin = max_net_margin # High scenario taking the max theoretical profit margin
+                # min_profit_margin = average_profit_margin
+                min_profit_margin = max_net_margin * 0.8
+                # max_profit_margin = average_profit_margin + 0.05
+                # max_profit_margin = max(profit_margin_valuation) + 0.05
+                max_profit_margin = max_net_margin  # High scenario taking the max theoretical profit margin
             profit_margin[0] = min_profit_margin  # Low scenario
             profit_margin[1] = max_profit_margin  # High scenario taking the max seen profit margin
 
@@ -3149,9 +3146,11 @@ def historical_valuation_calculation(df_formatted, total_assets, df_raw, latest_
                     k_selected = df_sorted.at[j * (len(df_sorted) - 1), 'K']
                     r_selected = df_sorted.at[j * (len(df_sorted) - 1), 'r']
                     p0_selected = df_sorted.at[j * (len(df_sorted) - 1), 'p0']
-                    future_customer_equity = src.analysis.net_present_value_arpu_growth(k_selected, r_selected, p0_selected,
+                    future_customer_equity = src.analysis.net_present_value_arpu_growth(k_selected, r_selected,
+                                                                                        p0_selected,
                                                                                         current_arpu, arpu_growth[j],
-                                                                                        profit_margin[j], discount_rate[j],
+                                                                                        profit_margin[j],
+                                                                                        discount_rate[j],
                                                                                         YEARS_DCF)
                     current_customer_equity = users_valuation[-1] * current_arpu * profit_margin[j]
                     total_valuation = future_customer_equity + current_customer_equity + non_operating_assets
@@ -3180,8 +3179,8 @@ def historical_valuation_calculation(df_formatted, total_assets, df_raw, latest_
     # Clean up dataframe to avoid having infinite values (function to be deleted once K calculation is improved)
     # Create a copy to avoid modifying the original
     df_valuation_cleaned = main.replace_inf_with_previous_2(df_valuation_over_time, "Valuation")
-    #df_valuation_cleaned_second_time = main.cleans_high_valuations(df_valuation_cleaned, "Valuation")
-    df_valuation_over_time_dict = df_valuation_cleaned.to_dict(orient='records') # Removing "inf" values
+    # df_valuation_cleaned_second_time = main.cleans_high_valuations(df_valuation_cleaned, "Valuation")
+    df_valuation_over_time_dict = df_valuation_cleaned.to_dict(orient='records')  # Removing "inf" values
 
     logger.info("DF Valuation over time")
     logger.info(df_valuation_over_time)
@@ -3196,7 +3195,7 @@ def historical_valuation_calculation(df_formatted, total_assets, df_raw, latest_
     print(f" Real time: {t2[0] - t1[0]:.2f} seconds")
     print(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
     return False, df_valuation_over_time_dict, hide_loader, display_loading_overlay, display_loading_overlay, \
-        display_loading_overlay, display_loading_overlay
+           display_loading_overlay, display_loading_overlay
 
 
 @app.callback(
@@ -3212,9 +3211,9 @@ def historical_valuation_calculation(df_formatted, total_assets, df_raw, latest_
     Output(component_id="valuation-content", component_property="children"),
     Output(component_id="valuation-message", component_property="color"),
     Output(component_id="accordion-valuation", component_property="icon"),
-    Output(component_id="hype-score", component_property="data"), # hype score storage
-    Output(component_id="hype-score-text", component_property="children"), #hype score text
-    Output(component_id="growth-content", component_property="children"), #hype score text
+    Output(component_id="hype-score", component_property="data"),  # hype score storage
+    Output(component_id="hype-score-text", component_property="children"),  # hype score text
+    Output(component_id="growth-content", component_property="children"),  # hype score text
     Output("loading-overlay", "visible", allow_duplicate=True),
     Output("loading-overlay2", "visible", allow_duplicate=True),
     Output("loading-overlay-welcome", "visible", allow_duplicate=True),
@@ -3274,22 +3273,15 @@ def graph_valuation_over_time(valuation_over_time_dict, unit_metric, date_picked
     # If HS = 0.5 → Market is right in the middle of your valuation range.
     # If HS > 1 → Market exceeds even your optimistic case (potential hype).
 
-    hype_score = (latest_market_cap*1e6 - low_scenario_valuation[-1]) / \
+    hype_score = (latest_market_cap * 1e6 - low_scenario_valuation[-1]) / \
                  (high_scenario_valuation[-1] - low_scenario_valuation[-1])
     logger.info("hype score calculation")
     logger.info(hype_score)
     logger.info(latest_market_cap)
     logger.info(low_scenario_valuation[-1])
     logger.info(high_scenario_valuation[-1])
-    hype_score_text = f"Hype score: {hype_score:.2f}"  # Formatted text for hype meter
-    print("hype score calculation")
-    print(hype_score)
-    print(latest_market_cap)
-    print(low_scenario_valuation[-1])
-    print(high_scenario_valuation[-1])
-    hype_score_text_old = f"Hype score: {hype_score:.2f}"  # Formatted text for hype meter
     badge_color, badge_label = main.hype_meter_indicator_values_new(hype_score)
-    #badge_color_growth, badge_label_growth = main.growth_meter_indicator_values(growth_score)
+    # badge_color_growth, badge_label_growth = main.growth_meter_indicator_values(growth_score)
     hype_score_text = dmc.Group([
         f"Hype score: {hype_score:.2f}",
         dmc.Badge(badge_label, size="xs", variant="outline", color=badge_color)
@@ -3301,7 +3293,6 @@ def graph_valuation_over_time(valuation_over_time_dict, unit_metric, date_picked
     dates_raw_market_cap = np.append(dates_raw, today_date)
     low_scenario_valuation = np.append(low_scenario_valuation, low_scenario_valuation[-1])
     high_scenario_valuation = np.append(high_scenario_valuation, high_scenario_valuation[-1])
-    # today_date_formatted = main.date_formatting_from_string(today_date)
 
     fig_valuation = go.Figure(layout=layout_main_graph)
 
@@ -3318,10 +3309,10 @@ def graph_valuation_over_time(valuation_over_time_dict, unit_metric, date_picked
                                        y=y_area,
                                        fill='toself',
                                        line_color='#953AF6',
-                                       #fillcolor='#C92A2A',
-                                       fillpattern={#'shape': '/',
-                                                    'bgcolor': 'white',
-                                                    'fgcolor': '#953AF6'},
+                                       # fillcolor='#C92A2A',
+                                       fillpattern={  # 'shape': '/',
+                                           'bgcolor': 'white',
+                                           'fgcolor': '#953AF6'},
                                        opacity=0.2,
                                        hoverinfo='none',
                                        showlegend=True,
@@ -3329,10 +3320,9 @@ def graph_valuation_over_time(valuation_over_time_dict, unit_metric, date_picked
                                        )
                             )
 
-
     # Confidence Interval
     # Filling the area of possible scenarios
-    y_area_low = low_scenario_valuation # Low growth array
+    y_area_low = low_scenario_valuation  # Low growth array
     y_area_high = np.flip(high_scenario_valuation)  # High growth array
     y_area = np.append(y_area_low, y_area_high)
     dates_area = np.append(dates_until_today, np.flip(dates_until_today))
@@ -3367,10 +3357,11 @@ def graph_valuation_over_time(valuation_over_time_dict, unit_metric, date_picked
     formatted_y_values = [
         f"${y:.0f}" if y < 1e6 else f"${y / 1e6:.1f} M" if y < 1e9 else f"${y / 1e9:.2f} B"
         for y in high_scenario_valuation
-        ]
+    ]
     fig_valuation.add_trace(go.Scatter(name="High Valuation", x=dates_until_today, y=high_scenario_valuation,
                                        mode="lines", line=dict(color="#C58400", width=1, dash="dash"),
-                                       text=formatted_y_values, hovertemplate=hovertemplate_maingraph, showlegend=False))
+                                       text=formatted_y_values, hovertemplate=hovertemplate_maingraph,
+                                       showlegend=False))
     # Market Cap
     formatted_y_values = [f"${y / 1e6:.1f} M" if y < 1e9 else f"${y / 1e9:.2f} B" for y in market_cap_array]
     fig_valuation.add_trace(go.Scatter(name="Market Cap", x=dates_raw_market_cap[MIN_DATE_INDEX:], y=market_cap_array,
@@ -3420,7 +3411,7 @@ def graph_valuation_over_time(valuation_over_time_dict, unit_metric, date_picked
         yaxis=dict(
             # range=[0, k_scenarios[-1] * 1.1],
             title="Valuation & Market Cap [$B]",
-            #minallowed=0,
+            # minallowed=0,
             # maxallowed=k_scenarios[-1] * 1.5,
         ),
         annotations=[
@@ -3438,8 +3429,8 @@ def graph_valuation_over_time(valuation_over_time_dict, unit_metric, date_picked
             ),
             # Low valuation arrow
             dict(
-                x=dates_until_today[mid_id_valuation-1],
-                y=low_scenario_valuation[mid_id_valuation-1],
+                x=dates_until_today[mid_id_valuation - 1],
+                y=low_scenario_valuation[mid_id_valuation - 1],
                 text="Worst scenario",
                 showarrow=True,
                 arrowhead=2,
@@ -3451,8 +3442,8 @@ def graph_valuation_over_time(valuation_over_time_dict, unit_metric, date_picked
             ),
             # High valuation arrow
             dict(
-                x=dates_until_today[mid_id_valuation+1],
-                y=high_scenario_valuation[mid_id_valuation+1],
+                x=dates_until_today[mid_id_valuation + 1],
+                y=high_scenario_valuation[mid_id_valuation + 1],
                 text="Best scenario",
                 showarrow=True,
                 arrowhead=2,
@@ -3498,12 +3489,15 @@ def graph_valuation_over_time(valuation_over_time_dict, unit_metric, date_picked
     r_high_valuation = df_sorted[-1]['r']
     p0_high_valuation = df_sorted[-1]['p0']
     try:
-        profit_margin_needed = src.analysis.profit_margin_for_valuation(k_high_valuation, r_high_valuation, p0_high_valuation,
-                                                                        current_arpu, 0.05, 0.1, YEARS_DCF, non_operating_assets, latest_market_cap * 1000000)
+        profit_margin_needed = src.analysis.profit_margin_for_valuation(k_high_valuation, r_high_valuation,
+                                                                        p0_high_valuation,
+                                                                        current_arpu, 0.05, 0.1, YEARS_DCF,
+                                                                        non_operating_assets,
+                                                                        latest_market_cap * 1000000)
     # Except to avoid errors
     except Exception as e:
-        profit_margin_needed = max_net_margin*0.2
-    #max_profit_margin = np.max(profit_margin_df) old method, using the max known PM
+        profit_margin_needed = max_net_margin * 0.2
+    # max_profit_margin = np.max(profit_margin_df) old method, using the max known PM
     max_profit_margin = max_net_margin  # new method, using the max theoretical net profit margin.
 
     # Valuation message
@@ -3515,9 +3509,9 @@ def graph_valuation_over_time(valuation_over_time_dict, unit_metric, date_picked
         # Messages right above the graph
         valuation_graph_title = "How well did our model perform over time?"
         valuation_graph_message = "The purple line shows " + company_symbol + "'s price (market cap) over time. The yellow zone is our confidence " \
-                                  "range, calculated over time (without readjustment, obviously). " \
-                                  "We believe the market cap tends to fall, sooner or later, within this range. " \
-                                    " The market cap is currently lower than the most optimistic valuation (" + \
+                                                                              "range, calculated over time (without readjustment, obviously). " \
+                                                                              "We believe the market cap tends to fall, sooner or later, within this range. " \
+                                                                              " The market cap is currently lower than the most optimistic valuation (" + \
                                   f"{high_scenario_valuation[-1] / 1e9:.2f} B$) meaning that this stock may be " \
                                   f"fairly or even undervalued! Note: The dot moves to show the valuation under " \
                                   f"your chosen scenario.\n"
@@ -3543,10 +3537,10 @@ def graph_valuation_over_time(valuation_over_time_dict, unit_metric, date_picked
         # Messages right above the graph
         valuation_graph_title = "How well did our model perform over time?"
         valuation_graph_message = "The purple line shows " + company_symbol + "s price (market cap) over time. The yellow zone is our confidence " \
-                                  "range, calculated over time (without readjustment, obviously). " \
-                                  "We believe the market cap tends to fall, sooner or later, within this range. " \
-                                  "The dot moves to show the valuation under your chosen scenario.\n" \
-                                  "The Market cap is currently higher than the most optimistic valuation (" + \
+                                                                              "range, calculated over time (without readjustment, obviously). " \
+                                                                              "We believe the market cap tends to fall, sooner or later, within this range. " \
+                                                                              "The dot moves to show the valuation under your chosen scenario.\n" \
+                                                                              "The Market cap is currently higher than the most optimistic valuation (" + \
                                   f"{high_scenario_valuation[-1] / 1e9:.2f} B$), meaning that this stock seems overvalued."
         valuation_graph_color = "yellow"
         valuation_icon_color = DashIconify(icon="radix-icons:rocket", color=dmc.DEFAULT_THEME["colors"]["yellow"][6],
@@ -3608,7 +3602,8 @@ def graph_valuation_over_time(valuation_over_time_dict, unit_metric, date_picked
                       dmc.Text(unit_metric, fs="italic", span=True),
                       ". The longer ",
                       company_symbol,
-                      " takes to generate more money per ", unit_metric, ", the greater the risk of a sharp drop in its stock price."
+                      " takes to generate more money per ", unit_metric,
+                      ", the greater the risk of a sharp drop in its stock price."
                       ],
             size="sm",
             fw=300,
@@ -3665,12 +3660,13 @@ def toggle_offcanvas(n1, is_open):
         return not is_open
     return is_open
 
+
 # Callback to update table based on selection
 @app.callback(
     Output("top_25_companies", "children"),
-    Input('all-companies-information', 'data'), # Table of companies
-    Input('hyped-table-select', 'value'), # more or least hyped
-    Input('hyped-table-industry', 'value'), # industry
+    Input('all-companies-information', 'data'),  # Table of companies
+    Input('hyped-table-select', 'value'),  # more or least hyped
+    Input('hyped-table-industry', 'value'),  # industry
     Input("login-state", "data"),
 )
 def update_table(df_all_companies, hype_choice, industries, logged_in):
@@ -3709,45 +3705,46 @@ def update_table(df_all_companies, hype_choice, industries, logged_in):
     ]
     df_sorted = pd.DataFrame(sorted_data)
     # Logic of changing it depending on what is chosen
-    #if hype_choice == 'most-hyped':
+    # if hype_choice == 'most-hyped':
     #    df_sorted = dataAPI.get_hyped_companies(True)
-    #else:
+    # else:
     #    df_sorted = dataAPI.get_hyped_companies(False)
     header = [html.Thead(html.Tr([
-    html.Th('Industry', style={"width": "15%"}),
-    html.Th('Company', style={"width": "30%"}),
-    html.Th(dmc.Group([
-        'Hype Score',
-        dmc.Tooltip(
-            DashIconify(icon="feather:info", width=15),
-            label="The hype score indicates how hyped companies are. A hype score between 0 & 1 means that the company "
-                  "is fairly priced. A negative hype score indicates an undervaluation.",
-            #transition="slide-down",
-            #transitionDuration=300,
-            multiline=True,
+        html.Th('Industry', style={"width": "15%"}),
+        html.Th('Company', style={"width": "30%"}),
+        html.Th(dmc.Group([
+            'Hype Score',
+            dmc.Tooltip(
+                DashIconify(icon="feather:info", width=15),
+                label="The hype score indicates how hyped companies are. A hype score between 0 & 1 means that the company "
+                      "is fairly priced. A negative hype score indicates an undervaluation.",
+                # transition="slide-down",
+                # transitionDuration=300,
+                multiline=True,
+            )
+        ]), style={"width": "22.5%"}
+        ),
+        html.Th(dmc.Group([
+            'Growth Score',
+            dmc.Tooltip(
+                DashIconify(icon="feather:info", width=15),
+                label="The growth score represents how much growth potential a company has relative to its current state. "
+                      "A score of zero implies stagnation, whereas a high score suggests strong momentum and the "
+                      "possibility of staying overvalued for an extended period.",
+                # transition="slide-down",
+                # transitionDuration=300,
+                multiline=True,
+            )
+        ]), style={"width": "32.5%"}
         )
-    ]), style={"width": "22.5%"}
-    ),
-    html.Th(dmc.Group([
-        'Growth Score',
-        dmc.Tooltip(
-            DashIconify(icon="feather:info", width=15),
-            label="The growth score represents how much growth potential a company has relative to its current state. "
-                  "A score of zero implies stagnation, whereas a high score suggests strong momentum and the "
-                  "possibility of staying overvalued for an extended period.",
-            #transition="slide-down",
-            #transitionDuration=300,
-            multiline=True,
-        )
-    ]), style={"width": "32.5%"}
-    )
     ])
     )]
     rows = []
 
     for i in range(len(df_sorted)):
         industry_type = df_sorted.iloc[i]['Industry'],
-        industry_type_icon = main.get_industry_icon(df_sorted.iloc[i]['Industry'])  # function mapping the industry to an icon
+        industry_type_icon = main.get_industry_icon(
+            df_sorted.iloc[i]['Industry'])  # function mapping the industry to an icon
         company_name = df_sorted.iloc[i]['Company Name']
         hype_score = df_sorted.iloc[i]['Hype Score']
         growth_score = df_sorted.iloc[i]['Growth Score']
@@ -3766,7 +3763,7 @@ def update_table(df_all_companies, hype_choice, industries, logged_in):
                     DashIconify(icon=industry_type_icon, width=15),
                     label=industry_type,
                 ),
-                #ta="center",
+                # ta="center",
                 style={"ta": "center"}
             ),
             html.Td(
@@ -3794,14 +3791,13 @@ def update_table(df_all_companies, hype_choice, industries, logged_in):
         ])
         rows.append(row)
     body = [html.Tbody(rows)]
-    #logger.info("Hyped table is")
-    #logger.info(df_sorted)
+    # logger.info("Hyped table is")
+    # logger.info(df_sorted)
     t2 = time.perf_counter(), time.process_time()
     logger.info(f" Performance of the table update")
     logger.info(f" Real time: {t2[0] - t1[0]:.2f} seconds")
     logger.info(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
     return header + body
-
 
 
 # Upload data functionality to be improved

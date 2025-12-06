@@ -186,7 +186,8 @@ class AirTableAPI:
         else:
             logger.info(f"{company} data already fetched. Using cached data")
 
-        return cls._data.get(company)
+        # Todo: Netflix vs netflix in whole Code - GoPro
+        return cls._data.get(company).copy()
 
     @classmethod
     def _get_hyped_companies(cls, hyped: bool) -> pd.DataFrame:
@@ -255,7 +256,7 @@ class AirTableAPI:
         else:
             logger.info(f"{'hyped' if hyped else 'not hyped'} company data already fetched. Using cached data")
 
-        return cls._hyped_companies.get(hyped)
+        return cls._hyped_companies.get(hyped).copy()
 
     # ToDo: This looks like we should be loading the data from airtable and then filter it depending on our needs
     @classmethod
@@ -348,3 +349,8 @@ if __name__ == "__main__":
     logger.info(f"{api1 is api2 =}")
     api1.get_labels()
     api2.get_labels()
+
+    df1 = api2.get_data('Netflix')
+    df2 = api1.get_data('Netflix')
+
+    logger.info(f"{df1 == df2}")

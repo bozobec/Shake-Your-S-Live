@@ -8,6 +8,8 @@ def get_default_logger():
     :return: A logging logger that uses ascitime, filename and message
     """
     # This makes the logger show anything above log-level Info. Debug level gets discarded.
+    # ToDo: Add log Level
+    # Todo: Make sure colours differ
     format = '%(asctime)s ~ %(filename)s   %(message)s'
     logging.basicConfig(level=logging.INFO, format=format)
     return logging.getLogger("Rast")
