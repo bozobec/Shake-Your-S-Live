@@ -3633,14 +3633,15 @@ def toggle_offcanvas(n1, is_open):
     Input('hyped-table-select', 'value'),  # more or least hyped
     Input('hyped-table-industry', 'value'),  # industry
     Input("login-state", "data"),
+    State('pro-user-state', 'data'), # stores pro account state (boolean))
 )
-def update_table(df_all_companies, hype_choice, industries, logged_in):
+def update_table(df_all_companies, hype_choice, industries, logged_in, pro_user):
     t1 = time.perf_counter(), time.process_time()
 
     # Blocks the process for dev
-    IS_PRODUCTION = os.getenv("IS_PRODUCTION") == "true"  # Setup in heroku 'heroku config:set IS_PRODUCTION=true'
-    if IS_PRODUCTION is False:
-        return no_update  # nothing to do
+    #IS_PRODUCTION = os.getenv("IS_PRODUCTION") == "true"  # Setup in heroku 'heroku config:set IS_PRODUCTION=true'
+    #if IS_PRODUCTION is False:
+    #    return no_update  # nothing to do
 
     # If dropdown hasn't been used yet, set a default
     if hype_choice is None:
@@ -3658,16 +3659,7 @@ def update_table(df_all_companies, hype_choice, industries, logged_in):
     # --- 3. Sort by Hype Score ---
     sorted_data = sorted(filtered_data, key=lambda x: x["Hype Score"] if x["Hype Score"] is not None else 0,
                          reverse=reverse)
-    # --- 4. Keep only selected columns ---
-    reduced_data = [
-        {
-            "Industry": d["Industry"],
-            "Company Name": d["Company Name"],
-            "Hype Score": d["Hype Score"],
-            "Growth Score": d["Growth Score"]
-        }
-        for d in sorted_data
-    ]
+
     df_sorted = pd.DataFrame(sorted_data)
     # Logic of changing it depending on what is chosen
     # if hype_choice == 'most-hyped':
@@ -3710,7 +3702,10 @@ def update_table(df_all_companies, hype_choice, industries, logged_in):
         industry_type = df_sorted.iloc[i]['Industry'],
         industry_type_icon = main.get_industry_icon(
             df_sorted.iloc[i]['Industry'])  # function mapping the industry to an icon
-        company_name = df_sorted.iloc[i]['Company Name']
+        if pro_user:
+            company_name = df_sorted.iloc[i]['Company Name']
+        else:
+            company_name = "Nope, still not pro amigo"
         hype_score = df_sorted.iloc[i]['Hype Score']
         growth_score = df_sorted.iloc[i]['Growth Score']
 
