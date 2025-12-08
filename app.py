@@ -772,17 +772,6 @@ def update_login_state(bridge_content):
     # Store the new state as a dict
     new_data = {"logged_in": logged_in, "user_id": user_id}
 
-    # 👉 Track login event in PostHog
-    # if logged_in and user_id:
-    #    posthog.capture(
-    #        distinct_id=user_id,
-    #        event='user_logged_in',
-    #        properties={
-    #            'logged_in': 'True',
-    #        }
-    #    )
-    #
-
     # Access previous value if available to avoid unnecessary updates
     triggered = callback_context.triggered
     if triggered:
