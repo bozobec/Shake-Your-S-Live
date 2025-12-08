@@ -3658,8 +3658,11 @@ def update_table(df_all_companies, hype_choice, industries, logged_in, pro_user)
     reverse = True if hype_choice == "most-hyped" else False
 
     # --- 3. Sort by Hype Score ---
-    sorted_data = sorted(filtered_data, key=lambda x: x["Hype Score"] if x["Hype Score"] is not None else 0,
+    if pro_user:
+        sorted_data = sorted(filtered_data, key=lambda x: x["Hype Score"] if x["Hype Score"] is not None else 0,
                          reverse=reverse)
+    else:
+        sorted_data = filtered_data
 
     df_sorted = pd.DataFrame(sorted_data)
     # Logic of changing it depending on what is chosen
