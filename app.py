@@ -1541,6 +1541,7 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
     Output("range-discount-rate", "value", allow_duplicate=True),
     Output("range-profit-margin", "value", allow_duplicate=True),
     Output(component_id="growth-score-text", component_property="children"),  # hype score text
+    Output(component_id="growth-score", component_property="data"),  # hype score text
 
     Input(component_id='dataset-selection', component_property='value'),  # Take dropdown value
     Input(component_id='date-picker', component_property='value'),  # Take date-picker date
@@ -1656,18 +1657,18 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
 
     # Growth score calculation (early rocket: low u, high r): BIG GS | tired incumbent (high u, low r): low GS
     # Here we take a simple 0.5 weight, different weight could be given to the headroom or core
-    GS = 0.5 * g / r_ref_global + 0.5 * h
+    growth_score = 0.5 * g / r_ref_global + 0.5 * h
 
     # growth_score_text = f"Growth score: {GS:.2f}"
 
-    badge_color_growth, badge_label_growth = main.growth_meter_indicator_values(GS)
+    badge_color_growth, badge_label_growth = main.growth_meter_indicator_values(growth_score)
     growth_score_text = dmc.Group([
-        f"Growth score: {GS:.2f}",
+        f"Growth score: {growth_score:.2f}",
         dmc.Badge(badge_label_growth, size="xs", variant="outline", color=badge_color_growth)
     ], gap="md")
 
-    logger.info("GS")
-    logger.info(GS)
+    logger.info("GS growth score")
+    logger.info(growth_score)
 
     # Growth Rate
     rd = src.analysis.discrete_growth_rate(users[0:data_len], dates[0:data_len] + 1970)
@@ -2077,7 +2078,7 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
            product_maturity_accordion_color, product_maturity_accordion_icon_color, df_sorted_dict, slider_max_value, marks_slider, current_arpu, hype_market_cap, \
            current_market_cap, latest_market_cap, growth_rate_graph_message1, growth_rate_graph_color, \
            product_maturity_graph_message, product_maturity_graph_message_color, revenue_graph_message, \
-           revenue_graph_message_color, growth_slider_value, arpu_growth_slider_value, discount_rate_slider_value, profit_margin_slider_value, growth_score_text
+           revenue_graph_message_color, growth_slider_value, arpu_growth_slider_value, discount_rate_slider_value, profit_margin_slider_value, growth_score_text, growth_score
 
 
 @app.callback([
