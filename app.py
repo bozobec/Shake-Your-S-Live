@@ -762,21 +762,11 @@ def update_login_state(bridge_content):
     # Extract logged_in and user_id
     logged_in = state.get("logged_in", False)
     user_id = state.get("user_id", None)
+    free_user = state.get("has_free_plan", False)
+    pro_user = state.get("has_pro_plan", False)
 
     # Store the new state as a dict
     new_data = {"logged_in": logged_in, "user_id": user_id}
-
-    # 👉 Track login event in PostHog
-    #if logged_in and user_id:
-    #    posthog.capture(
-    #        distinct_id=user_id,
-    #        event='user_logged_in',
-    #        properties={
-    #            'logged_in': 'True',
-    #        }
-    #    )
-    #
-
 
     # Access previous value if available to avoid unnecessary updates
     triggered = callback_context.triggered
@@ -787,7 +777,7 @@ def update_login_state(bridge_content):
         if prev_value == new_data:
             return no_update
 
-    logger.info(f"Updating login-state to: {logged_in} for user: {user_id}")
+    logger.info(f"Updating login-state to: {logged_in} for user: {user_id}; free plan: {free_user}, pro plan: {pro_user}")
     return logged_in, user_id
 
 @app.callback(
