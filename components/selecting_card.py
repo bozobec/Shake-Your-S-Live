@@ -1,11 +1,13 @@
-import dash_mantine_components as dmc
-from dash_iconify import DashIconify
-import dataAPI
 import os
 
+import dash_mantine_components as dmc
+
 # App Layout
+from src.API.AirTableAPI import AirTableAPI
+
 IS_PRODUCTION = os.getenv("IS_PRODUCTION") == "true"  # Setup in heroku 'heroku config:set IS_PRODUCTION=true'
-labels = dataAPI.get_airtable_labels() or [] if IS_PRODUCTION else ["Airbnb", "Affirm", "Spotify"]
+
+labels = AirTableAPI.get_labels() or [] if IS_PRODUCTION else ["Airbnb", "Affirm", "Spotify"]
 
 dropdown = dmc.Select(
             # label="Select framework",
