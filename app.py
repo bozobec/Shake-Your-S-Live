@@ -765,7 +765,7 @@ def update_login_state(bridge_content):
     free_user = state.get("has_free_plan", False)
     pro_user = state.get("has_pro_plan", False)
 
-    # Store the new state as a dict
+    # Store the new state as a dict.
     new_data = {"logged_in": logged_in, "user_id": user_id}
 
     # Access previous value if available to avoid unnecessary updates
