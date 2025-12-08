@@ -403,96 +403,6 @@ layout_one_column = dmc.AppShell(
         id="app-shell",
     ),
 
-layout_page_standard = dmc.AppShell(
-    [
-        dmc.AppShellHeader(
-            dmc.Group(
-                [
-                    dmc.Group(
-                        [
-                            dmc.Burger(
-                                id="burger",
-                                size="sm",
-                                hiddenFrom="sm",
-                                opened=True,
-                                color="white",
-                            ),
-                            dcc.Link(
-                                children=dmc.Image(
-                                    src="/assets/RAST_Vector_Logo.svg",
-                                    h={"base": 30, "sm": 35, "lg": 40},  # Responsive height
-                                    alt="RAST app guru, valuation made simple"
-                                ),
-                                href="https://www.rast.guru",
-                            ),
-                        ],
-                        gap="md",
-                        wrap="nowrap",
-                    ),
-                    dmc.Group(
-                        [
-                            offcanvas,
-                            html.Div(id="clerk-header"),  # Clerk user button
-                        ],
-                        gap="sm",
-                        wrap="nowrap",
-                    ),
-                ],
-                h="100%",
-                px="xl",  # Increased padding (or use a number like px=40)
-                justify="space-between",  # This pushes items to left and right
-                align="center",
-                wrap="nowrap",
-            ),
-            bg="black",
-        ),
-        dmc.AppShellNavbar(
-            id="navbar2",
-            children=dmc.ScrollArea(
-                [
-                    *[
-                        selecting_card,
-                        dmc.Space(h=20),
-                        analysis_card
-                    ],
-                ]
-            ),
-            p="md",
-        ),
-        dmc.AppShellMain(
-            children=[
-                dash.page_container,
-                dcc.Location(id='url-input', refresh=False),
-                dcc.Location(id='url-output', refresh=False),
-                # Hidden stores
-                dcc.Store(id="url-state"),  # intermediary to avoid circular dependency
-                dcc.Store(id="login-state", storage_type="session"),
-                dcc.Store(id="user-id", storage_type="session"),
-                html.Div(id="login-state-bridge", children="", style={"display": "none"}),
-                dcc.Download(id="download-chart"),  # Component to handle file download
-                dcc.Store(id='dataset-selected-url', data=None),
-                dcc.Store(id='launch-counter', data={'flag': False}),
-                dcc.Location(id='url', refresh=False),
-            ],
-        ),
-        # dmc.AppShellAside("Aside", p="md"),
-        # dmc.AppShellFooter("Footer", p="md"),
-    ],
-    header={"height": {"base": 48, "sm": 60, "lg": 76}},
-    navbar={
-        "width": {"base": 200, "sm": 400},  # 👈 200 on mobile, 400 on ≥ sm breakpoint
-        "breakpoint": "sm",
-        "collapsed": {"mobile": True},
-        "withOverlay": False,  # 👈 disables full-screen overlay
-        "style": {
-            "backgroundColor": "rgba(255, 255, 255, 0.7)",  # White with 70% opacity
-        }
-    },
-    withBorder=False,
-    padding="md",
-    id="appshell",
-)
-
 app.layout = dmc.MantineProvider(
     theme={
         "colors": {
@@ -588,7 +498,7 @@ def verify_token(token):
     return None
 
 
-PUBLIC_PATHS = ["/", "/robots.txt", "/sitemap.xml", "/ranking"]
+PUBLIC_PATHS = ["/", "/robots.txt", "/sitemap.xml", "/ranking", "/pricing"]
 
 
 @server.before_request
@@ -747,10 +657,54 @@ clientside_callback(
     prevent_initial_call=False,
 )
 
+app.clientside_callback(
+    """
+    function(id_table, pathname) {
+        // Only mount if we're on the pricing page
+        if (pathname === '/pricing') {
+            const container = document.getElementById('pricing-table-container');
+
+            // --- New/Modified Logic Starts Here ---
+            if (container) {
+                // Function to attempt mounting
+                function tryMountClerk() {
+                    if (window.Clerk) {
+                        // Clear previous content to avoid duplicates
+                        container.innerHTML = '';
+                        // Mount the pricing table
+                        window.Clerk.mountPricingTable(container);
+                        return true; // Successfully mounted
+                    }
+                    return false; // Clerk not ready yet
+                }
+
+                // Try mounting immediately
+                if (!tryMountClerk()) {
+                    // If not ready, poll every 50ms until Clerk is available
+                    const maxAttempts = 100; // Max 5 seconds
+                    let attempts = 0;
+                    const intervalId = setInterval(() => {
+                        if (tryMountClerk() || attempts >= maxAttempts) {
+                            clearInterval(intervalId); // Stop the interval
+                        }
+                        attempts++;
+                    }, 50);
+                }
+            }
+        }
+        return window.dash_clientside.no_update;
+    }
+    """,
+    Output('pricing-table-container', 'data-mounted'),
+    Input('pricing-table-container', 'id'),
+    Input('_pages_location', 'pathname')
+)
+
 
 # Stores login state & user data and avoids update if login state has not changed
 @app.callback(
-    Output('login-state', 'data'),
+    Output('login-state', 'data'),  # stores logged in state (boolean)
+    Output('pro-user-state', 'data'), # stores pro account state (boolean)
     Output('user-id', 'data'),
     Input("login-state-bridge", "children"),
     prevent_initial_call=True,  # avoid firing on page load if empty
@@ -768,6 +722,8 @@ def update_login_state(bridge_content):
     # Extract logged_in and user_id
     logged_in = state.get("logged_in", False)
     user_id = state.get("user_id", None)
+    free_user = state.get("has_free_plan", False)
+    pro_user = state.get("has_pro_plan", False)
 
     # Store the new state as a dict
     new_data = {"logged_in": logged_in, "user_id": user_id}
@@ -781,17 +737,26 @@ def update_login_state(bridge_content):
         if prev_value == new_data:
             return no_update
 
-    logger.info(f"Updating login-state to: {logged_in} for user: {user_id}")
-    return logged_in, user_id
+    # Message for free vs pro user
+    if free_user:
+        user_type_message = " who is a free user"
+    elif pro_user:
+        user_type_message = " who is a pro user"
+    else:
+        user_type_message = " error: neither free nor pro user"
+
+    logger.info(f"Updating login-state to: {logged_in} for user: {user_id, user_type_message}")
+    return logged_in, pro_user, user_id
 
 
 @app.callback(
     Output("login-overlay-table", "style"),
     Output("login-overlay-chart", "style"),
     Input("login-state", "data"),
+    State("pro-user-state", "data")
 )
-def toggle_overlay(logged_in):
-    if not logged_in:  # False or None:
+def toggle_overlay(logged_in, pro_user_state):
+    if not logged_in or not pro_user_state:  # False or None:
         style = {"display": "block",
                  "position": "absolute",
                  "top": 0,
@@ -912,8 +877,19 @@ def toggle_page_layout(pathname, search):
             {"display": "none"},  # ranking-grid
             {"display": "none"},  # Hide card welcome
         )
+    # --- CASE 3: PRICING PAGE ---------------------------------
+    if pathname == "/pricing":
+        # Hide homepage cards and right column, full width left
+        return (
+            {"display": "none"},  # Hide homepage cards
+            {"display": "none"},  # Hide functionalities card
+            {"display": "none"},  # Hide navbar
+            {"display": "none"},  # Hide dropdown
+            {"display": "none"},  # ranking-grid
+            {"display": "none"},  # Hide card welcome
+        )
 
-    # --- CASE 3: HOMEPAGE -------------------------------------
+    # --- CASE 4: HOMEPAGE -------------------------------------
     return (
         {"display": "none"},  # homepage-cards
         {"display": "none"},  # functionalities-card

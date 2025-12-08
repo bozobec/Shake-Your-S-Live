@@ -43,6 +43,7 @@ stored_data = dbc.Container(
         # Hidden stores
         dcc.Store(id="url-state"),  # intermediary to avoid circular dependency
         dcc.Store(id="login-state", storage_type="session"),
+        dcc.Store(id="pro-user-state", storage_type="session"),
         dcc.Store(id="user-id", storage_type="session"),
         html.Div(id="login-state-bridge", children="", style={"display": "none"}),
         dcc.Download(id="download-chart"),  # Component to handle file download

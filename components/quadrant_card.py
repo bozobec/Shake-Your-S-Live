@@ -12,20 +12,55 @@ ranking_graph_message = dmc.Alert(
     #hide="False",
     withCloseButton="True")
 
-login_overlay_chart = html.Div(
+login_overlay_chart = dmc.Group(
     id="login-overlay-chart",
     children=[
-    dmc.Space(h=60),
-    dmc.Text(
-        "Log in to view our most undervalued companies.",
-        fw=700,
-        size="m",
-        c="white",
-        ta="center",
-    )],
+        dmc.Stack(
+            [
+                dmc.Text(
+                    children=[
+                        "Are you a ",
+                        dmc.Anchor(
+                            dmc.Text(
+                                "pro",
+                                fw=900,
+                                span=True,
+                            ),
+                            target="_blank",
+                            underline="not-hover",
+                            href="/pricing",
+                            c="#FFA8FA",
+                        ),
+                        " member yet?",
+                        html.Br(),
+                        "Because if you are, you can access our quadrant mapping all of our companies.",
+                    ],
+                    fw=700,
+                    size="xl",
+                    c="white",
+                    ta="center",
+                    span=False,
+                ),
+                html.Img(
+                    src="https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExdDBxOGdmdHVuZW9ybzN6d2dzajJhdnplcj"
+                        "UwNHptZ3RkZDZ4Y3BjYyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/uyWTOgNGGWfks/giphy.gif",
+                    style={
+                        "width": "200px",
+                        "height": "233px",
+                        "margin": "0 auto",
+                        "display": "block"
+                    }
+                ),
+            ],
+            gap="xl",
+            align="center",
+            justify="center",
+            style={"height": "100%"}
+        )
+    ],
     style={
-        "display": "none",  # Hidden by default
-        "position": "absolute",  # Sit on top
+        "display": "none",
+        "position": "absolute",
         "top": 0,
         "left": 0,
         "width": "100%",
@@ -33,7 +68,9 @@ login_overlay_chart = html.Div(
         "backgroundColor": "rgba(0, 0, 0, 0.6)",
         "zIndex": 5,
         "backdropFilter": "blur(2px)",
-    }
+    },
+    align="center",
+    justify="center"
 )
 
 config_graph_with_toolbar = {
