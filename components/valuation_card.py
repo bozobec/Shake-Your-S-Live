@@ -33,12 +33,6 @@ valuation_graph_message = dmc.Alert(
 
 valuation_card = dmc.Card(
     children=[
-        dmc.LoadingOverlay(
-                visible=False,
-                id="loading-overlay",
-                overlayProps={"radius": "sm", "blur": 2},
-                zIndex=10,
-        ),
         # Card Title
         dmc.Stack(
             [

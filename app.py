@@ -328,14 +328,46 @@ layout_one_column = dmc.AppShell(
                                                 dmc.Stack(
                                                     id="homepage-cards",
                                                     children=[
-                                                        hype_meter_card,
-                                                        company_quadrant_card,
-                                                        analysis_card,
-                                                        valuation_card,
-                                                        growth_card,
-                                                        revenue_card,
-                                                        product_maturity_card,
-                                                        growth_rate_card,
+                                                        dcc.Loading(hype_meter_card,
+                                                                    overlay_style={"visibility":"visible",
+                                                                                   "filter": "blur(2px)"},
+                                                                    type="circle",
+                                                                    color ="black"),
+                                                        dcc.Loading(company_quadrant_card,
+                                                                    overlay_style={"visibility":"visible",
+                                                                                   "filter": "blur(2px)"},
+                                                                    type="circle",
+                                                                    color ="black"),
+                                                        dcc.Loading(analysis_card,
+                                                                    overlay_style={"visibility": "visible",
+                                                                                   "filter": "blur(2px)"},
+                                                                    type="circle",
+                                                                    color="black"),
+                                                        dcc.Loading(valuation_card,
+                                                                    overlay_style={"visibility": "visible",
+                                                                                   "filter": "blur(2px)"},
+                                                                    type="circle",
+                                                                    color="black"),
+                                                        dcc.Loading(growth_card,
+                                                                    overlay_style={"visibility": "visible",
+                                                                                   "filter": "blur(2px)"},
+                                                                    type="circle",
+                                                                    color="black"),
+                                                        dcc.Loading(revenue_card,
+                                                                    overlay_style={"visibility": "visible",
+                                                                                   "filter": "blur(2px)"},
+                                                                    type="circle",
+                                                                    color="black"),
+                                                        dcc.Loading(product_maturity_card,
+                                                                    overlay_style={"visibility": "visible",
+                                                                                   "filter": "blur(2px)"},
+                                                                    type="circle",
+                                                                    color="black"),
+                                                        dcc.Loading(growth_rate_card,
+                                                                    overlay_style={"visibility": "visible",
+                                                                                   "filter": "blur(2px)"},
+                                                                    type="circle",
+                                                                    color="black"),
                                                     ],
                                                     gap="md",
                                                     p="md",
@@ -1229,10 +1261,6 @@ def initialize_data(dropdown_selection, path):
     Output("range-discount-rate", "disabled"),
     Output("range-profit-margin", "disabled"),
     Output("all-sliders", "style"),
-    Output("loading-overlay", "visible"),
-    Output("loading-overlay-welcome", "visible", allow_duplicate=True),
-    Output("loading-overlay2", "visible"),
-    Output("loading-overlay-quadrant", "visible"),
 
     [Input("dataset-selection", "value"),
      Input("scenarios-picker", "value")], prevent_initial_call=True)
@@ -1247,9 +1275,9 @@ def enable_slider(selection, scenario_value):
         }
     )
     if scenario_value == "Nerd mode":
-        return False, False, False, False, visible_style, True, True, True, True
+        return False, False, False, False, visible_style
     else:
-        return True, True, True, True, invisible_style, True, True, False, False
+        return True, True, True, True, invisible_style
 
 
 # Callback displaying the functionalities & graph cards, and hiding the text
@@ -1261,10 +1289,6 @@ def enable_slider(selection, scenario_value):
     Output("accordion-correlation", "disabled"),
     Output("accordion-product-maturity", "disabled"),
     Output("loader-general", "style", allow_duplicate=True),
-    Output("loading-overlay", "visible", allow_duplicate=True),
-    Output("loading-overlay2", "visible", allow_duplicate=True),
-    Output("loading-overlay-quadrant", "visible", allow_duplicate=True),
-    Output("loading-overlay-welcome", "visible", allow_duplicate=True),
     Output("homepage-cards", "style", allow_duplicate=True),
     Output("section-1", "style", allow_duplicate=True),
     Output("card-welcome", 'style'),
@@ -1288,7 +1312,7 @@ def show_cards(data, launch_counter):
         logger.info("Displaying the graph hihi")
         navbar_state = {"width": 250, "breakpoint": "sm", "style": {}}
         navbar_state["style"] = {"display": "block"}
-        return {'display': 'block'}, launch_counter, False, False, False, False, show_card, True, True, True, True, display_card, display_card, hide_graph_card, \
+        return {'display': 'block'}, launch_counter, False, False, False, False, show_card, display_card, display_card, hide_graph_card, \
             display_card, display_card, display_card, display_card, display_card, show_card, \
             {"visibility": "visible"}
 
@@ -1332,10 +1356,6 @@ def show_cards(data, launch_counter):
     Output(component_id='data-source', component_property='children'),  # Stores the source of the data shown
     Output(component_id='data-selection-counter', component_property='data'),  # Flags that the data has changed
     Output("loader-general", "style", allow_duplicate=True),
-    Output("loading-overlay", "visible", allow_duplicate=True),
-    Output("loading-overlay2", "visible", allow_duplicate=True),
-    Output("loading-overlay-welcome", "visible", allow_duplicate=True),
-    Output("loading-overlay-quadrant", "visible", allow_duplicate=True),
     # Output(component_id='market-cap-tab', component_property='style'),  # Hides Market cap tab if other data is selected
     Output(component_id='symbol-dataset', component_property='data'),  # Hides Market cap tab if other data is selected
     Output(component_id='max-net-margin', component_property='data'),
@@ -1545,14 +1565,13 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
                show_company_functionalities, show_company_functionalities, show_company_functionalities, \
                show_company_functionalities, text_profit_margin, text_best_profit_margin, marks_profit_margin_slider, \
                total_assets, users_revenue_regression, \
-               initial_sliders_values, source_string, True, True, hide_loader, display_loading_overlay, display_loading_overlay, display_loading_overlay, symbol_company, max_net_margin, company_logo_link_src
+               initial_sliders_values, source_string, True, True, symbol_company, max_net_margin, company_logo_link_src
     except:
         logger.exception(f"Error fetching or processing dataset")
         raise PreventUpdate
 
 
 @app.callback(
-    # Output("loading-component", "loading"),
     Output(component_id='initial-sliders-values', component_property='data', allow_duplicate=True),
     Output(component_id="accordion-main", component_property="value"),
     Output(component_id="plateau-message", component_property="title"),
@@ -3043,10 +3062,6 @@ def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, arpu_grow
     Output(component_id='data-selection-counter', component_property='data', allow_duplicate=True),
     Output(component_id='valuation-over-time', component_property='data'),
     Output("loader-general", "style", allow_duplicate=True),
-    Output("loading-overlay", "visible", allow_duplicate=True),
-    Output("loading-overlay2", "visible", allow_duplicate=True),
-    Output("loading-overlay-welcome", "visible", allow_duplicate=True),
-    Output("loading-overlay-quadrant", "visible", allow_duplicate=True),
     Input(component_id='users-dates-formatted', component_property='data'),
     Input(component_id='total-assets', component_property='data'),
     Input(component_id='users-dates-raw', component_property='data'),
@@ -3232,8 +3247,7 @@ def historical_valuation_calculation(df_formatted, total_assets, df_raw, latest_
     print(f" Performance of the valuation over time")
     print(f" Real time: {t2[0] - t1[0]:.2f} seconds")
     print(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
-    return False, df_valuation_over_time_dict, hide_loader, display_loading_overlay, display_loading_overlay, \
-           display_loading_overlay, display_loading_overlay
+    return False, df_valuation_over_time_dict, hide_loader
 
 
 @app.callback(
@@ -3252,10 +3266,6 @@ def historical_valuation_calculation(df_formatted, total_assets, df_raw, latest_
     Output(component_id="hype-score", component_property="data"),  # hype score storage
     Output(component_id="hype-score-text", component_property="children"),  # hype score text
     Output(component_id="growth-content", component_property="children"),  # hype score text
-    Output("loading-overlay", "visible", allow_duplicate=True),
-    Output("loading-overlay2", "visible", allow_duplicate=True),
-    Output("loading-overlay-welcome", "visible", allow_duplicate=True),
-    Output("loading-overlay-quadrant", "visible", allow_duplicate=True),
 
     Input(component_id='valuation-over-time', component_property='data'),
     Input(component_id='graph-unit', component_property='data'),  # Getting the Unit used
@@ -3716,7 +3726,7 @@ def graph_valuation_over_time(valuation_over_time_dict, unit_metric, date_picked
     print(f" Real time: {t2[0] - t1[0]:.2f} seconds")
     print(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
     return fig_valuation, valuation_graph_message, valuation_graph_color, valuation_graph_title, quadrant_message, quadrant_color, quadrant_title, valuation_accordion_title, \
-        valuation_accordion_message, valuation_graph_color, valuation_icon_color, hype_score, hype_score_text, growth_description, False, False, False, False,
+        valuation_accordion_message, valuation_graph_color, valuation_icon_color, hype_score, hype_score_text, growth_description
 
 
 # Callback resetting enabling the reset button

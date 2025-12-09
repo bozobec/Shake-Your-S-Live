@@ -230,12 +230,12 @@ card_dashboard = dmc.Group(
         # Title and subtitle at the top
         dmc.Stack(
             [
-                dmc.LoadingOverlay(
-                    visible=True,
-                    id="loading-overlay-welcome",
-                    overlayProps={"radius": "sm", "blur": 2},
-                    zIndex=10,
-                ),
+                #dmc.LoadingOverlay(
+                #    visible=True,
+                #    id="loading-overlay-welcome",
+                #    overlayProps={"radius": "sm", "blur": 2},
+                #    zIndex=10,
+                #),
                 dmc.Group(
                     [
                         dmc.Title("in short", id="summary-card-title", order=5),
