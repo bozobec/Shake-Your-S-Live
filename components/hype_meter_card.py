@@ -311,7 +311,7 @@ card_1 = dmc.Card(
             children=[
                 dmc.Anchor(
                     dmc.Button(
-                        company["symbol"],
+                        #company["symbol"],
                         variant="outline",
                         size="sm",
                         fullWidth=True,
