@@ -3390,7 +3390,7 @@ def graph_valuation_over_time(valuation_over_time_dict, unit_metric, date_picked
     formatted_y_values = [f"${current_valuation / 1e6:.1f} M" if current_valuation < 1e9
                           else f"${current_valuation / 1e9:.2f} B"]
 
-    fig_valuation.add_scatter(name="Move this by changing scenarios or parameters", x=[date_picked], y=[current_valuation],
+    fig_valuation.add_scatter(name="Chosen scenario", x=[date_picked], y=[current_valuation],
                               marker=dict(
                                   color=color_dot,
                                   size=10

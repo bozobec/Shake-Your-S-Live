@@ -18,6 +18,7 @@ login_overlay_chart = html.Div(
     style={
         "display": "none",  # Hidden by default
         "position": "absolute",  # Sit on top
+        'scrollZoom': False,
         "top": 0,
         "left": 0,
         "width": "100%",
