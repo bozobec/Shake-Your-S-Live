@@ -133,7 +133,7 @@ dropdown = html.Div(
             "input": {
                 "backgroundColor": "#1a1b1e",
                 "color": "#ffffff",
-                "border": "1px solid #909296",
+                "border": "1px solid #454547",
                 "fontWeight": "500",
 
                 "&::placeholder": {
@@ -143,7 +143,7 @@ dropdown = html.Div(
             },
             "dropdown": {
                 "backgroundColor": "#1a1b1e",
-                "border": "1px solid #909296",
+                "border": "1px solid #454547",
                 "fontWeight": "500",
             },
             "option": {
