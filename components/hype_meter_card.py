@@ -74,28 +74,28 @@ config_graph_with_toolbar = {
 valuation_message = dmc.Alert(
     children=[
         dmc.Text(
-            "Loading...",
+            dmc.Skeleton(height=8, radius="xl"),
             size="sm",
             id="valuation-content"
         ),
         dmc.Space(h="xs"),
         dmc.List(
             [
-                dmc.ListItem("Hype score: Oups, couldn't load it", id="hype-score-text"),
-                dmc.ListItem("Growth score: Oups, couldn't load it", id="growth-score-text"),
+                dmc.ListItem(dmc.Skeleton(height=8, w="70%", radius="xl"), id="hype-score-text"),
+                dmc.ListItem(dmc.Skeleton(height=8, w="70%", radius="xl"), id="growth-score-text"),
             ],
             size="sm",
             spacing="xs",
         ),
         dmc.Space(h="xs"),
         dmc.Text(
-            "Loading...",
+            dmc.Skeleton(height=8, w="70%", radius="xl"),
             size="sm",
             id="growth-content"
         )
     ],
     id="valuation-message",
-    title="Valuation Overview",
+    title=dmc.Skeleton(height=8, w="70%", radius="xl"),
     color="blue",
     variant="light",
     icon=dmc.Text("💡", size={"base": "xs", "sm": "xl"}),

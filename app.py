@@ -781,57 +781,66 @@ def toggle_overlay(logged_in, pro_user_state):
 # ----------------------------------------------------------------------------------
 # Callback behaviours and interaction
 
-# Callback to update the URL based on the dropdown selection and track the dataset selected via posthog
+# Callback to update the URL based on the dropdown selection
 @app.callback(
-    Output('url-input', 'search'),
-    Input("dataset-selection", "value"),
-    State("url-input", "search")
+    Output('url-input', 'search'),  # Output 1: URL search string
+    Output('dataset-selection', 'value'),  # Output 2: Dropdown value
+    Input('url-input', 'search'),  # Input 1: URL search string
+    Input("dataset-selection", "value")  # Input 2: Dropdown selection
 )
-def update_url(data_selection, current_pathname):
-    """
-    Updates the URL pathname based on dropdown selection.
-    """
-    if not data_selection:
-        # No update if no data selection is made
-        return no_update
+def sync_url_and_dropdown(url_search, dropdown_value):
+    # This helps break the cycle by identifying the source of the trigger
+    ctx = dash.callback_context
 
-        # Parse the current pathname and extract query parameters
-    parsed_url = urllib.parse.urlparse(current_pathname)
-    current_query_params = urllib.parse.parse_qs(parsed_url.query)
-    current_company = current_query_params.get('company', [None])[0]
-    # No update if the current company matches the dropdown selection
-    if current_company == data_selection:
-        return dash.no_update
-    # Update the pathname with the selected dataset
+    # 1. Handle Initial Load
+    if not ctx.triggered:
+        # On initial load, prioritize the URL. If 'company' is in the URL,
+        # set the dropdown to match. Otherwise, no update.
+        company_from_url = None
+        if url_search:
+            query_params = urllib.parse.parse_qs(url_search.lstrip('?'))
+            company_from_url = query_params.get('company', [None])[0]
 
-    return f"?company={urllib.parse.quote(data_selection)}"
+        if company_from_url and company_from_url != dropdown_value:
+            # Update dropdown from URL on initial load
+            return no_update, company_from_url
+
+        return no_update, no_update
+
+    # 2. Determine Trigger Source
+    trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
+
+    # --- A. Dropdown Triggered the Change ---
+    if trigger_id == 'dataset-selection':
+        # User selected a company from the dropdown.
+        # Goal: Update the URL to reflect the selection.
+        if dropdown_value:
+            new_search = f"?company={urllib.parse.quote(dropdown_value)}"
+            return new_search, no_update
+        # If selection is cleared/empty, you might want to clear the URL or no_update
+        return no_update, no_update
 
 
-# Callback to update the dropdown selection based on the URL.
-@app.callback(
-    [Output('dataset-selection', 'value'),
-     Output('dataset-selected-url', 'data')],
-    [Input('url-input', 'search')],
-    [State('dataset-selection', 'value')]
-)
-def update_select_based_on_url(url_search, current_selected_dataset):
-    """
-    Synchronizes the dropdown selection with the current URL.
-    """
-    if not url_search:
-        # No update if the URL search part is empty
-        return dash.no_update, dash.no_update
+    # --- B. URL Triggered the Change ---
+    elif trigger_id == 'url-input':
+        # User typed directly into the URL or navigated using a URL.
+        # Goal: Update the dropdown to match the URL.
+        company_from_url = None
+        if url_search:
+            query_params = urllib.parse.parse_qs(url_search.lstrip('?'))
+            company_from_url = query_params.get('company', [None])[0]
 
-    # Parse the query string from the URL
-    query_params = urllib.parse.parse_qs(url_search.lstrip('?'))
-    dataset_url = query_params.get('company', [None])[0]  # Get the 'company' parameter from the URL
+        if company_from_url and company_from_url != dropdown_value:
+            # Update dropdown if the URL contains a valid, different company
+            return no_update, company_from_url
 
-    # No update if the dropdown already matches the URL or the URL value is invalid
-    if dataset_url == current_selected_dataset or not dataset_url:
-        return dash.no_update, dash.no_update
+        # If the URL is empty or the company is already selected, do nothing
+        return no_update, no_update
 
-    # Update the dropdown value and clear the persistent URL dataset data
-    return dataset_url, None
+    # Fallback
+    return no_update, no_update
+
+
 
 
 # Callback to show/hide sections based on page
@@ -1563,7 +1572,7 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
     logger.info("datedate")
     df_dataset = pd.DataFrame(df_dataset_dict)
     logger.info(f"DF_dataset_first {df_dataset}")
-    if dropdown_value is None:
+    if dropdown_value is None or df_dataset is None or df_raw is None:
         raise PreventUpdate
     # Dates array definition from dictionary
     dates_raw = np.array([entry['Date'] for entry in df_raw])
