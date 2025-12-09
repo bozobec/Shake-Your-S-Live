@@ -2262,18 +2262,18 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     else:
         past_tense = " will be approaching 90% of its peak as of "
     graph_message = dmc.Text(children=[
-        dmc.Text("The pink bars ", span=True, c="#F862F0"),
+        dmc.Text("The pink bars ", span=True, c="#F862F0", fw=600),
         "show how " + dropdown_value + "’s " + graph_unit + " (the key revenue driver) have grown over time. ",
-        dmc.Text("The yellow zone ", span=True, c="#C48501"), "is our forecast range, " \
+        dmc.Text("The yellow zone ", span=True, c="#C48501", fw=600), "is our forecast range, " \
                                                               "showing how this driver should evolve in the future. These drivers follow an S-curve: " \
                                                               "fast growth at first, then a gradual slowdown.\n" \
                                                               " With the selected growth, the",
-        dmc.Text(" plateau ", span=True, c="#953BF6"), past_tense,
+        dmc.Text(" plateau ", span=True, c="#953BF6", fw=600), past_tense,
         dmc.Text(src.Utils.dates.string_formatting_to_date(time_selected_growth) + ", projected at " \
-                 + str(plateau_selected_growth) + " " + str(graph_unit), span=True, c="#953BF6"),
+                 + str(plateau_selected_growth) + " " + str(graph_unit), span=True, c="#953BF6", fw=600),
     ],
         size="sm",
-        fw=300,
+        #fw=300,
     )
 
     # Build Main Chart
@@ -3390,7 +3390,7 @@ def graph_valuation_over_time(valuation_over_time_dict, unit_metric, date_picked
     formatted_y_values = [f"${current_valuation / 1e6:.1f} M" if current_valuation < 1e9
                           else f"${current_valuation / 1e9:.2f} B"]
 
-    fig_valuation.add_scatter(name="Calculated Valuation", x=[date_picked], y=[current_valuation],
+    fig_valuation.add_scatter(name="Move this by changing scenarios or parameters", x=[date_picked], y=[current_valuation],
                               marker=dict(
                                   color=color_dot,
                                   size=10
@@ -3519,13 +3519,28 @@ def graph_valuation_over_time(valuation_over_time_dict, unit_metric, date_picked
                                                        "If you see long-term potential, it might be a good buy."
         # Messages right above the graph
         valuation_graph_title = "How well did our model perform over time?"
-        valuation_graph_message = "The purple line shows " + company_symbol + "'s price (market cap) over time. The yellow zone is our confidence " \
-                                                                              "range, calculated over time (without readjustment, obviously). " \
-                                                                              "We believe the market cap tends to fall, sooner or later, within this range. " \
-                                                                              " The market cap is currently lower than the most optimistic valuation (" + \
-                                  f"{high_scenario_valuation[-1] / 1e9:.2f} B$) meaning that this stock may be " \
-                                  f"fairly or even undervalued! Note: The dot moves to show the valuation under " \
-                                  f"your chosen scenario.\n"
+        valuation_graph_message = dmc.Text(
+            children=[
+                dmc.Text("The purple line", span=True, c="#953BF6", fw=600),
+                " shows ",
+                company_symbol,
+                "'s ",
+                dmc.Text("price", span=True, c="black", fw=600),
+                " (market cap) over time. ",
+                dmc.Text("The yellow zone", span=True, c="#C48501", fw=600),
+                " is our ",
+                dmc.Text("confidence range. ", span=True, c="black", fw=600),
+                "We believe the market cap tends to fall, sooner or later, within this range. " \
+                " The market cap is currently ",
+                dmc.Text("lower than the most optimistic valuation ", span=True, c="black", fw=600),
+                f"({high_scenario_valuation[-1] / 1e9:.2f} B$) ",
+                "meaning that this stock may be ",
+                dmc.Text("fairly or even undervalued!", span=True, c="#034205", fw=600),
+                dmc.Text("Note: Move the dot by changing scenarios or parameters in the nerd mode", c="black",
+                          fs="italic"),
+            ],
+            size="sm",
+        )
         valuation_graph_color = "green"
         valuation_icon_color = DashIconify(icon="radix-icons:rocket", color=dmc.DEFAULT_THEME["colors"]["green"][6],
                                            width=20)
@@ -3547,12 +3562,28 @@ def graph_valuation_over_time(valuation_over_time_dict, unit_metric, date_picked
 
         # Messages right above the graph
         valuation_graph_title = "How well did our model perform over time?"
-        valuation_graph_message = "The purple line shows " + company_symbol + "s price (market cap) over time. The yellow zone is our confidence " \
-                                                                              "range, calculated over time (without readjustment, obviously). " \
-                                                                              "We believe the market cap tends to fall, sooner or later, within this range. " \
-                                                                              "The dot moves to show the valuation under your chosen scenario.\n" \
-                                                                              "The Market cap is currently higher than the most optimistic valuation (" + \
-                                  f"{high_scenario_valuation[-1] / 1e9:.2f} B$), meaning that this stock seems overvalued."
+        valuation_graph_message = dmc.Text(
+            children=[
+                dmc.Text("The purple line", span=True, c="#953BF6", fw=600),
+                " shows ",
+                company_symbol,
+                "'s ",
+                dmc.Text("price", span=True, c="black", fw=600),
+                " (market cap) over time. ",
+                dmc.Text("The yellow zone", span=True, c="#C48501", fw=600),
+                " is our ",
+                dmc.Text("confidence range. ", span=True, c="black", fw=600),
+                "We believe the market cap tends to fall, sooner or later, within this range. " \
+                " The market cap is currently ",
+                dmc.Text("higher than the most optimistic valuation", span=True, c="black", fw=600),
+                f"({high_scenario_valuation[-1] / 1e9:.2f} B$) ",
+                "meaning that this stock seems ",
+                dmc.Text("overvalued!", span=True, c="#FA4140", fw=600),
+                dmc.Text("Note: Move the dot by changing scenarios or parameters in the nerd mode", c="black",
+                          fs="italic"),
+            ],
+            size="sm",
+        )
         valuation_graph_color = "yellow"
         valuation_icon_color = DashIconify(icon="radix-icons:rocket", color=dmc.DEFAULT_THEME["colors"]["yellow"][6],
                                            width=20)
@@ -3567,7 +3598,7 @@ def graph_valuation_over_time(valuation_over_time_dict, unit_metric, date_picked
                       " It can be considered a safe (boring?) investment: no major upside nor downside in the mid-term should be expected."
                       ],
             size="sm",
-            fw=300,
+            #fw=300,
         )
         quadrant_color = "yellow"
         growth_description = dmc.Text(
@@ -3592,7 +3623,7 @@ def graph_valuation_over_time(valuation_over_time_dict, unit_metric, date_picked
                       dmc.Text(" price could very likely rise in the mid-term.", span=True, c="#black", fw=600),
                       ],
             size="sm",
-            fw=300,
+            #fw=300,
         )
         quadrant_color = "green"
         growth_description = dmc.Text(
@@ -3617,14 +3648,15 @@ def graph_valuation_over_time(valuation_over_time_dict, unit_metric, date_picked
                       ", the greater the risk of a sharp drop in its stock price."
                       ],
             size="sm",
-            fw=300,
+            #fw=300,
         )
         quadrant_color = "#FB4040"
         growth_description = dmc.Text(
             children=[
                 "Given the limited growth of ",
                 dmc.Text(unit_metric, fs="italic", span=True),
-                dmc.Text(", a maaaassive change ", span=True, c="black", fw=600),
+                ",",
+                dmc.Text(" a maaaassive change ", span=True, c="black", fw=600),
                 " should happen in the near future to justify the current value.",
             ]
         )
@@ -3639,7 +3671,7 @@ def graph_valuation_over_time(valuation_over_time_dict, unit_metric, date_picked
                       ". Which such a growth, the hype can live a while longer. But the price is likely to drop at the first sign of weakness."
                       ],
             size="sm",
-            fw=300,
+            #fw=300,
         )
         quadrant_color = "yellow"
         growth_description = dmc.Text(
