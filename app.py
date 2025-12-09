@@ -592,6 +592,8 @@ clientside_callback(
                 const companyName = urlParams.get('company') || 'None Selected';
 
                 if (window.posthog) {
+                    console.log(`[POSTHOG DEBUG] Attempting to capture: Section Viewed for section ${currentSectionId}`)
+                    
                     window.posthog.capture('Section Viewed', {
                         section_name: currentSectionId.replace('section-', ''), 
                         company_name: companyName,
