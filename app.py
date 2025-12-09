@@ -1239,6 +1239,13 @@ def initialize_data(dropdown_selection, path):
 def enable_slider(selection, scenario_value):
     visible_style = {"display": "block"}
     invisible_style = {"display": "hidden"}
+    posthog.capture(
+        event='scenario_selected',
+        properties={
+            'source_location': 'scenarios_picker',
+            'scenario_name': scenario_value  # <-- The dynamic value from the input
+        }
+    )
     if scenario_value == "Nerd mode":
         return False, False, False, False, visible_style, True, True, True, True
     else:
@@ -1352,7 +1359,6 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
     # skipping it if no dropdown value is selected to avoid firing it when starting
     if dropdown_value is not None and IS_PRODUCTION:
         posthog.capture(
-            distinct_id='user_or_session_id',  # replace with real user/session ID
             event='dash_select_changed',
             properties={
                 'location': 'dash_app',
