@@ -26,7 +26,7 @@ login_overlay_table = dmc.Group(
                                 fw=900,
                                 span=True,
                             ),
-                            target="_blank",
+                            #target="_blank",
                             underline = "not-hover",
                             href="/pricing",
                             c="#FFA8FA",

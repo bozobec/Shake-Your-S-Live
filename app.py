@@ -657,6 +657,8 @@ clientside_callback(
     prevent_initial_call=False,
 )
 
+# Callback displaying the pricing table on the pricing page
+
 app.clientside_callback(
     """
     function(id_table, pathname) {
