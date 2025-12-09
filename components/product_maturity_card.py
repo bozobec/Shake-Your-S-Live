@@ -3,7 +3,7 @@ import dash_mantine_components as dmc
 
 config_graph = {
     'displayModeBar': True,
-    'scrollZoom': True,
+    'scrollZoom': False,
     'displaylogo': False,
     'modeBarButtonsToRemove': ['zoom', 'zoomIn', 'zoomOut', 'pan', 'lasso', 'select','autoScale', 'resetScale'],
     'toImageButtonOptions': {
