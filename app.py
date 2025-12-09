@@ -156,7 +156,7 @@ dropdown = html.Div(
                     "backgroundColor": "#5c7cfa",
                     "color": "white",
                 },
-                "fontWeight": "500",
+                "fontWeight": "300",
             },
         },
         nothingFoundMessage="We don't have this company yet!",
