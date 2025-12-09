@@ -162,7 +162,7 @@ offcanvas_card_valuation_analysis = base_card(
 offcanvas = html.Div(
     [
         #dbc.Button("How it works", id="open-offcanvas", n_clicks=0, color="dark"),
-        dmc.Button("How it works", id="open-offcanvas", n_clicks=0, variant="transparent"),
+        dmc.Button("How it works", id="open-offcanvas", n_clicks=0, variant="transparent", color="white"),
         dbc.Offcanvas([
             dmc.Container(children=[
                 dmc.Text(
