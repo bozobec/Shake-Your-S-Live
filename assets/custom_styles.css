@@ -42,3 +42,7 @@ h1, h2, h3, h4, h5, h6 {
   --bs-btn-active-bg: #4f0bbb;
   --bs-btn-active-border-color: #4f0bbb;
 }
+
+.hype-meter-progress .progress-bar {
+    font-weight: 600;
+}

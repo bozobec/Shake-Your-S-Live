@@ -21,7 +21,7 @@ layout_main_graph = go.Layout(
         xanchor="left",
         x=0.01,
         font=dict(
-            family="Basel, Arial, sans-serif",
+            #family="Basel, Arial, sans-serif",
             size=10,
         ),
     ),
@@ -42,7 +42,7 @@ layout_main_graph = go.Layout(
     ),
     showlegend=True,
     font=dict(
-        family="Basel, Arial, sans-serif",
+        #family="Basel, Arial, sans-serif",
     ),
 )
 
@@ -69,7 +69,7 @@ layout_revenue_graph = go.Layout(
         xanchor="left",
         x=0.01,
         font=dict(
-            family="Basel, Arial, sans-serif",
+            #family="Basel, Arial, sans-serif",
             #size=10,
             # color="black"
         ),
@@ -90,7 +90,7 @@ layout_revenue_graph = go.Layout(
     ),
     showlegend=True,
     font=dict(
-        family="Basel, Arial, sans-serif",
+        #family="Basel, Arial, sans-serif",
         # size=10,
         # color="black"
     ),
@@ -133,7 +133,7 @@ layout_growth_rate_graph = go.Layout(
     ),
     showlegend=True,
     font=dict(
-        family="Basel, Arial, sans-serif",
+        #family="Basel, Arial, sans-serif",
     ),
 )
 
@@ -183,7 +183,7 @@ layout_product_maturity_graph = go.Layout(
     ),
     showlegend=True,
     font=dict(
-        family="Basel, Arial, sans-serif",
+        #family="Basel, Arial, sans-serif",
         # size=16,
         # color="Black"
     ),

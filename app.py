@@ -123,45 +123,47 @@ sections = [
     {"id": "section-8", "title": "Ranking", "subtitle": "Logged in only", "color": "yellow", "icon": "solar:ranking-line-duotone"},
 ]
 
-dropdown = dmc.Select(
-    placeholder="Select a company...",
-    id="dataset-selection",
-    data=labels,
-    leftSection=DashIconify(icon="icon-park-outline:search"),
-    # size="lg",
-    # style={"marginBottom": 10},
-    styles={
-        "fontSize": "16px",  # Prevents iOS zoom
-        "input": {
-            "backgroundColor": "#1a1b1e",  # Dark background
-            "color": "#c1c2c5",  # Light text
-            "border": "1px solid #373A40",  # Subtle border
-            "&:focus": {
-                "borderColor": "#5c7cfa",  # Blue border on focus
+dropdown = html.Div(
+    dmc.Select(
+        placeholder="Select a company...",
+        id="dataset-selection",
+        data=labels,
+        leftSection=DashIconify(icon="icon-park-outline:search"),
+        styles={
+            "input": {
+                "backgroundColor": "#1a1b1e",
+                "color": "#ffffff",
+                "border": "1px solid #909296",
+                "fontWeight": "500",
+
+                "&::placeholder": {
+                    "color": "#ffffff",
+                    "opacity": "0.7",
+                },
+            },
+            "dropdown": {
+                "backgroundColor": "#1a1b1e",
+                "border": "1px solid #909296",
+                "fontWeight": "500",
+            },
+            "option": {
+                "color": "#ffffff",
+                "backgroundColor": "#1a1b1e",
+                "&:hover": {
+                    "backgroundColor": "#373A40",
+                },
+                "&[data-selected]": {
+                    "backgroundColor": "#5c7cfa",
+                    "color": "white",
+                },
+                "fontWeight": "500",
             },
         },
-        "dropdown": {
-            "backgroundColor": "#1a1b1e",  # Dark dropdown background
-            "border": "1px solid #373A40",
-        },
-        "option": {
-            "color": "#c1c2c5",  # Light text for options
-            "backgroundColor": "#1a1b1e",
-            "&:hover": {
-                "backgroundColor": "#25262b",  # Slightly lighter on hover
-            },
-            "&[data-selected]": {
-                "backgroundColor": "#5c7cfa",  # Blue when selected
-                "color": "white",
-            },
-            "&[data-selected]:hover": {
-                "backgroundColor": "#4c6ef5",  # Darker blue on hover when selected
-            },
-        },
-    },
-    nothingFoundMessage="We don't have this company yet!",
-    searchable=True,
-    comboboxProps={"transitionProps": {"transition": "pop", "duration": 200}},
+        nothingFoundMessage="We don't have this company yet!",
+        searchable=True,
+        comboboxProps={"transitionProps": {"transition": "pop", "duration": 200}},
+    ),
+    className="mantine-select-wrapper"
 )
 
 layout_one_column = dmc.AppShell(
@@ -1695,11 +1697,10 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
     # Here we take a simple 0.5 weight, different weight could be given to the headroom or core
     growth_score = 0.5 * g / r_ref_global + 0.5 * h
 
-    # growth_score_text = f"Growth score: {GS:.2f}"
 
     badge_color_growth, badge_label_growth = main.growth_meter_indicator_values(growth_score)
     growth_score_text = dmc.Group([
-        f"Growth score: {growth_score:.2f}",
+        dmc.Text(f"Growth score: {growth_score:.2f}", size="sm"),
         dmc.Badge(badge_label_growth, size="xs", variant="outline", color=badge_color_growth)
     ], gap="md")
 
@@ -1712,34 +1713,49 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
 
     # Growth Rate Graph message
     if average_rd < 0.1:
-        growth_rate_graph_message1 = "The discrete growth rate indicates where " + dropdown_value + " is along its S-curve. " \
-                                     "When it reaches 0, growth of its " + key_unit + " ends. The flatter the regression line (purple) " \
-                                     "the longer the growth phase.\n" \
-                                      "For " + dropdown_value + ", the average annual discrete " \
-                                     "growth rate is approaching 0 (" + f"{average_rd:.1f}"+ \
-                                     "), indicating an approaching end of the growth."
+        growth_rate_graph_message1 = dmc.Text(
+            children=[
+                "The discrete growth rate indicates where ",
+                dropdown_value,
+                " is along its S-curve. When it reaches 0, growth of its ",
+                key_unit,
+                " ends. The flatter the regression line (purple) the longer the growth phase. For ",
+                dropdown_value,
+                ", the average annual discrete growth rate is approaching 0 (",
+                f"{average_rd:.1f}), indicating an approaching end of the growth."
+                ],
+            size="sm")
         growth_rate_graph_color= "yellow"
         if any(r < 0 for r in r_full[-5:]):
-            growth_rate_graph_message1 = growth_rate_graph_message1 + " However, the latest growth rates vary substantially," \
-                                                                      "  which could lead to a prolonged growth."
+            growth_rate_graph_message1 = dmc.Text(
+                children=[
+                    growth_rate_graph_message1,
+                    " However, the latest growth rates vary substantially, which could lead to a prolonged growth."
+                    ]
+                , size="sm")
     else:
-        growth_rate_graph_message1 = "The discrete growth rate indicates where " + dropdown_value + " is along its S-curve. " \
-                                     "When it reaches 0, growth of its " + key_unit + " has ended. The flatter the regression line (purple) " \
-                                     "the longer the growth phase.\n" \
-                                      "For " + dropdown_value + ", the line is still far away from zero, " \
-                                                                "indicating a substantial growth ahead."
+        growth_rate_graph_message1 = dmc.Text(
+            children=[
+                "The discrete growth rate indicates where ",
+                dropdown_value + " is along its S-curve. When it reaches 0, growth of its ",
+                key_unit,
+                " has ended. The flatter the regression line (purple) the longer the growth phase. For ",
+                dropdown_value,
+                ", the line is still far away from zero, indicating a substantial growth ahead."
+            ],
+            size="sm")
 
         growth_rate_graph_color = "green"
 
     # Revenue Graph Message
-    revenue_graph_message = "The graph shows revenue per " + key_unit + " (purple bars) and profit margin (pink line).\n" \
+    revenue_graph_message = dmc.Text("The graph shows revenue per " + key_unit + " (purple bars) and profit margin (pink line).\n" \
                             " The dotted line represents projected revenue growth, adjustable with the Revenue slider.\n" \
-                            " The max net margin indicates the theoretical maximum margin for " + dropdown_value + "."
+                            " The max net margin indicates the theoretical maximum margin for " + dropdown_value + ".", size="sm")
     revenue_graph_message_color = "primaryPurple"
 
     # Product Maturity Graph Message
     if np.all(share_research_and_development == 0):
-        product_maturity_graph_message = "No R&D data available at the moment for " + str(dropdown_value) + " 🫣"
+        product_maturity_graph_message = dmc.Text("No R&D data available at the moment for " + str(dropdown_value) + " 🫣", size="sm")
         product_maturity_graph_message_color = "gray"
         product_maturity_accordion_title = "No Data Available 🫣"
         product_maturity_accordion_body = "At the moment no data is available for " + str(dropdown_value) + " 🫣"
@@ -1748,42 +1764,56 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
                                                             color=dmc.DEFAULT_THEME["colors"]["gray"][6],
                                                             width=20)
     elif share_research_and_development[-1] > 30:
-        product_maturity_graph_message = "Tech companies often invest a large share of their revenue in R&D, " \
+        product_maturity_graph_message = dmc.Text("Tech companies often invest a large share of their revenue in R&D, " \
                                          "and decrease it as their products mature. Currently, " \
                                          + dropdown_value +" is investing heavily in development: a sign that " \
-                                                           "its revenue & profit margin could grow significantly in the future."
+                                                           "its revenue & profit margin could grow significantly in the future.", size="sm")
         product_maturity_graph_message_color = "green"
         product_maturity_accordion_title = "The Product is Growing!"
-        product_maturity_accordion_body = "At the moment, " + str(dropdown_value) + \
-                                         " is heavily investing in its product, indicating " \
-                                         "that the revenue & profit margin may strongly grow in the future."
+        product_maturity_accordion_body = dmc.Text(
+            children=[
+                "At the moment, ",
+                str(dropdown_value),
+                " is heavily investing in its product, indicating that the revenue & profit margin may strongly grow in the future."], size="sm")
         product_maturity_accordion_color = "green"
         product_maturity_accordion_icon_color = DashIconify(icon="fluent-mdl2:product-release", color=dmc.DEFAULT_THEME["colors"]["green"][6],
                                              width=20)
 
     elif share_research_and_development[-1] > 10:
-        product_maturity_graph_message = "Tech companies often invest a large share of their revenue in R&D. " \
+        product_maturity_graph_message = dmc.Text("Tech companies often invest a large share of their revenue in R&D. " \
                                             "Currently, " + str(dropdown_value) + " is limiting its investment in " \
                                           "its product, indicating that the product is on its way to being mature and " \
-                                                                                  "limited profit margin improvements should be expected."
+                                                                                  "limited profit margin improvements should be expected.", size="sm")
         product_maturity_graph_message_color = "yellow"
         product_maturity_accordion_title = "The Product is Maturing"
-        product_maturity_accordion_body = "At the moment, " + str(dropdown_value) + \
+        product_maturity_accordion_body = dmc.Text(
+            children=[
+                "At the moment, " + str(dropdown_value) + \
                                          " is limiting its investment in its product, indicating that the revenue and " \
                                          "profit margin should stabilize."
+            ],
+            size="sm")
         product_maturity_accordion_color = "yellow"
         product_maturity_accordion_icon_color = DashIconify(icon="fluent-mdl2:product-release",
                                                             color=dmc.DEFAULT_THEME["colors"]["yellow"][6],
                                                             width=20)
     else:
-        product_maturity_graph_message = "At the moment, " + str(
-            dropdown_value) + " is heavily limiting its product investment, indicating" \
-                              " that limited improvement on profit margin is to be expected"
+        product_maturity_graph_message = dmc.Text(
+            children=[
+                "At the moment, ",
+                str(dropdown_value),
+                " is heavily limiting its product investment, indicating that limited improvement on profit "
+                "margin is to be expected"],
+            size="sm")
         product_maturity_graph_message_color = "red"
         product_maturity_accordion_title = "The Product is Mature"
-        product_maturity_accordion_body = "At the moment, " + str(dropdown_value) + \
-                                          " is heavily limiting its investment in its product, indicating that " \
-                                          "limited improvement on the profit margin is to be expected"
+        product_maturity_accordion_body = dmc.Text(
+            children=[
+                "At the moment, ",
+                str(dropdown_value),
+                " is heavily limiting its investment in its product, indicating that limited improvement on the "
+                "profit margin is to be expected"
+                ])
         product_maturity_accordion_color = "red"
         product_maturity_accordion_icon_color = DashIconify(icon="fluent-mdl2:product-release",
                                                             color=dmc.DEFAULT_THEME["colors"]["red"][6],
@@ -2583,7 +2613,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
             formatted_y_values = [f"${y:.1f}" if y < 1000 else f"${y / 1e3:.2f} K" for y in y_revenue]
             # Past revenue outline to increase the contrast
             fig_revenue.add_trace(go.Bar(
-                name="Annual Revenue per User (arpu)",
+                name="Annual Revenue per Unit (arpu)",
                 x=x_revenue,
                 y=y_revenue,
                 # mode='lines',
@@ -2596,7 +2626,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
                 # secondary_y=True,
             )
             fig_revenue.add_trace(go.Scatter(
-                name="Future Annual Revenue per User (arpu)",
+                name="Future Annual Revenue per Unit (arpu)",
                 x=future_arpu_dates,
                 y=future_arpu,
                 mode='lines',
@@ -2609,7 +2639,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
             )
             # Revenue past the selected date that are known [data_len:]
             fig_revenue.add_trace(go.Scatter(
-                name="Annual Revenue per User or Unit (ARPU)",
+                name="Annual Revenue per Unit (ARPU)",
                 x=x_revenue[len(dates_revenue_actual):],
                 y=y_revenue[len(dates_revenue_actual):],
                 mode='lines',
@@ -2620,7 +2650,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
                 # secondary_y=True,
             )
             fig_revenue.update_yaxes(range=[min(annual_revenue_per_user) * 0.9, max(annual_revenue_per_user) * 1.5],
-                                     title="Annual Revenue per " + graph_unit + " [$]",
+                                     title="ARPU (" + graph_unit + ") [$]",
                                      color="#953AF6")
             fig_revenue.add_trace(go.Scatter(
                 name="Profit Margin",
@@ -3285,7 +3315,7 @@ def graph_valuation_over_time(valuation_over_time_dict, unit_metric, date_picked
     badge_color, badge_label = main.hype_meter_indicator_values_new(hype_score)
     # badge_color_growth, badge_label_growth = main.growth_meter_indicator_values(growth_score)
     hype_score_text = dmc.Group([
-        f"Hype score: {hype_score:.2f}",
+        dmc.Text(f"Hype score: {hype_score:.2f}", size="sm"),
         dmc.Badge(badge_label, size="xs", variant="outline", color=badge_color)
     ], gap="md")
 

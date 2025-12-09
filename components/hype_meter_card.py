@@ -34,6 +34,7 @@ hype_meter_bootstrap = dbc.Progress(
         dbc.Tooltip("Intrinsic value: $3.0B", target="hype-meter-users", id='hype-tooltip-users', placement="top"),
     ],
     style={"height": "30px", "borderRadius": "0px"},
+    className="hype-meter-progress",
 )
 
 hype_meter_bootstrap_undervaluation = dbc.Progress(
@@ -43,6 +44,7 @@ hype_meter_bootstrap_undervaluation = dbc.Progress(
         dbc.Tooltip("Hype: $4.0B", target="hype-meter-undervaluation-hype", id='hype-tooltip-hype', placement="top"),
     ],
     style={"height": "15px", "borderRadius": "0px"},
+    className="hype-meter-progress",
 )
 
 hype_meter_bootstrap_price = dbc.Progress(
@@ -52,6 +54,7 @@ hype_meter_bootstrap_price = dbc.Progress(
         dbc.Tooltip("Price: $4.0B", target="hype-meter-price", id='hype-tooltip-price', placement="bottom"),
     ],
     style={"height": "30px", "borderRadius": "0px"},
+    className="hype-meter-progress",
 )
 
 config_graph_with_toolbar = {
