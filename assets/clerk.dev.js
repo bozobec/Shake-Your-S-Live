@@ -52,7 +52,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       } else {
         const btn = document.createElement("button");
         btn.id = "sign-in-btn";
-        btn.className = "btn btn-outline-light btn-sm";
+        btn.className = "btn btn-outline-primary btn-sm";  // Look and feel updated in .css
         btn.textContent = "Sign In";
         btn.addEventListener("click", () => Clerk.openSignIn());
         header.appendChild(btn);

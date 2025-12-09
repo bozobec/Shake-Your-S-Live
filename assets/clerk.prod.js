@@ -52,7 +52,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       } else {
         const btn = document.createElement("button");
         btn.id = "sign-in-btn";
-        btn.className = "btn btn-outline-light btn-sm";
+        btn.className = "btn btn-outline-primary btn-sm";
         btn.textContent = "Sign In";
         btn.addEventListener("click", () => {
             posthog.capture("sign_in_clicked"); // posthog event
