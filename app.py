@@ -557,28 +557,54 @@ def close_navbar_on_click(*args):
 clientside_callback(
     """
     function(n_clicks_list) {
-        const mainContent = document.getElementById('main-content');
-        const links = document.querySelectorAll('[id^="link-section-"]');
-        const sections = document.querySelectorAll('[id^="section-"]');
+        // Use a persistent key to ensure listeners are only added once per page load.
+        // This is often more reliable than checking n_clicks, especially for listeners.
+        if (window.__scrollListenersAttached) {
+            return window.dash_clientside.no_update;
+        }
 
-        // Function to update active link based on scroll position
+        const mainContent = document.getElementById('main-content');
+        // Ensure this selector targets your links correctly
+        const links = document.querySelectorAll('[id^="link-section-"]'); 
+        const sections = document.querySelectorAll('[id^="section-"]'); 
+
+        // --- 1. Attach Scroll Spy Listener ---
         function updateActiveLink() {
-            let currentSection = '';
-            const scrollPosition = mainContent.scrollTop + 200; // Offset for better UX
+            // ... (Your original scroll spy logic, and the PostHog logic)
+            // ... (This part seems okay as it relates to the scroll event)
+
+            // Re-inserting the PostHog tracking logic here for completeness:
+            let currentSectionId = '';
+            const scrollPosition = mainContent.scrollTop + 200; 
 
             sections.forEach(section => {
                 const sectionTop = section.offsetTop;
                 const sectionHeight = section.offsetHeight;
 
                 if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
-                    currentSection = section.id;
+                    currentSectionId = section.id;
                 }
             });
 
-            // Update link styles
+            // PostHog Tracking Logic (Ensure window.posthog exists on your page)
+            if (currentSectionId && currentSectionId !== window.lastTrackedSection) {
+                const urlParams = new URLSearchParams(window.location.search);
+                const companyName = urlParams.get('company') || 'None Selected';
+
+                if (window.posthog) {
+                    window.posthog.capture('Section Viewed', {
+                        section_name: currentSectionId.replace('section-', ''), 
+                        company_name: companyName,
+                        scroll_transition: 'enter',
+                    });
+                }
+                window.lastTrackedSection = currentSectionId;
+            }
+
+            // Scroll Spy logic (Style update)
             links.forEach(link => {
                 const linkTarget = link.getAttribute('href').substring(1);
-                if (linkTarget === currentSection) {
+                if (linkTarget === currentSectionId) {
                     link.style.backgroundColor = '#953AF6';
                     link.style.fontWeight = '600';
                     link.style.color = '#FFFFFF';
@@ -590,20 +616,21 @@ clientside_callback(
             });
         }
 
-        // Add scroll event listener
-        if (mainContent && !mainContent.hasAttribute('data-scroll-listener')) {
+        // Attach scroll listener once
+        if (mainContent) {
             mainContent.addEventListener('scroll', updateActiveLink);
-            mainContent.setAttribute('data-scroll-listener', 'true');
-            // Initial update
-            updateActiveLink();
+            updateActiveLink(); // Initial run
         }
 
-        // Handle click events for smooth scrolling
+        // --- 2. Attach Click Listeners (The fix is ensuring this runs) ---
         links.forEach(link => {
-            if (!link.hasAttribute('data-click-listener')) {
+            // Ensure link is a valid DOM element
+            if (link && !link.hasAttribute('data-click-listener')) {
                 link.addEventListener('click', function(e) {
                     e.preventDefault();
-                    const targetId = this.getAttribute('href').substring(1);
+
+                    // Verify targetId is correct
+                    const targetId = this.getAttribute('href').substring(1); 
                     const targetElement = document.getElementById(targetId);
 
                     if (targetElement && mainContent) {
@@ -618,10 +645,15 @@ clientside_callback(
             }
         });
 
+        // Mark listeners as attached to prevent duplication on subsequent updates
+        window.__scrollListenersAttached = true; 
+
         return window.dash_clientside.no_update;
     }
     """,
-    Output("link-section-1", "n_clicks"),
+    Output("link-section-1", "n_clicks"),  # Use a dummy output ID that exists
+    # Use any input that reliably triggers on load or user interaction.
+    # The list of n_clicks is fine if 'sections' is defined in Python.
     [Input(f"link-{section['id']}", "n_clicks") for section in sections],
     prevent_initial_call=False,
 )
