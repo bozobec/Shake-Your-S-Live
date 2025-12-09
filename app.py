@@ -3715,11 +3715,13 @@ def toggle_offcanvas(n1, is_open):
 )
 def update_table(df_all_companies, hype_choice, industries, logged_in, pro_user):
     t1 = time.perf_counter(), time.process_time()
+    if df_all_companies is None:
+        raise PreventUpdate
 
     # Blocks the process for dev
-    #IS_PRODUCTION = os.getenv("IS_PRODUCTION") == "true"  # Setup in heroku 'heroku config:set IS_PRODUCTION=true'
-    #if IS_PRODUCTION is False:
-    #    return no_update  # nothing to do
+    IS_PRODUCTION = os.getenv("IS_PRODUCTION") == "true"  # Setup in heroku 'heroku config:set IS_PRODUCTION=true'
+    if IS_PRODUCTION is False:
+        return no_update  # nothing to do
 
     # If dropdown hasn't been used yet, set a default
     if hype_choice is None:
