@@ -3628,7 +3628,6 @@ def graph_valuation_over_time(valuation_over_time_dict, unit_metric, date_picked
                       dmc.Text(" price could very likely rise in the mid-term.", span=True, c="#black", fw=600),
                       ],
             size="sm",
-            #fw=300,
         )
         quadrant_color = "green"
         growth_description = dmc.Text(
