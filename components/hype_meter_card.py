@@ -421,7 +421,11 @@ card_welcome = dmc.Container(
 
 hype_meter_card = dmc.Card(
         children=[
-            card_dashboard
+            dcc.Loading(card_dashboard,
+                overlay_style={"visibility": "visible", "filter": "blur(2px)"},
+                type="circle",
+                color="black"
+                        ),
         ],
         id="section-1",
         withBorder=True,

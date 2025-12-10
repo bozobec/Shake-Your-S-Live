@@ -19,12 +19,9 @@ valuation_over_time = html.Div(children=[dcc.Graph(id='valuation-graph', config=
 
 # Graph message
 valuation_graph_message = dmc.Alert(
-    dmc.Text(
-        "About the Current Market Cap",
-        #size={"base": "8px", "sm": "sm"}   # smaller text on mobile
-    ),
+    dmc.Skeleton(height=8, w="70%", radius="xl"),
     id="valuation-graph-message",
-    title="About the Current Market Cap",
+    title=dmc.Skeleton(height=8, w="70%", radius="xl"),
     color="blue",
     withCloseButton="True",
     p={"base": "xs", "sm": "md"},  # ⬅ smaller padding on mobile
@@ -33,16 +30,21 @@ valuation_graph_message = dmc.Alert(
 
 valuation_card = dmc.Card(
     children=[
-        # Card Title
-        dmc.Stack(
-            [
-                dmc.Title("Welcome to RAST", id="graph-title", order=5, textWrap="nowrap"),
-                html.Div(children=[valuation_graph_message, valuation_over_time])
-            ],
-            justify="space-between",
-            mt={"base": 5, "sm": "md"},  # tighter on mobile
-            mb={"base": 5, "sm": "xs"},  # tighter on mobile
-        )
+        dcc.Loading(children=[
+            # Card Title
+            dmc.Stack(
+                [
+                    dmc.Title(dmc.Skeleton(height=8, w="70%", radius="xl"), id="graph-title", order=5, textWrap="nowrap"),
+                    html.Div(children=[valuation_graph_message, valuation_over_time])
+                ],
+                justify="space-between",
+                mt={"base": 5, "sm": "md"},  # tighter on mobile
+                mb={"base": 5, "sm": "xs"},  # tighter on mobile
+            )],
+            overlay_style={"visibility": "visible", "filter": "blur(2px)"},
+            type="circle",
+            color="black"
+        ),
     ],
     id="section-3",
     style={'display': 'none'},

@@ -37,14 +37,19 @@ source = dmc.Text(
 
 growth_card = dmc.Card(
     children=[
-        dmc.Stack(
-            [
-                dmc.Title("Growth over time", id='growth-card-title', order=5),
-                html.Div(children=[graph_message, main_graph, source],)
-            ],
-            #justify="space-around",
-            mt={"base": 5, "sm": "md"},  # tighter on mobile
-            mb={"base": 5, "sm": "xs"},  # tighter on mobile
+        dcc.Loading(
+            dmc.Stack(
+                [
+                    dmc.Title("Growth over time", id='growth-card-title', order=5),
+                    html.Div(children=[graph_message, main_graph, source],)
+                ],
+                #justify="space-around",
+                mt={"base": 5, "sm": "md"},  # tighter on mobile
+                mb={"base": 5, "sm": "xs"},  # tighter on mobile
+            ),
+        overlay_style={"visibility": "visible", "filter": "blur(2px)"},
+        type="circle",
+        color="black"
         ),
     ],
     id="section-4",
