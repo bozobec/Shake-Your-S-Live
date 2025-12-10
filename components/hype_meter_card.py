@@ -160,69 +160,6 @@ companies = [
     {'symbol': 'WEN', 'name': "Wendy's", 'url': '/?company=Wendy%27s', 'logo': 'https://upload.wikimedia.org/wikipedia/en/3/32/Wendy%27s_full_logo_2012.svg'}
 ]
 
-card_welcome2 = dmc.Stack(
-            id='card-welcome2',
-            gap='xl',
-            align="center",
-            children=[
-                dmc.Title(
-                    "Understand companies' potential",
-                    order=4,
-                    textWrap="nowrap",
-                    #align='center',
-                    style={
-                        #'fontSize': '2.5rem',
-                        #'fontWeight': 700,
-                        #'color': 'white',
-                        #'marginBottom': '10px',
-                        #'textAlign': 'center',
-                    }
-                ),
-                dmc.Group(
-                    #position='center',
-                    gap='sm',
-                    style={'flexWrap': 'wrap'},
-                    children=[
-                        dmc.Anchor(
-                            dmc.Button(
-                                html.Div([
-                                    html.Img(
-                                        src=company['logo'],
-                                        style={
-                                            'width': '20px',
-                                            'height': '20px',
-                                            'marginRight': '8px',
-                                            'verticalAlign': 'middle'
-                                        }
-                                    ),
-                                    html.Span(
-                                        company['symbol'],
-                                        style={'verticalAlign': 'middle'}
-                                    )
-                                ], style={'display': 'flex', 'alignItems': 'center'}),
-                                variant='light',
-                                color="violet",
-                                size='md',
-                                style={
-                                    #'background': 'rgba(255, 255, 255, 0.1)',
-                                    #'border': '1px solid rgba(255, 255, 255, 0.2)',
-                                    #'color': 'white',
-                                    'fontWeight': 600,
-                                    'fontSize': '0.9rem',
-                                    'padding': '10px 20px',
-                                    'transition': 'all 0.3s ease'
-                                }
-                            ),
-                            href=company['url'],
-                            target='_blank',
-                            style={'textDecoration': 'none'}
-                        )
-                        for company in companies
-                    ]
-                )
-            ]
-        )
-
 card_dashboard = dmc.Group(
     id='card-dashboard',
     #style={'display': 'none'},
@@ -334,7 +271,7 @@ card_1 = dmc.Card(
                                     }
                                 ),
                     ),
-                    href=company["url"],
+                    href=company.get("url", "") or "#",
                 )
                 for company in companies
             ]

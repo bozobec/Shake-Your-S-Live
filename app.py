@@ -977,10 +977,11 @@ def initialize_data(dropdown_selection, path):
     industry_list = []
     for index, row in df_list.iterrows():
         industry = row['Industry']
-        industry_list.append({
-            "value": industry,
-            "label": f"{industry}",
-        })
+        if pd.notna(industry) and industry is not None:  # Skip null/NaN values
+            industry_list.append({
+                "value": industry,
+                "label": f"{industry}",
+            })
     logger.info("List of industries")
     logger.info(industry_list)
     # Creates the graph mapping companies
