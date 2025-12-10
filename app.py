@@ -3604,7 +3604,6 @@ def graph_valuation_over_time(valuation_over_time_dict, unit_metric, date_picked
                       " It can be considered a safe (boring?) investment: no major upside nor downside in the mid-term should be expected."
                       ],
             size="sm",
-            #fw=300,
         )
         quadrant_color = "yellow"
         growth_description = dmc.Text(
