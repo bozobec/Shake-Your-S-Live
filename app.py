@@ -3551,7 +3551,7 @@ def graph_valuation_over_time(valuation_over_time_dict, unit_metric, date_picked
         valuation_icon_color = DashIconify(icon="radix-icons:rocket", color=dmc.DEFAULT_THEME["colors"]["green"][6],
                                            width=20)
     else:
-        # Messages in the accordion
+        # Messages in the accordion!
         valuation_accordion_title = company_symbol + " is overvalued"
         valuation_accordion_message = dmc.Text(
             children=[
