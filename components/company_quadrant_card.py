@@ -51,8 +51,6 @@ quadrant_company_message = dmc.Alert(
     ],
     id="quadrant-company-message",
     title=dmc.Skeleton(height=8, w="70%", radius="xl"),
-    #color="primaryPurple",
-    #hide="False",
     withCloseButton="True",
     p={"base": "xs", "sm": "md"},  # ⬅ smaller padding on mobile
 )
