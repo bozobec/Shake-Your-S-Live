@@ -71,8 +71,6 @@ config_graph_with_toolbar = {
           },
 }
 
-#graph = dcc.Graph(id='hyped-ranking-graph-company', config=config_graph_with_toolbar)
-
 # Valuation message (left side)
 valuation_message = dmc.Alert(
     children=[
@@ -351,9 +349,7 @@ card_welcome = dmc.Container(
             ],
             id='card-welcome',
             size="xl",
-            style={
-                #'background': 'linear-gradient(to bottom, #f8f9fa, #D5AEFF)',
-            }
+            style={}
         )
 
 hype_meter_card = dmc.Card(

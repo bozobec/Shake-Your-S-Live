@@ -51,6 +51,8 @@ from components.revenue_card import revenue_card
 from components.selecting_card import labels
 from components.stored_data import stored_data
 from components.valuation_card import valuation_card
+import components.AppShellNavbar.RastAppShellNavbar as RastAppShellNavbar
+
 from src.API.AirTableAPI import AirTableAPI
 from src.API.FinhubAPI import FinhubAPI
 from src.Utils.RastLogger import get_default_logger
@@ -234,82 +236,7 @@ layout_one_column = dmc.AppShell(
             ),
             bg="black",
         ),
-        dmc.AppShellNavbar(
-            id="navbar",
-            p="md",
-            style={'display': 'none'},
-            children=dmc.Stack(
-                [
-                    dmc.NavLink(
-                        label=" Current situation",
-                        description="",
-                        leftSection=DashIconify(icon="mdi:bullseye", height=16),
-                        href="#section-1",
-                        id="link-section-1",
-                        style={"padding": "8px 12px", "borderRadius": "4px"},
-                    ),
-                    dmc.NavLink(
-                        label="Quadrant",
-                        description="",
-                        leftSection=DashIconify(icon="carbon:quadrant-plot", height=16),
-                        href="#section-2",
-                        id="link-section-2",
-                        style={"padding": "8px 12px", "borderRadius": "4px"},
-                    ),
-                    dmc.NavLink(
-                        label="Valuation history",
-                        description="",
-                        leftSection=DashIconify(icon="tabler:pig-money", height=16),
-                        href="#section-3",
-                        id="link-section-3",
-                        style={"padding": "8px 12px", "borderRadius": "4px"},
-                    ),
-                    dmc.NavLink(
-                        label="Growth",
-                        description="",
-                        leftSection=DashIconify(icon="streamline-sharp:decent-work-and-economic-growth",
-                                                height=16),
-                        href="#section-4",
-                        id="link-section-4",
-                        style={"padding": "8px 12px", "borderRadius": "4px"},
-                    ),
-                    dmc.NavLink(
-                        label="Revenue",
-                        description="",
-                        leftSection=DashIconify(icon="fa6-solid:money-check-dollar", height=16),
-                        href="#section-5",
-                        id="link-section-5",
-                        style={"padding": "8px 12px", "borderRadius": "4px"},
-                    ),
-                    dmc.NavLink(
-                        label="Product Maturity",
-                        description="",
-                        leftSection=DashIconify(icon="healthicons:old-man-outline", height=16),
-                        href="#section-6",
-                        id="link-section-6",
-                        style={"padding": "8px 12px", "borderRadius": "4px"},
-                    ),
-                    dmc.NavLink(
-                        label="Growth rate",
-                        description="",
-                        leftSection=DashIconify(icon="material-symbols-light:biotech-outline-rounded",
-                                                height=16),
-                        href="#section-7",
-                        id="link-section-7",
-                        style={"padding": "8px 12px", "borderRadius": "4px"},
-                    ),
-                    dmc.NavLink(
-                        label="Ranking",
-                        description="Logged in only",
-                        leftSection=DashIconify(icon="solar:ranking-line-duotone", height=16),
-                        href="/ranking",
-                        id="link-section-8",
-                        style={"padding": "8px 12px", "borderRadius": "4px"},
-                    ),
-                ],
-                gap="sm",
-            ),
-        ),
+        RastAppShellNavbar.create(),
         dmc.AppShellMain(
             children=[
                 dmc.Grid(
@@ -1042,11 +969,6 @@ def initialize_data(dropdown_selection, path):
         for x, y in zip(growth_score, hype_score_log)
     ]
 
-    text_font = [
-        dict(size=8, weight="bold") if (x > x_mid and y < y_mid) else dict(size=8)
-        for x, y in zip(growth_score, hype_score_log)
-    ]
-
     # Alternate text positions to try to limit overlapping
     text_positions = ['top center' if i % 2 == 0 else 'bottom center' for i in range(len(growth_score))]
 
@@ -1089,21 +1011,10 @@ def initialize_data(dropdown_selection, path):
     df_all_companies_information.set_index("Company Name")
 
     if dropdown_selection is not None:
-
         try:
             growth_score_company = df_all_companies_information[df_all_companies_information['Company Name'] == dropdown_selection]['Growth Score'].iloc[0]
             hype_score_company = df_all_companies_information[df_all_companies_information['Company Name'] == dropdown_selection]['Hype Score'].iloc[0]+3
-            company_logo_href = df_all_companies_information[df_all_companies_information['Company Name'] == dropdown_selection]['Company Logo'].iloc[0]
 
-            company_logo = html.Img(
-                src=company_logo_href,
-                style={
-                    'width': '20px',
-                    'height': '20px',
-                    'marginRight': '8px',
-                    'verticalAlign': 'middle'
-                }
-            )
         except KeyError:
             raise ValueError(f"Company '{dropdown_selection}' not found in the quadrant dataframe")
 
@@ -1168,7 +1079,6 @@ def initialize_data(dropdown_selection, path):
         ))
 
         # Position of the company label depending on where it is positioned in the quadrant
-
         if hype_score_company > 12:
             label_position = 'bottom center'
         elif hype_score_company > 12 and growth_score_company < 0.1:
