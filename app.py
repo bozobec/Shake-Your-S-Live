@@ -48,10 +48,10 @@ from components.product_maturity_card import product_maturity_card
 from components.quadrant_card import quadrant_card
 from components.ranking_card import table_hype_card
 from components.revenue_card import revenue_card
-from components.selecting_card import labels
 from components.stored_data import stored_data
 from components.valuation_card import valuation_card
 import components.AppShellNavbar.RastAppShellNavbar as RastAppShellNavbar
+import components.RastDropDownBox.RastDropDownBox as RastDropDownBox
 
 from src.API.AirTableAPI import AirTableAPI
 from src.API.FinhubAPI import FinhubAPI
@@ -120,49 +120,6 @@ sections = [
     {"id": "section-8", "title": "Ranking", "subtitle": "Logged in only", "color": "yellow", "icon": "solar:ranking-line-duotone"},
 ]
 
-dropdown = html.Div(
-    dmc.Select(
-        placeholder="Select a company...",
-        id="dataset-selection",
-        data=labels,
-        leftSection=DashIconify(icon="icon-park-outline:search"),
-        styles={
-            "input": {
-                "backgroundColor": "#1a1b1e",
-                "color": "#ffffff",
-                "border": "1px solid #454547",
-                "fontWeight": "500",
-
-                "&::placeholder": {
-                    "color": "#ffffff",
-                    "opacity": "0.7",
-                },
-            },
-            "dropdown": {
-                "backgroundColor": "#1a1b1e",
-                "border": "1px solid #454547",
-                "fontWeight": "500",
-            },
-            "option": {
-                "color": "#ffffff",
-                "backgroundColor": "#1a1b1e",
-                "&:hover": {
-                    "backgroundColor": "#373A40",
-                },
-                "&[data-selected]": {
-                    "backgroundColor": "#5c7cfa",
-                    "color": "white",
-                },
-                "fontWeight": "300",
-            },
-        },
-        nothingFoundMessage="We don't have this company yet!",
-        searchable=True,
-        comboboxProps={"transitionProps": {"transition": "pop", "duration": 200}},
-    ),
-    className="mantine-select-wrapper"
-)
-
 layout_one_column = dmc.AppShell(
     children=[
         dmc.AppShellHeader(
@@ -186,21 +143,12 @@ layout_one_column = dmc.AppShell(
                                     alt="RAST app guru, valuation made simple"
                                 ),
                                 href="/",
-                                # target="_blank"
                             ),
                         ],
                         gap="xs",
                         wrap="nowrap",
                     ),
-                    dmc.Box(
-                        dropdown,
-                        style={
-                            "minWidth": {"base": "200px", "sm": "250px", "lg": "400px"},  # Changed to minWidth
-                            "flex": "1 1 0%",  # Use 0% as flex-basis for consistent behavior
-                            "maxWidth": {"lg": "80%"},
-                        },
-                        id="dropdown-container"
-                    ),
+                    RastDropDownBox.create(labels=AirTableAPI.get_labels() or [] if IS_PRODUCTION else ["Airbnb", "Affirm", "Spotify"]),
                     dmc.Group(
                         [
                             # Text version - visible on medium+ screens
