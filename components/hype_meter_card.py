@@ -71,8 +71,6 @@ config_graph_with_toolbar = {
           },
 }
 
-#graph = dcc.Graph(id='hyped-ranking-graph-company', config=config_graph_with_toolbar)
-
 # Valuation message (left side)
 valuation_message = dmc.Alert(
     children=[
@@ -167,12 +165,6 @@ card_dashboard = dmc.Group(
         # Title and subtitle at the top
         dmc.Stack(
             [
-                #dmc.LoadingOverlay(
-                #    visible=True,
-                #    id="loading-overlay-welcome",
-                #    overlayProps={"radius": "sm", "blur": 2},
-                #    zIndex=10,
-                #),
                 dmc.Group(
                     [
                         dmc.Title("in short", id="summary-card-title", order=5),
@@ -192,7 +184,6 @@ card_dashboard = dmc.Group(
                 ),
             ],
             gap="xs",
-            #mt="xs",
             mb="xs",
         ),
         # Two-column layout: Alert on left, Hype meter on right
@@ -351,9 +342,7 @@ card_welcome = dmc.Container(
             ],
             id='card-welcome',
             size="xl",
-            style={
-                #'background': 'linear-gradient(to bottom, #f8f9fa, #D5AEFF)',
-            }
+            style={}
         )
 
 hype_meter_card = dmc.Card(

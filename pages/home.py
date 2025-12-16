@@ -1,12 +1,12 @@
-import dash
-from dash import html, dcc, callback, Input, Output, register_page
-import dash_mantine_components as dmc
-from dash_iconify import DashIconify
+from datetime import datetime
+
 import dash_bootstrap_components as dbc
-import plotly.graph_objects as go
+import dash_mantine_components as dmc
 import numpy as np
-import main
-from datetime import datetime, timedelta, date
+import plotly.graph_objects as go
+from dash import html, dcc
+from dash_iconify import DashIconify
+
 from pages.dashboard import table_hype
 
 '''

@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 # Run this app with `python app.py` and
 # visit http://127.0.0.1:8050/ in your web browser
+import copy
 import json
 import math
 import os
 import time
+import urllib.parse
 import urllib.parse
 from datetime import datetime, timedelta, date
 
@@ -22,12 +24,6 @@ from dash import html, dcc, callback_context, no_update, clientside_callback
 from dash.dependencies import Input, Output, State
 from dash.exceptions import PreventUpdate
 from dash_iconify import DashIconify
-import urllib.parse
-import copy
-import plotly.io as pio
-import io
-from flask import send_file, request, jsonify, send_from_directory, Flask
-import base64
 from dateutil.relativedelta import relativedelta
 from dotenv import load_dotenv
 from flask import request, jsonify, send_from_directory
@@ -52,17 +48,18 @@ from components.product_maturity_card import product_maturity_card
 from components.quadrant_card import quadrant_card
 from components.ranking_card import table_hype_card
 from components.revenue_card import revenue_card
-from components.selecting_card import selecting_card, labels
 from components.stored_data import stored_data
 from components.valuation_card import valuation_card
+import components.AppShellNavbar.RastAppShellNavbar as RastAppShellNavbar
+import components.RastDropDownBox.RastDropDownBox as RastDropDownBox
+
 from src.API.AirTableAPI import AirTableAPI
 from src.API.FinhubAPI import FinhubAPI
 from src.Utils.RastLogger import get_default_logger
 from src.Utils.dates import YEAR_OFFSET
+from components.company_quadrant_card import company_quadrant_card
 
 logger = get_default_logger()
-
-from components.company_quadrant_card import company_quadrant_card
 
 t1 = time.perf_counter(), time.process_time()
 
@@ -123,278 +120,151 @@ sections = [
     {"id": "section-8", "title": "Ranking", "subtitle": "Logged in only", "color": "yellow", "icon": "solar:ranking-line-duotone"},
 ]
 
-dropdown = html.Div(
-    dmc.Select(
-        placeholder="Select a company...",
-        id="dataset-selection",
-        data=labels,
-        leftSection=DashIconify(icon="icon-park-outline:search"),
-        styles={
-            "input": {
-                "backgroundColor": "#1a1b1e",
-                "color": "#ffffff",
-                "border": "1px solid #454547",
-                "fontWeight": "500",
-
-                "&::placeholder": {
-                    "color": "#ffffff",
-                    "opacity": "0.7",
-                },
-            },
-            "dropdown": {
-                "backgroundColor": "#1a1b1e",
-                "border": "1px solid #454547",
-                "fontWeight": "500",
-            },
-            "option": {
-                "color": "#ffffff",
-                "backgroundColor": "#1a1b1e",
-                "&:hover": {
-                    "backgroundColor": "#373A40",
-                },
-                "&[data-selected]": {
-                    "backgroundColor": "#5c7cfa",
-                    "color": "white",
-                },
-                "fontWeight": "300",
-            },
-        },
-        nothingFoundMessage="We don't have this company yet!",
-        searchable=True,
-        comboboxProps={"transitionProps": {"transition": "pop", "duration": 200}},
-    ),
-    className="mantine-select-wrapper"
-)
-
 layout_one_column = dmc.AppShell(
-        children=[
-            dmc.AppShellHeader(
-                dmc.Group(
-                    [
-                        dmc.Group(
-                            [
-                                dmc.Burger(
-                                    id="burger",
+    children=[
+        dmc.AppShellHeader(
+            dmc.Group(
+                [
+                    dmc.Group(
+                        [
+                            dmc.Burger(
+                                id="burger",
+                                size="xs",
+                                hiddenFrom="sm",
+                                opened=False,
+                                color="white",
+                            ),
+                            dcc.Link(
+                                id='logo-link',
+                                children=dmc.Image(
+                                    src="/assets/RAST_Vector_Logo.svg",
+                                    h={"base": 25, "sm": 35, "lg": 40},  # Responsive height
+                                    w={"base": 65, "sm": 91, "lg": 104},  # Responsive width
+                                    alt="RAST app guru, valuation made simple"
+                                ),
+                                href="/",
+                            ),
+                        ],
+                        gap="xs",
+                        wrap="nowrap",
+                    ),
+                    RastDropDownBox.create(labels=AirTableAPI.get_labels() or [] if IS_PRODUCTION else ["Airbnb", "Affirm", "Spotify"]),
+                    dmc.Group(
+                        [
+                            # Text version - visible on medium+ screens
+                            dcc.Link(
+                                dmc.Button(
+                                    [
+                                        DashIconify(icon="solar:ranking-linear", width=18),
+                                        dmc.Text("Ranking", visibleFrom="sm", ml="xs", fw=600)
+                                    ],
+                                    variant="subtle",
+                                    color="gray",
                                     size="xs",
-                                    hiddenFrom="sm",
-                                    opened=False,
-                                    color="white",
+                                    style={"color": "var(--mantine-color-gray-3)"},
                                 ),
-                                dcc.Link(
-                                    id='logo-link',
-                                    children=dmc.Image(
-                                        src="/assets/RAST_Vector_Logo.svg",
-                                        h={"base": 25, "sm": 35, "lg": 40},  # Responsive height
-                                        w={"base": 65, "sm": 91, "lg": 104},  # Responsive width
-                                        alt="RAST app guru, valuation made simple"
-                                    ),
-                                    href="/",
-                                    #target="_blank"
-                                ),
-                            ],
-                            gap="xs",
-                            wrap="nowrap",
-                        ),
-                        dmc.Box(
-                            dropdown,
-                            style={
-                                "minWidth": {"base": "200px", "sm": "250px", "lg": "400px"},  # Changed to minWidth
-                                "flex": "1 1 0%",  # Use 0% as flex-basis for consistent behavior
-                                "maxWidth": {"lg": "80%"},
-                            },
-                            id="dropdown-container"
-                        ),
-                        dmc.Group(
+                                href="/ranking",
+                            ),
+                            dmc.Box(offcanvas, visibleFrom="sm"),
+                            html.Div(
+                                id="clerk-header",
+                                style={"flexShrink": "0"}  # Prevent shrinking
+                            ),  # Clerk user button
+                        ],
+                        gap="sm",
+                        wrap="nowrap",
+                    ),
+                ],
+                h="100%",
+                px="sm",  # Increased padding (or use a number like px=40)
+                justify="space-between",  # This pushes items to left and right
+                align="center",
+                wrap="nowrap",
+                gap="sm",
+            ),
+            bg="black",
+        ),
+        RastAppShellNavbar.create(),
+        dmc.AppShellMain(
+            children=[
+                dmc.Grid(
+                    [
+                        # Left column: scrollable content
+                        dmc.GridCol(
+                            span={"base": 12, "lg": 8},
+                            children=
                             [
-                                # Text version - visible on medium+ screens
-                                dcc.Link(
-                                    dmc.Button(
-                                        [
-                                            DashIconify(icon="solar:ranking-linear", width=18),
-                                            dmc.Text("Ranking", visibleFrom="sm", ml="xs", fw=600)
-                                        ],
-                                        variant="subtle",
-                                        color="gray",
-                                        size="xs",
-                                        style={"color": "var(--mantine-color-gray-3)"},
-                                    ),
-                                    href="/ranking",
-                                ),
-                                dmc.Box(offcanvas, visibleFrom="sm"),
-                                html.Div(
-                                    id="clerk-header",
-                                    style={"flexShrink": "0"}  # Prevent shrinking
-                                ),  # Clerk user button
-                            ],
-                            gap="sm",
-                            wrap="nowrap",
+                                card_welcome,
+                                dmc.Stack(
+                                    id="homepage-cards",
+                                    children=[
+                                        hype_meter_card,
+                                        company_quadrant_card,
+                                        analysis_card,
+                                        valuation_card,
+                                        growth_card,
+                                        revenue_card,
+                                        product_maturity_card,
+                                        growth_rate_card,
+                                    ],
+                                    gap="md",
+                                    p="md",
+                                    style={'display': 'none'}
+                                )],
+                        ),
+
+                        # Right column: static functionalities card
+                        dmc.GridCol(
+                            span={"base": 12, "lg": 4},
+                            children=dmc.Stack(
+                                [functionalities_card],
+                                gap="md",
+                                p="md",
+                                style={
+                                    "position": "sticky",
+                                    "top": "17px",  # stays fixed below header
+                                    "alignSelf": "start",
+                                },
+                            ),
                         ),
                     ],
-                    h="100%",
-                    px="sm",  # Increased padding (or use a number like px=40)
-                    justify="space-between",  # This pushes items to left and right
-                    align="center",
-                    wrap="nowrap",
-                    gap="sm",
+                    # gutter="md",
+                    # style={
+                    #    "maxWidth": "100%",
+                    #    "margin": "0"},
                 ),
-                bg="black",
-            ),
-            dmc.AppShellNavbar(
-                id="navbar",
-                p="md",
-                style={'display': 'none'},
-                children=dmc.Stack(
-                    [
-                        dmc.NavLink(
-                            label=" Current situation",
-                            description="",
-                            leftSection=DashIconify(icon="mdi:bullseye", height=16),
-                            href="#section-1",
-                            id="link-section-1",
-                            style={"padding": "8px 12px", "borderRadius": "4px"},
-                        ),
-                        dmc.NavLink(
-                            label="Quadrant",
-                            description="",
-                            leftSection=DashIconify(icon="carbon:quadrant-plot", height=16),
-                            href="#section-2",
-                            id="link-section-2",
-                            style={"padding": "8px 12px", "borderRadius": "4px"},
-                        ),
-                        dmc.NavLink(
-                            label="Valuation history",
-                            description="",
-                            leftSection=DashIconify(icon="tabler:pig-money", height=16),
-                            href="#section-3",
-                            id="link-section-3",
-                            style={"padding": "8px 12px", "borderRadius": "4px"},
-                        ),
-                        dmc.NavLink(
-                            label="Growth",
-                            description="",
-                            leftSection=DashIconify(icon="streamline-sharp:decent-work-and-economic-growth",
-                                                    height=16),
-                            href="#section-4",
-                            id="link-section-4",
-                            style={"padding": "8px 12px", "borderRadius": "4px"},
-                        ),
-                        dmc.NavLink(
-                            label="Revenue",
-                            description="",
-                            leftSection=DashIconify(icon="fa6-solid:money-check-dollar", height=16),
-                            href="#section-5",
-                            id="link-section-5",
-                            style={"padding": "8px 12px", "borderRadius": "4px"},
-                        ),
-                        dmc.NavLink(
-                            label="Product Maturity",
-                            description="",
-                            leftSection=DashIconify(icon="healthicons:old-man-outline", height=16),
-                            href="#section-6",
-                            id="link-section-6",
-                            style={"padding": "8px 12px", "borderRadius": "4px"},
-                        ),
-                        dmc.NavLink(
-                            label="Growth rate",
-                            description="",
-                            leftSection=DashIconify(icon="material-symbols-light:biotech-outline-rounded",
-                                                    height=16),
-                            href="#section-7",
-                            id="link-section-7",
-                            style={"padding": "8px 12px", "borderRadius": "4px"},
-                        ),
-                        dmc.NavLink(
-                            label="Ranking",
-                            description="Logged in only",
-                            leftSection=DashIconify(icon="solar:ranking-line-duotone", height=16),
-                            href="/ranking",
-                            id="link-section-8",
-                            style={"padding": "8px 12px", "borderRadius": "4px"},
-                        ),
-                        ],
-                    gap="sm",
+                html.Div(
+                    id="ranking-grid",
+                    style={"display": "none"},  # Hidden by default
+                    children=dmc.Grid([
+                        dmc.GridCol([table_hype_card], span={'base': 12, 'sm': 10}),
+                        dmc.GridCol([quadrant_card], span={'base': 12, 'sm': 10}),
+                    ],
+                        gutter="xs"
+                    )
                 ),
-            ),
-            dmc.AppShellMain(
-                        children=[
-                            dmc.Grid(
-                                [
-                                    # Left column: scrollable content
-                                    dmc.GridCol(
-                                        span={"base": 12, "lg": 8},
-                                        children=
-                                        [
-                                                card_welcome,
-                                                dmc.Stack(
-                                                    id="homepage-cards",
-                                                    children=[
-                                                        hype_meter_card,
-                                                        company_quadrant_card,
-                                                        analysis_card,
-                                                        valuation_card,
-                                                        growth_card,
-                                                        revenue_card,
-                                                        product_maturity_card,
-                                                        growth_rate_card,
-                                                    ],
-                                                    gap="md",
-                                                    p="md",
-                                                    style={'display':'none'}
-                                                )],
-                                    ),
-
-                                    # Right column: static functionalities card
-                                    dmc.GridCol(
-                                        span={"base": 12, "lg": 4},
-                                        children=dmc.Stack(
-                                            [functionalities_card],
-                                            gap="md",
-                                            p="md",
-                                            style={
-                                                "position": "sticky",
-                                                "top": "17px",  # stays fixed below header
-                                                "alignSelf": "start",
-                                            },
-                                        ),
-                                    ),
-                                ],
-                                #gutter="md",
-                                #style={
-                                #    "maxWidth": "100%",
-                                #    "margin": "0"},
-                            ),
-                            html.Div(
-                                id="ranking-grid",
-                                style={"display": "none"},  # Hidden by default
-                                children=dmc.Grid([
-                                    dmc.GridCol([table_hype_card], span={'base': 12, 'sm': 10}),
-                                    dmc.GridCol([quadrant_card], span={'base': 12, 'sm': 10}),
-                                ],
-                                    gutter="xs"
-                                )
-                            ),
-                            dash.page_container,
-                            stored_data,
-                        ],
-                        id="main-content",
-                        style={
-                            "height": "100vh",
-                            "overflow": "auto",
-                            "overflowX": "hidden"
-                        },
-                    ),
-        ],
-        header={"height": 60},
-        navbar={
-                "width": 250,
-                "breakpoint": "sm",
-                "collapsed": {"mobile": True},
-                "style": {
-                    "backgroundColor": "rgba(255, 255, 255, 0.7)",  # White with 70% opacity
-                }},
-        padding="0",
-        id="app-shell",
-    ),
+                dash.page_container,
+                stored_data,
+            ],
+            id="main-content",
+            style={
+                "height": "100vh",
+                "overflow": "auto",
+                "overflowX": "hidden"
+            },
+        ),
+    ],
+    header={"height": 60},
+    navbar={
+        "width": 250,
+        "breakpoint": "sm",
+        "collapsed": {"mobile": True},
+        "style": {
+            "backgroundColor": "rgba(255, 255, 255, 0.7)",  # White with 70% opacity
+        }},
+    padding="0",
+    id="app-shell",
+),
 
 app.layout = dmc.MantineProvider(
     theme={
@@ -438,7 +308,8 @@ app.layout = dmc.MantineProvider(
 # Clerk domain (e.g., "your-app.clerk.accounts.dev")
 
 # Pick the right url depending on the environment (first one is prod, stored on heroku, second is dev)
-CLERK_JWKS_URL = os.getenv("https://clerk.rast.guru/.well-known/jwks.json", "https://happy-skylark-73.clerk.accounts.dev/.well-known/jwks.json")
+CLERK_JWKS_URL = os.getenv("https://clerk.rast.guru/.well-known/jwks.json",
+                           "https://happy-skylark-73.clerk.accounts.dev/.well-known/jwks.json")
 logger.info("clerk jwks")
 logger.info(CLERK_JWKS_URL)
 jwks = requests.get(CLERK_JWKS_URL).json()
@@ -733,7 +604,7 @@ app.clientside_callback(
 # Stores login state & user data and avoids update if login state has not changed
 @app.callback(
     Output('login-state', 'data'),  # stores logged in state (boolean)
-    Output('pro-user-state', 'data'), # stores pro account state (boolean)
+    Output('pro-user-state', 'data'),  # stores pro account state (boolean)
     Output('user-id', 'data'),
     Input("login-state-bridge", "children"),
     prevent_initial_call=True,  # avoid firing on page load if empty
@@ -868,8 +739,6 @@ def sync_url_and_dropdown(url_search, dropdown_value):
 
     # Fallback
     return no_update, no_update
-
-
 
 
 # Callback to show/hide sections based on page
@@ -1033,19 +902,18 @@ def initialize_data(dropdown_selection, path):
     fig.add_shape(type="rect", x0=x_mid, x1=1, y0=y_min, y1=y_mid, fillcolor="#FFD000", opacity=0.2, line_width=0)
 
     # Add quadrant labels - position them in log space
-    fig.add_annotation(x=0.65, y=log_y_top, text=" Hot & hyped ", showarrow=False, font=dict(size=12), bgcolor="#F862F0")
-    fig.add_annotation(x=0.15, y=log_y_top, text="<b> Bubble zone </b>", showarrow=False, font=dict(size=12), bgcolor="#F862F0")
-    fig.add_annotation(x=0.15, y=log_y_bottom, text=" Steady, Forgotten ", showarrow=False, font=dict(size=12), bgcolor="#F862F0")
-    fig.add_annotation(x=0.65, y=log_y_bottom, text="<b> Undervalued gems </b>", showarrow=False, font=dict(size=12), bgcolor="#FED100")
+    fig.add_annotation(x=0.65, y=log_y_top, text=" Hot & hyped ", showarrow=False, font=dict(size=12),
+                       bgcolor="#F862F0")
+    fig.add_annotation(x=0.15, y=log_y_top, text="<b> Bubble zone </b>", showarrow=False, font=dict(size=12),
+                       bgcolor="#F862F0")
+    fig.add_annotation(x=0.15, y=log_y_bottom, text=" Steady, Forgotten ", showarrow=False, font=dict(size=12),
+                       bgcolor="#F862F0")
+    fig.add_annotation(x=0.65, y=log_y_bottom, text="<b> Undervalued gems </b>", showarrow=False, font=dict(size=12),
+                       bgcolor="#FED100")
 
     # Marking points as gold and bolded if in the "undervalued gems", otherwise as purple
     marker_colors = [
         "#C58400" if (x > x_mid and y < y_mid) else "#953AF6"
-        for x, y in zip(growth_score, hype_score_log)
-    ]
-
-    text_font = [
-        dict(size=8, weight="bold") if (x > x_mid and y < y_mid) else dict(size=8)
         for x, y in zip(growth_score, hype_score_log)
     ]
 
@@ -1091,21 +959,10 @@ def initialize_data(dropdown_selection, path):
     df_all_companies_information.set_index("Company Name")
 
     if dropdown_selection is not None:
-
         try:
             growth_score_company = df_all_companies_information[df_all_companies_information['Company Name'] == dropdown_selection]['Growth Score'].iloc[0]
             hype_score_company = df_all_companies_information[df_all_companies_information['Company Name'] == dropdown_selection]['Hype Score'].iloc[0]+3
-            company_logo_href = df_all_companies_information[df_all_companies_information['Company Name'] == dropdown_selection]['Company Logo'].iloc[0]
 
-            company_logo = html.Img(
-                src=company_logo_href,
-                style={
-                    'width': '20px',
-                    'height': '20px',
-                    'marginRight': '8px',
-                    'verticalAlign': 'middle'
-                }
-            )
         except KeyError:
             raise ValueError(f"Company '{dropdown_selection}' not found in the quadrant dataframe")
 
@@ -1117,13 +974,14 @@ def initialize_data(dropdown_selection, path):
 
         # Add quadrant labels - position them in log space
         fig_company.add_annotation(x=0.65, y=log_y_top, text=" Hot & hyped ", showarrow=False, font=dict(size=12),
-                           bgcolor="#E2E2E2")
+                                   bgcolor="#E2E2E2")
         fig_company.add_annotation(x=0.15, y=log_y_top, text=" Bubble zone ", showarrow=False, font=dict(size=12),
-                           bgcolor="#E2E2E2")
-        fig_company.add_annotation(x=0.15, y=log_y_bottom, text=" Steady, Forgotten ", showarrow=False, font=dict(size=12),
-                           bgcolor="#E2E2E2")
+                                   bgcolor="#E2E2E2")
+        fig_company.add_annotation(x=0.15, y=log_y_bottom, text=" Steady, Forgotten ", showarrow=False,
+                                   font=dict(size=12),
+                                   bgcolor="#E2E2E2")
         fig_company.add_annotation(x=0.65, y=log_y_bottom, text=" Undervalued gems ", showarrow=False,
-                           font=dict(size=12), bgcolor="#E2E2E2")
+                                   font=dict(size=12), bgcolor="#E2E2E2")
 
         if growth_score_company < x_mid and hype_score_company < y_mid:
             valuation_category = "lowGrowth_lowHype"
@@ -1169,7 +1027,6 @@ def initialize_data(dropdown_selection, path):
         ))
 
         # Position of the company label depending on where it is positioned in the quadrant
-
         if hype_score_company > 12:
             label_position = 'bottom center'
         elif hype_score_company > 12 and growth_score_company < 0.1:
@@ -1437,7 +1294,8 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
                 if dropdown_value == "Centene Corporation":
                     total_assets = 0
                 else:
-                    yearly_revenue, total_assets = FinhubAPI().get_previous_quarter_revenue(symbol_company)  # Getting with API
+                    # Getting with API
+                    yearly_revenue, total_assets = FinhubAPI().get_previous_quarter_revenue(symbol_company)
                 logger.info("Latest yearly revenue & total assets fetched")
             except:
                 logger.exception("Error fetching revenue & total assets, standard value assigned")
@@ -1691,7 +1549,6 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
     # Here we take a simple 0.5 weight, different weight could be given to the headroom or core
     growth_score = 0.5 * g / r_ref_global + 0.5 * h
 
-
     badge_color_growth, badge_label_growth = main.growth_meter_indicator_values(growth_score)
     growth_score_text = dmc.Group([
         dmc.Text(f"Growth score: {growth_score:.2f}", size="sm"),
@@ -1717,15 +1574,15 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
                 dropdown_value,
                 ", the average annual discrete growth rate is approaching 0 (",
                 f"{average_rd:.1f}), indicating an approaching end of the growth."
-                ],
+            ],
             size="sm")
-        growth_rate_graph_color= "yellow"
+        growth_rate_graph_color = "yellow"
         if any(r < 0 for r in r_full[-5:]):
             growth_rate_graph_message1 = dmc.Text(
                 children=[
                     growth_rate_graph_message1,
                     " However, the latest growth rates vary substantially, which could lead to a prolonged growth."
-                    ]
+                ]
                 , size="sm")
     else:
         growth_rate_graph_message1 = dmc.Text(
@@ -1759,9 +1616,10 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
                                                             width=20)
     elif share_research_and_development[-1] > 30:
         product_maturity_graph_message = dmc.Text("Tech companies often invest a large share of their revenue in R&D, " \
-                                         "and decrease it as their products mature. Currently, " \
-                                         + dropdown_value +" is investing heavily in development: a sign that " \
-                                                           "its revenue & profit margin could grow significantly in the future.", size="sm")
+                                                  "and decrease it as their products mature. Currently, " \
+                                                  + dropdown_value + " is investing heavily in development: a sign that " \
+                                                                     "its revenue & profit margin could grow significantly in the future.",
+                                                  size="sm")
         product_maturity_graph_message_color = "green"
         product_maturity_accordion_title = "The Product is Growing!"
         product_maturity_accordion_body = dmc.Text(
@@ -1770,8 +1628,9 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
                 str(dropdown_value),
                 " is heavily investing in its product, indicating that the revenue & profit margin may strongly grow in the future."], size="sm")
         product_maturity_accordion_color = "green"
-        product_maturity_accordion_icon_color = DashIconify(icon="fluent-mdl2:product-release", color=dmc.DEFAULT_THEME["colors"]["green"][6],
-                                             width=20)
+        product_maturity_accordion_icon_color = DashIconify(icon="fluent-mdl2:product-release",
+                                                            color=dmc.DEFAULT_THEME["colors"]["green"][6],
+                                                            width=20)
 
     elif share_research_and_development[-1] > 10:
         product_maturity_graph_message = dmc.Text("Tech companies often invest a large share of their revenue in R&D. " \
@@ -1807,7 +1666,7 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
                 str(dropdown_value),
                 " is heavily limiting its investment in its product, indicating that limited improvement on the "
                 "profit margin is to be expected"
-                ])
+            ])
         product_maturity_accordion_color = "red"
         product_maturity_accordion_icon_color = DashIconify(icon="fluent-mdl2:product-release",
                                                             color=dmc.DEFAULT_THEME["colors"]["red"][6],
@@ -1820,7 +1679,8 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
         growth_message_body = "Rast's model predicts a strong likelihood of exponential growth in the foreseeable " \
                               "future, surpassing the best-case scenario displayed."
         growth_message_color = "green"
-        growth_icon_color = DashIconify(icon="uit:chart-growth", color=dmc.DEFAULT_THEME["colors"]["green"][6], width=20)
+        growth_icon_color = DashIconify(icon="uit:chart-growth", color=dmc.DEFAULT_THEME["colors"]["green"][6],
+                                        width=20)
 
     # Stable Growth
     else:
@@ -1828,7 +1688,8 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
         growth_message_body = "Rast's model suggests a high probability that the dataset has transitioned into a " \
                               "stable growth pattern, aligning closely with our best-case scenario."
         growth_message_color = "yellow"
-        growth_icon_color = DashIconify(icon="uit:chart-growth", color=dmc.DEFAULT_THEME["colors"]["yellow"][6], width=20)
+        growth_icon_color = DashIconify(icon="uit:chart-growth", color=dmc.DEFAULT_THEME["colors"]["yellow"][6],
+                                        width=20)
 
     # High Growth
     if k_scenarios[-1] < 1e9:
@@ -1873,11 +1734,12 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
     # Plateau message color
     if time_best_growth < date_picked_formatted:
         plateau_message_color = "red"
-        plateau_icon_color = DashIconify(icon="simple-icons:futurelearn", color=dmc.DEFAULT_THEME["colors"]["red"][6], width=20)
+        plateau_icon_color = DashIconify(icon="simple-icons:futurelearn", color=dmc.DEFAULT_THEME["colors"]["red"][6],
+                                         width=20)
     else:
         plateau_message_color = "green"
-        plateau_icon_color = DashIconify(icon="simple-icons:futurelearn", color=dmc.DEFAULT_THEME["colors"]["green"][6], width=20)
-
+        plateau_icon_color = DashIconify(icon="simple-icons:futurelearn", color=dmc.DEFAULT_THEME["colors"]["green"][6],
+                                         width=20)
 
     # Formatting of the displayed correlation message
 
@@ -1888,8 +1750,9 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
                                                             " to estimate the valuation, because " + str(key_unit) + \
                                    " account for " + str(formatted_correlation) + "% of the revenue variability."
         correlation_message_color = "primaryGreen"
-        correlation_icon_color = DashIconify(icon="lineicons:target-revenue", color=dmc.DEFAULT_THEME["colors"]["green"][6],
-                                         width=20)
+        correlation_icon_color = DashIconify(icon="lineicons:target-revenue",
+                                             color=dmc.DEFAULT_THEME["colors"]["green"][6],
+                                             width=20)
     elif users_revenue_correlation > 0:
         correlation_message_title = "Take it with a grain of salt"
         correlation_message_body = str(key_unit) + " do not have a strong correlation with the revenue over time. " \
@@ -1897,14 +1760,16 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
                                                    "company's valuation, since only " + str(formatted_correlation) + \
                                    "% of the revenue variability is explained by this metric."
         correlation_message_color = "yellow"
-        correlation_icon_color = DashIconify(icon="lineicons:target-revenue", color=dmc.DEFAULT_THEME["colors"]["yellow"][6],
+        correlation_icon_color = DashIconify(icon="lineicons:target-revenue",
+                                             color=dmc.DEFAULT_THEME["colors"]["yellow"][6],
                                              width=20)
 
     else:
         correlation_message_title = "Correlation not applicable"
         correlation_message_body = "The correlation information is only relevant for companies"
         correlation_message_color = "gray"
-        correlation_icon_color = DashIconify(icon="lineicons:target-revenue", color=dmc.DEFAULT_THEME["colors"]["gray"][6],
+        correlation_icon_color = DashIconify(icon="lineicons:target-revenue",
+                                             color=dmc.DEFAULT_THEME["colors"]["gray"][6],
                                              width=20)
 
     # Slider definition
@@ -2280,15 +2145,15 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
         dmc.Text("The pink bars ", span=True, c="#F862F0", fw=600),
         "show how " + dropdown_value + "’s " + graph_unit + " (the key revenue driver) have grown over time. ",
         dmc.Text("The yellow zone ", span=True, c="#C48501", fw=600), "is our forecast range, " \
-                                                              "showing how this driver should evolve in the future. These drivers follow an S-curve: " \
-                                                              "fast growth at first, then a gradual slowdown.\n" \
-                                                              " With the selected growth, the",
+                                                                      "showing how this driver should evolve in the future. These drivers follow an S-curve: " \
+                                                                      "fast growth at first, then a gradual slowdown.\n" \
+                                                                      " With the selected growth, the",
         dmc.Text(" plateau ", span=True, c="#953BF6", fw=600), past_tense,
         dmc.Text(src.Utils.dates.string_formatting_to_date(time_selected_growth) + ", projected at " \
                  + str(plateau_selected_growth) + " " + str(graph_unit), span=True, c="#953BF6", fw=600),
     ],
         size="sm",
-        #fw=300,
+        # fw=300,
     )
 
     # Build Main Chart
@@ -2991,7 +2856,8 @@ def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, arpu_grow
         hype_ratio_rest = 100 - hype_ratio_absolute
         hype_color_indicator = "#fa5252"  # red
         # Progress 2
-        intrinsic_value_ratio_rest = 100 - (non_operating_assets_ratio + customer_equity_ratio)   # white part of the intrinsic value bar
+        intrinsic_value_ratio_rest = 100 - (
+                non_operating_assets_ratio + customer_equity_ratio)  # white part of the intrinsic value bar
         # Progress 3
         price_rest_ratio = 0.0
         current_market_cap_ratio = 100  # the price bar is full if hype is positive
@@ -3022,8 +2888,8 @@ def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, arpu_grow
     logger.info(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
 
     return non_operating_assets_ratio, noa_tooltip, customer_equity_ratio, customer_equity_tooltip, intrinsic_value_ratio_rest, \
-        hype_tooltip, price_tooltip, hype_indicator_color, hype_indicator_text, current_valuation, hype_ratio_progress, hype_indicator_color, hype_ratio_rest, \
-        current_market_cap_ratio, price_rest_ratio, text_overvaluation, text_overvaluation
+           hype_tooltip, price_tooltip, hype_indicator_color, hype_indicator_text, current_valuation, hype_ratio_progress, hype_indicator_color, hype_ratio_rest, \
+           current_market_cap_ratio, price_rest_ratio, text_overvaluation, text_overvaluation
 
 
 # Callback calculating the valuation over time and displaying the functionalities & graph cards, and hiding the text
@@ -3543,7 +3409,7 @@ def graph_valuation_over_time(valuation_over_time_dict, unit_metric, date_picked
                 "meaning that this stock may be ",
                 dmc.Text("fairly or even undervalued!", span=True, c="#034205", fw=600),
                 dmc.Text("Note: Move the dot by changing scenarios or parameters in the nerd mode", c="black",
-                          fs="italic"),
+                         fs="italic"),
             ],
             size="sm",
         )
@@ -3586,7 +3452,7 @@ def graph_valuation_over_time(valuation_over_time_dict, unit_metric, date_picked
                 "meaning that this stock seems ",
                 dmc.Text("overvalued!", span=True, c="#FA4140", fw=600),
                 dmc.Text("Note: Move the dot by changing scenarios or parameters in the nerd mode", c="black",
-                          fs="italic"),
+                         fs="italic"),
             ],
             size="sm",
         )
@@ -3652,7 +3518,7 @@ def graph_valuation_over_time(valuation_over_time_dict, unit_metric, date_picked
                       ", the greater the risk of a sharp drop in its stock price."
                       ],
             size="sm",
-            #fw=300,
+            # fw=300,
         )
         quadrant_color = "#FB4040"
         growth_description = dmc.Text(
@@ -3675,7 +3541,7 @@ def graph_valuation_over_time(valuation_over_time_dict, unit_metric, date_picked
                       ". Which such a growth, the hype can live a while longer. But the price is likely to drop at the first sign of weakness."
                       ],
             size="sm",
-            #fw=300,
+            # fw=300,
         )
         quadrant_color = "yellow"
         growth_description = dmc.Text(
@@ -3693,7 +3559,7 @@ def graph_valuation_over_time(valuation_over_time_dict, unit_metric, date_picked
     print(f" Real time: {t2[0] - t1[0]:.2f} seconds")
     print(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
     return fig_valuation, valuation_graph_message, valuation_graph_color, valuation_graph_title, quadrant_message, quadrant_color, quadrant_title, valuation_accordion_title, \
-        valuation_accordion_message, valuation_graph_color, valuation_icon_color, hype_score, hype_score_text, growth_description
+           valuation_accordion_message, valuation_graph_color, valuation_icon_color, hype_score, hype_score_text, growth_description
 
 
 # Callback resetting enabling the reset button
@@ -3715,7 +3581,7 @@ def toggle_offcanvas(n1, is_open):
     Input('hyped-table-select', 'value'),  # more or least hyped
     Input('hyped-table-industry', 'value'),  # industry
     Input("login-state", "data"),
-    State('pro-user-state', 'data'), # stores pro account state (boolean))
+    State('pro-user-state', 'data'),  # stores pro account state (boolean))
 )
 def update_table(df_all_companies, hype_choice, industries, logged_in, pro_user):
     t1 = time.perf_counter(), time.process_time()
@@ -3743,7 +3609,7 @@ def update_table(df_all_companies, hype_choice, industries, logged_in, pro_user)
     # --- 3. Sort by Hype Score ---
     if pro_user:
         sorted_data = sorted(filtered_data, key=lambda x: x["Hype Score"] if x["Hype Score"] is not None else 0,
-                         reverse=reverse)
+                             reverse=reverse)
     else:
         sorted_data = filtered_data
 
