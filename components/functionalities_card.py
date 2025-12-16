@@ -95,6 +95,12 @@ datepicker = html.Div(
                         #inputFormat="MMMM,YY",
                         #dropdownType="modal",
                         clearable=False,
+                        fw=500,
+                        styles={
+                                "day": {"fontWeight": 500},      # Thickens the numbers in the calendar
+                                "weekday": {"fontWeight": 500},  # Thickens 'Mo, Tu, We...'
+                                "calendarHeaderLevel": {"fontWeight": 500} # Thickens 'December 2025'
+                            },
                     ),
                 ]
             )
@@ -126,7 +132,14 @@ functionalities_card = dmc.Card(
         #),
         #dmc.Space(h=10),
         dmc.Space(h=10),
-        scenarios_picker,
+        dmc.Tooltip(
+            id="picker-tooltip",
+            label="Login to enable scenario selection",
+            withArrow=True,
+            children=scenarios_picker,
+            boxWrapperProps={"w": "100%"},
+            fw=500, # bold
+        ),
 
         # Div wrapping all sliders
 
@@ -146,13 +159,16 @@ functionalities_card = dmc.Card(
                                 ),
                             dmc.Tooltip(
                                 children=DashIconify(icon="feather:info", width=15),
-                                label="Select 'Custom' to move the blue curve and see how well it fits the dataset. "
-                                      "The star indicates RAST's best prediction",
+                                label="We've calculated many plausible scenarios, and sorted them from worst (very left),"
+                                      " to best (very right). The wheel indicates how accurate the fit is."
+                                      " The star indicates RAST's best prediction",
                                 transitionProps={
                                         "transition": "slide-down",
                                         "duration": 300,
                                     },
                                 multiline=True,
+                                w=400,
+                                fw=500,
                             ),
                             dmc.RingProgress(
                                 id="r2-ring-progress",
@@ -195,6 +211,8 @@ functionalities_card = dmc.Card(
                                             "duration": 300,
                                         },
                                     multiline=True,
+                                    fw=500,
+                                    w=400,
                                 ),
                             ]),
                         dmc.Space(h=10),
@@ -241,6 +259,8 @@ functionalities_card = dmc.Card(
                                     "duration": 300,
                                 },
                             multiline=True,
+                            fw=500,
+                            w=400,
                         ),
                     ]),
                 dmc.Space(h=10),
@@ -271,6 +291,8 @@ functionalities_card = dmc.Card(
                                     "duration": 300,
                                 },
                             multiline=True,
+                            fw=500,
+                            w=200,
                         ),
                     ]),
                 dmc.Space(h=10),
@@ -303,6 +325,8 @@ functionalities_card = dmc.Card(
                                     "duration": 300,
                                 },
                             multiline=True,
+                            fw=500,
+                            w=200,
                         ),
                         dmc.Text(
                             id="arpu-needed",
@@ -333,6 +357,8 @@ functionalities_card = dmc.Card(
                                     "duration": 300,
                                 },
                     multiline=True,
+                    fw=500,
+                    w=200,
                 ),
                 dmc.Space(h=10),
                 datepicker,

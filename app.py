@@ -652,10 +652,17 @@ def update_login_state(bridge_content):
 @app.callback(
     Output("login-overlay-table", "style"),
     Output("login-overlay-chart", "style"),
+    Output("scenarios-picker", "disabled"),
+    Output("picker-tooltip", "disabled"),  # New Output for the Tooltip
     Input("login-state", "data"),
     State("pro-user-state", "data")
 )
 def toggle_overlay(logged_in, pro_user_state):
+    # Scenario picker logic: If logged_in is True, disabled is False.
+    picker_disabled = not logged_in
+    # Tooltip logic: Disable the tooltip if the user IS logged in
+    tooltip_disabled = logged_in
+
     if not logged_in or not pro_user_state:  # False or None:
         style = {"display": "block",
                  "position": "absolute",
@@ -666,7 +673,7 @@ def toggle_overlay(logged_in, pro_user_state):
                  "backgroundColor": "rgba(0,0,0,0.6)",
                  "zIndex": 5,
                  "backdropFilter": "blur(2px)"}
-        return style, style
+        return style, style, picker_disabled, tooltip_disabled
         # skipping it if no dropdown value is selected to avoid firing it when starting
     posthog.capture(
         # distinct_id='loggd',  # replace with real user/session ID
@@ -675,7 +682,7 @@ def toggle_overlay(logged_in, pro_user_state):
             'logged_in': 'True',
         }
     )
-    return {"display": "none"}, {"display": "none"}
+    return {"display": "none"}, {"display": "none"}, picker_disabled, tooltip_disabled
 
 
 # ----------------------------------------------------------------------------------
