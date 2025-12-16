@@ -30,7 +30,7 @@ login_overlay_chart = html.Div(
 )
 
 config_graph_with_toolbar = {
-    'displayModeBar': False,
+    'displayModeBar': True,
     'scrollZoom': False,
     'displaylogo': False,
     'modeBarButtonsToRemove': ['zoom', 'zoomIn', 'zoomOut', 'pan', 'lasso', 'select','autoScale', 'resetScale'],

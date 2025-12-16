@@ -4,8 +4,8 @@ import plotly.graph_objects as go
 layout_main_graph = go.Layout(
     plot_bgcolor="white",
     paper_bgcolor="white",
-    dragmode="pan",
-    clickmode="event+select",
+    #dragmode="pan",
+    #clickmode="event+select",
     margin=go.layout.Margin(
         l=5,  # left margin
         r=5,  # right margin
