@@ -1223,7 +1223,7 @@ def initialize_data(dropdown_selection, path):
     return all_companies_information_store, fig, fig_company, industry_list, valuation_category
 
 
-# Callback to enable the slider if "Custom" is selected
+# Callback to enable the slider if "Custom" is selected!
 @app.callback(
     Output("range-slider-k", "disabled"),
     Output("range-arpu-growth", "disabled"),
