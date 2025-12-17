@@ -387,7 +387,7 @@ def check_auth():
 
     request.user = claims  # attach user info
 
-    # attach plan info for convenience
+    # Attach plan info for convenience
     request.user_plan = claims.get("public_metadata", {}).get("plan", "free")
 
 
