@@ -2782,8 +2782,6 @@ def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, current_m
     Output(component_id="hype-meter-hype", component_property="value"),
     Output(component_id="hype-tooltip-hype", component_property="children"),
     Output(component_id="hype-tooltip-price", component_property="children"),
-    Output(component_id="hype-meter-indicator", component_property="color"),
-    Output(component_id="hype-meter-indicator", component_property="children"),
     Output(component_id="current-valuation-calculated", component_property="data"),
     Output(component_id="hype-meter-undervaluation-hype", component_property="value"),
     # Progress 1 colored value (hype)
@@ -2804,12 +2802,13 @@ def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, current_m
         Input(component_id='current-arpu-stored', component_property='data'),
         Input(component_id='total-assets', component_property='data'),
         Input(component_id='users-dates-formatted', component_property='data'),
-        State(component_id='graph-unit', component_property='data')
+        State(component_id='graph-unit', component_property='data'),
+        State(component_id='hype-score', component_property='data')
     ], prevent_initial_call=True
 )
 def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, arpu_growth, current_market_cap,
                    latest_market_cap, current_arpu,
-                   total_assets, df_dataset_dict, graph_unit):
+                   total_assets, df_dataset_dict, graph_unit, hype_score):
     t1 = time.perf_counter(), time.process_time()
     # The entire callback is skipped if the current market cap = 0, i.e. if it is not a public company
     if current_market_cap == 0:
@@ -2891,13 +2890,14 @@ def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, arpu_grow
     else:
         price_tooltip = f"Price: ${current_market_cap / 1e6:.2f} M, the current valuation (or price) on the stock market."
     hype_indicator_color, hype_indicator_text = src.analysis.hype_meter_indicator_values(hype_ratio / 100)
+
     t2 = time.perf_counter(), time.process_time()
     logger.info(f" Performance of the valuation over time")
     logger.info(f" Real time: {t2[0] - t1[0]:.2f} seconds")
     logger.info(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
 
     return non_operating_assets_ratio, noa_tooltip, customer_equity_ratio, customer_equity_tooltip, intrinsic_value_ratio_rest, \
-           hype_tooltip, price_tooltip, hype_indicator_color, hype_indicator_text, current_valuation, hype_ratio_progress, hype_indicator_color, hype_ratio_rest, \
+           hype_tooltip, price_tooltip, current_valuation, hype_ratio_progress, hype_indicator_color, hype_ratio_rest, \
            current_market_cap_ratio, price_rest_ratio, text_overvaluation, text_overvaluation
 
 
@@ -3110,6 +3110,8 @@ def historical_valuation_calculation(df_formatted, total_assets, df_raw, latest_
     Output(component_id="hype-score", component_property="data"),  # hype score storage
     Output(component_id="hype-score-text", component_property="children"),  # hype score text
     Output(component_id="growth-content", component_property="children"),  # hype score text
+    Output(component_id="hype-meter-indicator", component_property="color"),
+    Output(component_id="hype-meter-indicator", component_property="children"),
 
     Input(component_id='valuation-over-time', component_property='data'),
     Input(component_id='graph-unit', component_property='data'),  # Getting the Unit used
@@ -3568,7 +3570,7 @@ def graph_valuation_over_time(valuation_over_time_dict, unit_metric, date_picked
     print(f" Real time: {t2[0] - t1[0]:.2f} seconds")
     print(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
     return fig_valuation, valuation_graph_message, valuation_graph_color, valuation_graph_title, quadrant_message, quadrant_color, quadrant_title, valuation_accordion_title, \
-           valuation_accordion_message, valuation_graph_color, valuation_icon_color, hype_score, hype_score_text, growth_description
+           valuation_accordion_message, valuation_graph_color, valuation_icon_color, hype_score, hype_score_text, growth_description, badge_color, badge_label
 
 
 # Callback resetting enabling the reset button
