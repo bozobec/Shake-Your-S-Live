@@ -675,13 +675,14 @@ def toggle_overlay(logged_in, pro_user_state):
                  "backdropFilter": "blur(2px)"}
         return style, style, picker_disabled, tooltip_disabled
         # skipping it if no dropdown value is selected to avoid firing it when starting
-    posthog.capture(
-        # distinct_id='loggd',  # replace with real user/session ID
-        event='logged_in',
-        properties={
-            'logged_in': 'True',
-        }
-    )
+    if IS_PRODUCTION:
+        posthog.capture(
+            # distinct_id='loggd',  # replace with real user/session ID
+            event='logged_in',
+            properties={
+                'logged_in': 'True',
+            }
+        )
     return {"display": "none"}, {"display": "none"}, picker_disabled, tooltip_disabled
 
 
@@ -1100,13 +1101,14 @@ def initialize_data(dropdown_selection, path):
 def enable_slider(selection, scenario_value):
     visible_style = {"display": "block"}
     invisible_style = {"display": "hidden"}
-    posthog.capture(
-        event='scenario_selected',
-        properties={
-            'source_location': 'scenarios_picker',
-            'scenario_name': scenario_value  # <-- The dynamic value from the input
-        }
-    )
+    if IS_PRODUCTION:
+        posthog.capture(
+            event='scenario_selected',
+            properties={
+                'source_location': 'scenarios_picker',
+                'scenario_name': scenario_value  # <-- The dynamic value from the input
+            }
+        )
     if scenario_value == "Nerd mode":
         return False, False, False, False, visible_style
     else:
