@@ -2951,13 +2951,13 @@ def historical_valuation_calculation(df_formatted, total_assets, df_raw, latest_
     logger.info(f"{iteration_range = }")
     if df_rawdataset_counter:  # calculates the historic of valuation only if the dataset has been updated
         for i in range(iteration_range[0], iteration_range[1]):
-            dates_valuation = dates_original[:i]
-            users_valuation = users_original[:i]
+            dates_valuation = dates_original[:i+1]
+            users_valuation = users_original[:i+1]
             quarterly_revenue = revenue_df * 1_000_000  # Getting in database
-            revenue_valuation = quarterly_revenue[:i]
+            revenue_valuation = quarterly_revenue[:i+1]
             market_cap_valuation = market_cap_original[i]
 
-            profit_margin_valuation = profit_margin_original[:i]
+            profit_margin_valuation = profit_margin_original[:i+1]
 
             # Smoothing the data
             # dates, users = main.moving_average_smoothing(dates_valuation, users_valuation, 1)
