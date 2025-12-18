@@ -3124,7 +3124,7 @@ def historical_valuation_calculation(df_formatted, total_assets, df_raw, latest_
     State(component_id='current-arpu-stored', component_property='data'),  # Stores the current arpu
     State(component_id='dataset-selection', component_property='value'),  # Stores the name of the dataset selected
     Input(component_id="current-valuation-calculated", component_property="data"),
-    State(component_id='max-net-margin', component_property='data'),
+    State(component_id='max-net-margin', component_property='data'), # max net margin
     State(component_id='valuation-category', component_property='data'),  # Take date-picker date
     prevent_initial_call=True,
 )
