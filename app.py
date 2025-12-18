@@ -2942,7 +2942,6 @@ def historical_valuation_calculation(df_formatted, total_assets, df_raw, latest_
     # Iteration range for valuation calculation
     iteration_range = [MIN_DATE_INDEX,
                        len(dates_original)]  # Range for calculating all the valuations, starting from the 4th date
-    # Dataframe creation for all the valuation over time
 
     # Valuation calculation
     non_operating_assets = total_assets
