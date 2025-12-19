@@ -44,7 +44,7 @@ from components.graph_layouts import layout_main_graph, layout_revenue_graph, la
     layout_product_maturity_graph
 from components.growth_card import growth_card
 from components.growth_rate_card import growth_rate_card
-from components.hype_meter_card import hype_meter_card, card_welcome
+from components.hype_meter_card import hype_meter_card
 from components.offcanvas import offcanvas
 from components.product_maturity_card import product_maturity_card
 from components.quadrant_card import quadrant_card
@@ -198,7 +198,6 @@ layout_one_column = dmc.AppShell(
                             span={"base": 12, "lg": 8},
                             children=
                             [
-                                card_welcome,
                                 dmc.Stack(
                                     id="homepage-cards",
                                     children=[

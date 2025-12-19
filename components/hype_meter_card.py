@@ -2,9 +2,6 @@ import dash_mantine_components as dmc
 from dash import html, dcc
 import dash_bootstrap_components as dbc
 
-import components.HomePage.HomeSelectCompanyCard as HomeSelectCompanyCard
-from components.HomePage.DisplayedCompanies import DISPLAYED_COMPANIES
-
 hype_meter_indicator = dmc.Badge("Super hyped", variant="outline", color="red", id="hype-meter-indicator")
 
 line = html.Div(
@@ -32,7 +29,8 @@ hype_meter_bootstrap = dbc.Progress(
     children=[
         dbc.Progress(value=10, color="#C58400", bar=True, label="N-O Assets", id="hype-meter-noa"),
         dbc.Progress(value=10, color="#953BF6", bar=True, label="Intrinsic value", id="hype-meter-users"),
-        dbc.Progress(value=10, color="white", bar=True, animated=True, striped=True, label="Hype", id="hype-meter-hype"),
+        dbc.Progress(value=10, color="white", bar=True, animated=True, striped=True, label="Hype",
+                     id="hype-meter-hype"),
         dbc.Tooltip("Non-Operating Assets: $3.0B", target="hype-meter-noa", id='hype-tooltip-noa', placement="top"),
         dbc.Tooltip("Intrinsic value: $3.0B", target="hype-meter-users", id='hype-tooltip-users', placement="top"),
     ],
@@ -64,14 +62,14 @@ config_graph_with_toolbar = {
     'displayModeBar': False,
     'scrollZoom': False,
     'displaylogo': False,
-    'modeBarButtonsToRemove': ['zoom', 'zoomIn', 'zoomOut', 'pan', 'lasso', 'select','autoScale', 'resetScale'],
+    'modeBarButtonsToRemove': ['zoom', 'zoomIn', 'zoomOut', 'pan', 'lasso', 'select', 'autoScale', 'resetScale'],
     'toImageButtonOptions': {
-            'format': 'svg', # one of png, svg, jpeg, webp
-            'filename': 'RAST_Growth',
-            'height': 735,
-            'width': 1050,
-            'scale': 1 # Multiply title/legend/axis/canvas sizes by this factor
-          },
+        'format': 'svg',  # one of png, svg, jpeg, webp
+        'filename': 'RAST_Growth',
+        'height': 735,
+        'width': 1050,
+        'scale': 1  # Multiply title/legend/axis/canvas sizes by this factor
+    },
 }
 
 # Valuation message (left side)
@@ -104,7 +102,6 @@ valuation_message = dmc.Alert(
     variant="light",
     icon=dmc.Text("💡", size={"base": "xs", "sm": "xl"}),
     p={"base": "xs", "sm": "md"},  # ⬅ smaller padding on mobile
-    #style={"height": "100%"},
 )
 
 # Hype meter visualization (right side)
@@ -130,12 +127,12 @@ hype_meter_visualization = dmc.Stack(
                              'objectFit': 'contain'  # Ensures the image is scaled inside the box
                          }
                          ),
-                ],
+            ],
                 justify="space-between"
             )
         ],
-        align="stretch",
-        gap="xs"
+            align="stretch",
+            gap="xs"
         )
     ],
     gap="md"
@@ -145,7 +142,7 @@ hype_meter_visualization = dmc.Stack(
 
 card_dashboard = dmc.Group(
     id='card-dashboard',
-    #style={'display': 'none'},
+    # style={'display': 'none'},
     children=[
         # Title and subtitle at the top
         dmc.Stack(
@@ -197,88 +194,20 @@ card_dashboard = dmc.Group(
     ]
 )
 
-# Card 1 - Select a Company
-
-
-# Card 2 - See the Ranking
-card2 = dmc.Card(
-    children=[
-        html.Img(
-            src='/assets/ranking_illustration.png',
-            style={
-                'width': '80px',
-                'height': '80px',
-                'marginBottom': '30px',
-                'borderRadius': '20px'
-            }
-        ),
-        dmc.Title(
-            "Explore our ranking",
-            order=5,
-            style={
-                'fontFamily': 'ABCGravityUprightVariable-Trial, sans-serif',
-                #'fontWeight': 'bold',
-                #'marginBottom': '30px',
-                #'fontSize': '2.5rem'
-            }
-        ),
-        dmc.Text(
-            "We rank the most undervalued companies based on our valuations (for members only).",
-            size="sm",
-            c="dimmed",
-            #style={'lineHeight': '1.6', 'marginBottom': '20px'}
-        ),
-        dmc.Space(h=40),
-        dcc.Link(
-            html.Div(
-                id="clerk-extra-signin",
-                style={
-                    'textAlign': 'center',
-                }
-            ),
-            href="/ranking",
-        ),
-    ],
-    withBorder=True,
-    shadow="sm",
-    radius="xl",
-    p="xl",
-    style={
-        'minHeight': '500px',
-        'backgroundColor': 'white'
-    }
-)
-
 # Card containing the welcome components when no company is selected
 
-card_welcome = dmc.Container(
-            children=[
-                dmc.SimpleGrid(
-                    cols={"base": 1, "lg": 2},
-                    spacing="xl",
-                    children=[
-                        HomeSelectCompanyCard.create(companies=DISPLAYED_COMPANIES),
-                        card2],
-                    style={'padding': '50px 0'}
-                )
-            ],
-            id='card-welcome',
-            size="xl",
-            style={}
-        )
-
 hype_meter_card = dmc.Card(
-        children=[
-            dcc.Loading(card_dashboard,
-                overlay_style={"visibility": "visible", "filter": "blur(2px)"},
-                type="circle",
-                color="black"
-                        ),
-        ],
-        id="section-1",
-        withBorder=True,
-        shadow="sm",
-        radius="md",
-        p={"base": "sm", "sm": "xl"},  # smaller padding on mobile
-        m={"base": 5, "sm": "md"},  # tighter outer margin on mobile
-    )
+    children=[
+        dcc.Loading(card_dashboard,
+                    overlay_style={"visibility": "visible", "filter": "blur(2px)"},
+                    type="circle",
+                    color="black"
+                    ),
+    ],
+    id="section-1",
+    withBorder=True,
+    shadow="sm",
+    radius="md",
+    p={"base": "sm", "sm": "xl"},  # smaller padding on mobile
+    m={"base": 5, "sm": "md"},  # tighter outer margin on mobile
+)
