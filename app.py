@@ -1019,7 +1019,6 @@ def show_cards(data, launch_counter):
     Input(component_id='dataset-selection', component_property='value'),  # Take dropdown value
     Input(component_id='last-imported-data', component_property='data')],  # Take dropdown value
     Input(component_id='all-companies-information', component_property='data'),  # Take information about all companies
-    # [State('main-plot-container', 'figure')],
     prevent_initial_call=True,
 )
 def set_history_size(dropdown_value, imported_df, df_all_companies):
@@ -1192,7 +1191,6 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
         value_discount_rate_slider = 5
 
         # Graph creation
-        hovertemplate_maingraph = "%{text}"
         y_legend_title = key_unit
 
         # Initial_sliders_values
@@ -1878,7 +1876,6 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     hovertemplate_maingraph = "%{text}"
     fig_main = go.Figure(layout=layout_main_graph)
 
-    # fig_main.update_xaxes(range=x_axis)  # Fixing the size of the X axis with users max + 10%
     # Historical data
     # Highlight points considered for the approximation
     fig_main.add_trace(go.Bar(name="Dataset", x=dates_raw[number_ignored_data:data_len],
@@ -1907,8 +1904,6 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
                               marker_color='#e6ecf5', hoverinfo='none', ))
 
     # Add vertical line indicating the year of the prediction for retrofitting
-    # fig_main.add_vline(x=history_value_graph, line_width=1, line_dash="dot",
-    # opacity=0.5, annotation_text="   Forecast")
     fig_main.add_shape(
         go.layout.Shape(
             type="line",
@@ -1989,8 +1984,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
                                   mode='lines',
                                   line=dict(color='#C58400', width=0.5), showlegend=False, text=formatted_y_values,
                                   hovertemplate=hovertemplate_maingraph)),
-    # fig.add_trace(go.Line(name="Predicted S Curve", x=x + 1970,
-    # y=main.logisticfunction(k_scenarios[1], r_scenarios[1], p0_scenarios[1], x), mode="lines"))
+
     y_trace = src.Utils.Logistics.logisticfunction(k_scenarios[-1], r_scenarios[-1], p0_scenarios[-1], x_scenarios)
     formatted_y_values = [
         f"{y:.3f}" if y < 1e6 else f"{y / 1e6:.3f} M" if y < 1e9 else f"{y / 1e9:.3f} B"
@@ -2178,7 +2172,6 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
                 showlegend=True,
                 text=formatted_y_values,
                 hovertemplate=hovertemplate_maingraph),
-                # secondary_y=True,
             )
             # Revenue past the selected date that are known [data_len:]
             fig_revenue.add_trace(go.Scatter(
@@ -2198,11 +2191,8 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
                 x=x_revenue,
                 y=profit_margin_array[valid_indices],
                 mode='lines',
-                # line_dash="dot",
                 marker=dict(color='#F963F1', size=4),
                 showlegend=True,
-                # text=formatted_y_values,
-                # hovertemplate=hovertemplate_maingraph
             ),
                 secondary_y=True,
             )
@@ -2619,7 +2609,6 @@ def historical_valuation_calculation(df_formatted, total_assets, df_raw, latest_
             profit_margin_valuation = profit_margin_original[:i + 1]
 
             # Smoothing the data
-            # dates, users = main.moving_average_smoothing(dates_valuation, users_valuation, 1)
             dates = dates_valuation
             users = users_valuation
 
@@ -2633,7 +2622,6 @@ def historical_valuation_calculation(df_formatted, total_assets, df_raw, latest_
 
             if df_sorted.empty:  # Smoothening data for cases where it doesn't work
                 # Smoothing the data
-                # dates1, users1 = main.moving_average_smoothing(dates_valuation, users_valuation, 4)
                 dates = dates_valuation
                 users = users_valuation
 
@@ -2735,7 +2723,6 @@ def historical_valuation_calculation(df_formatted, total_assets, df_raw, latest_
     # Clean up dataframe to avoid having infinite values (function to be deleted once K calculation is improved)
     # Create a copy to avoid modifying the original
     df_valuation_cleaned = src.Utils.Utils.replace_inf_with_previous_2(df_valuation_over_time, "Valuation")
-    # df_valuation_cleaned_second_time = main.cleans_high_valuations(df_valuation_cleaned, "Valuation")
     df_valuation_over_time_dict = df_valuation_cleaned.to_dict(orient='records')  # Removing "inf" values
 
     logger.info("DF Valuation over time")
@@ -2834,7 +2821,6 @@ def graph_valuation_over_time(valuation_over_time_dict, unit_metric, date_picked
     logger.info(low_scenario_valuation[-1])
     logger.info(high_scenario_valuation[-1])
     badge_color, badge_label = src.Utils.HypeMeterIndicator.hype_meter_indicator_values_new(hype_score)
-    # badge_color_growth, badge_label_growth = main.growth_meter_indicator_values(growth_score)
     hype_score_text = dmc.Group([
         dmc.Text(f"Hype score: {hype_score:.2f}", size="sm"),
         dmc.Badge(badge_label, size="xs", variant="outline", color=badge_color)
@@ -3333,8 +3319,6 @@ def update_table(df_all_companies, hype_choice, industries, logged_in, pro_user)
         growth_score = df_sorted.iloc[i]['Growth Score']
 
         # Determine badge color and label -> To-do: apply the function in .main to this -> done, replace it by main.hype_meter_indicator_values
-        # badge_color, badge_label = main.hype_meter_indicator_values(hype_score)
-
         badge_color, badge_label = src.Utils.HypeMeterIndicator.hype_meter_indicator_values_new(hype_score)
 
         # Determine growth badge color and label -> To-do: apply the function in .main to this
@@ -3374,8 +3358,6 @@ def update_table(df_all_companies, hype_choice, industries, logged_in, pro_user)
         ])
         rows.append(row)
     body = [html.Tbody(rows)]
-    # logger.info("Hyped table is")
-    # logger.info(df_sorted)
     t2 = time.perf_counter(), time.process_time()
     logger.info(f" Performance of the table update")
     logger.info(f" Real time: {t2[0] - t1[0]:.2f} seconds")
@@ -3384,62 +3366,5 @@ def update_table(df_all_companies, hype_choice, industries, logged_in, pro_user)
 
 
 # Upload data functionality to be improved
-
-
-'''
-# Callback opening the modal when new data is uploaded and closing it when another button is clicked
-@callback(
-    Output("upload-modal", "opened"),
-    Input("upload-button", "n_clicks"),
-    Input("modal-close-button", "n_clicks"),
-    Input("modal-submit-button", "n_clicks"),
-    State("upload-modal", "opened"),
-    prevent_initial_call=True,
-)
-def modal_demo(upload_clicks, close_clicks, submit_clicks, is_open):
-    ctx = dash.callback_context
-    if not ctx.triggered:
-        return False
-    else:
-        prop_id = ctx.triggered[0]["prop_id"]
-        if prop_id == "upload-button.n_clicks":
-            return True
-        elif prop_id == "modal-close-button.n_clicks" or prop_id == "modal-submit-button.n_clicks":
-            return False
-        else:
-            return is_open
-
-# Callback parsing the CSV/XLS and displaying it on the modal
-@callback(Output('output-data-upload', 'children'),
-          Output('last-imported-data', 'data'),
-              Input('upload-data', 'contents'),
-              State('upload-data', 'filename'),
-              State('upload-data', 'last_modified'),
-          prevent_initial_call=True,)
-def update_output(list_of_contents, list_of_names, list_of_dates):
-    if list_of_contents is not None:
-        table = main.parse_contents(list_of_contents, list_of_names, list_of_dates)
-        df = main.parse_contents_df(list_of_contents, list_of_names, list_of_dates)
-        children = [table]
-        #table = main.parse_file_contents(list_of_contents, list_of_names)
-        #children = [table]
-        df_dict = df.to_dict(orient='records')
-        return children, df_dict
-
-# Callback setting the loaded data as the current selection
-@callback(
-    Output("dataset-selection", "value"),
-    Output("upload-modal", "is_open"),
-    Input("modal-submit-button", "n_clicks"),
-    State('last-imported-data', 'data'),
-    prevent_initial_call=True,
-)
-def save_imported_data(submit_clicks, df):
-    if df is not None:
-        return "Uploaded Data", False
-    else:
-        raise PreventUpdate
-'''
-
 if __name__ == '__main__':
     app.run(debug=True)
