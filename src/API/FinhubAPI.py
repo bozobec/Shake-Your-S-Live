@@ -16,7 +16,6 @@ class FinhubAPI:
     _previous_quarter_revenue = {}
     _profit_margin = {}
 
-
     def __new__(cls, *args, **kwargs):
         """
         This function makes sure that there is only one instance of this class, no matter where you call it in code

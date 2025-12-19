@@ -708,7 +708,6 @@ functionalities_card = dmc.Card(
     shadow="sm",
     radius="md",
     style={'display': 'none'},
-    #style={"height": 500},
 )
 # Welcome timeline introducing the user to RAST
 
@@ -722,7 +721,6 @@ welcome_timeline = html.Div([
         dmc.TimelineItem(
             title="Choose a company",
             bullet=DashIconify(icon="teenyicons:add-solid", width=12),
-            #lineVariant="dashed",
             c="dimmed",
             children=[
                 dmc.Text(
@@ -820,7 +818,6 @@ tabs_graph = dmc.Tabs(
     [
         dmc.Loader(color="red", size="md", variant="oval", style={'display': 'none'}, id='loader-general'),
         dmc.TabsList(
-            #grow=True,
             children=
                 [
                     dmc.LoadingOverlay(
@@ -882,7 +879,6 @@ tabs_graph = dmc.Tabs(
     variant="pills",
     color='violet',
     id='tabs-component',
-    #style={'display': 'none'}
 )
 
 source = dmc.Text(
@@ -903,7 +899,6 @@ graph_card = dmc.Card(
                                      'height': '20px',  # Fixed height
                                      'width': 'auto',  # Width adjusts automatically to maintain aspect ratio
                                      'display': 'block',  # Prevents inline spacing issues
-                                     #'marginTop': '20px',
                                      'maxWidth': '100%',  # Prevents overflow in smaller containers
                                      'objectFit': 'contain'  # Ensures the image is scaled inside the box
                                  }
@@ -959,8 +954,6 @@ hype_meter = dmc.ProgressRoot(
     size=40,
     radius="xl",
     styles={"label": {"font-size": "15px", "font-weight": 600}},
-    #striped=True,
-    #animate=True,
 )
 data = [
         {"value": "Low", "label": "React", "color":"red"},
@@ -975,7 +968,6 @@ hype_score_gauge = html.Div([
                 id='my-gauge-1',
                 color={"gradient":False,"ranges":{"teal":[-1,0],"green":[0,1],"yellow":[1,1.5],"orange":[1.5,2.5],"red":[2.5,3]}},
                 showCurrentValue=True,
-                #label="Hype score",
                 size=180,
                 min=-1,
                 max=3,
@@ -984,9 +976,7 @@ hype_score_gauge = html.Div([
 
 line = html.Div(
             style={
-                #"width": "2px",
                 "height": "20px",
-                #"backgroundColor": "black",
                 "borderLeft": "2px dotted black",
                 "marginLeft": "auto",
                 "marginBottom": 0,   # remove bottom margin
@@ -995,9 +985,7 @@ line = html.Div(
         )
 line_middle = html.Div(
             style={
-                #"width": "2px",
                 "height": "20px",
-                #"backgroundColor": "black",
                 "borderLeft": "2px dotted black",
                 "marginRight": "auto",
                 "marginBottom": 0,   # remove bottom margin
@@ -1064,7 +1052,6 @@ hype_meter_card = dmc.Card(
 
 # Build main graph
 layout_main_graph = go.Layout(
-    # title="User Evolution",
     plot_bgcolor="White",
     margin=go.layout.Margin(
         l=0, #left margin
@@ -1076,37 +1063,25 @@ layout_main_graph = go.Layout(
         # Adjust click behavior
         itemclick="toggleothers",
         itemdoubleclick="toggle",
-        #orientation="h",
-        #x=0.5,
-        #y=-0.1,
         yanchor="top",
         y=0.96,
         xanchor="left",
         x=0.01,
         font=dict(
-            #family="Courier",
             size=10,
-            #color="black"
         ),
     ),
     xaxis=dict(
-        # title="Timeline",
         linecolor="Grey",
-        #hoverformat=".0f",
     ),
     yaxis=dict(
         title="Users",
         linecolor="Grey",
         gridwidth=1,
         gridcolor='#e3e1e1',
-        # hoverformat='{y/1e6:.0f} M'
     ),
     showlegend=True,
-    font=dict(
-        # family="Open Sans",
-        #size=16,
-        # color="Black"
-    ),
+    font={},
 )
 
 # Build second graph
@@ -1155,11 +1130,7 @@ layout_third_graph = go.Layout(
         gridcolor='#e3e1e1',
     ),
     showlegend=False,
-    font=dict(
-        # family="Open Sans",
-        #size=16,
-        #color="Black"
-    ),
+    font={},
 )
 
 main_plot.update(
