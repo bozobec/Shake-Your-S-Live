@@ -1,6 +1,9 @@
 import dash_mantine_components as dmc
-from dash import Dash, html, dcc, callback, dash_table
+from dash import html, dcc
 import dash_bootstrap_components as dbc
+
+import components.HomePage.HomeSelectCompanyCard as HomeSelectCompanyCard
+from components.HomePage.DisplayedCompanies import DISPLAYED_COMPANIES
 
 hype_meter_indicator = dmc.Badge("Super hyped", variant="outline", color="red", id="hype-meter-indicator")
 
@@ -140,24 +143,6 @@ hype_meter_visualization = dmc.Stack(
 
 # Main card
 
-companies = [
-    {'symbol': 'RDDT', 'name': 'Reddit', 'url': '/?company=Reddit', 'logo': 'https://upload.wikimedia.org/wikipedia/en/b/bd/Reddit_Logo_Icon.svg'},
-    {'symbol': 'DASH', 'name': 'Doordash', 'url': '/?company=Doordash', 'logo': 'https://upload.wikimedia.org/wikipedia/commons/6/6a/DoorDash_Logo.svg'},
-    {'symbol': 'TSLA', 'name': 'Tesla', 'url': '/?company=Tesla', 'logo': 'https://upload.wikimedia.org/wikipedia/commons/e/e8/Tesla_logo.png'},
-    {'symbol': 'SBUX', 'name': 'Starbucks', 'url': '/?company=Starbucks', 'logo': 'https://upload.wikimedia.org/wikipedia/sco/d/d3/Starbucks_Corporation_Logo_2011.svg'},
-    {'symbol': 'PYPL', 'name': 'PayPal', 'url': '/?company=Paypal', 'logo': 'https://upload.wikimedia.org/wikipedia/commons/3/39/PayPal_logo.svg'},
-    {'symbol': 'CHYM', 'name': 'Chime', 'url': '/?company=Chime', 'logo': 'https://upload.wikimedia.org/wikipedia/commons/f/f6/Chime_company_logo.svg'},
-    {'symbol': 'SNAP', 'name': 'Snap Inc.', 'url': '/?company=Snap%20Inc.', 'logo': 'https://upload.wikimedia.org/wikipedia/commons/0/0c/Snap_Inc._logo.svg'},
-    {'symbol': 'BMBL', 'name': 'Bumble', 'url': '/?company=Bumble', 'logo': 'https://upload.wikimedia.org/wikipedia/commons/8/8e/Bumble_Logo_2024.svg'},
-    {'symbol': 'PLTR', 'name': 'Palantir', 'url': '/?company=Palantir', 'logo': 'https://upload.wikimedia.org/wikipedia/commons/3/37/Palantir_company_logo.png'},
-    {'symbol': 'SOFI', 'name': 'SoFi', 'url': '/?company=SoFi', 'logo': 'https://upload.wikimedia.org/wikipedia/commons/1/16/SoFi_logo.svg'},
-    {'symbol': 'META', 'name': 'Meta', 'url': '/?company=Meta', 'logo': 'https://upload.wikimedia.org/wikipedia/commons/7/7b/Meta_Platforms_Inc._logo.svg'},
-    {'symbol': 'LYFT', 'name': 'Lyft', 'url': '/?company=Lyft', 'logo': 'https://upload.wikimedia.org/wikipedia/commons/a/a0/Lyft_logo.svg'},
-    {'symbol': 'PTON', 'name': 'Peloton', 'url': '/?company=Peloton', 'logo': 'https://upload.wikimedia.org/wikipedia/commons/4/42/Peloton_%28Unternehmen%29_logo.svg'},
-    {'symbol': 'ACN', 'name': 'Accenture', 'url': '/?company=Accenture', 'logo': 'https://upload.wikimedia.org/wikipedia/commons/c/cd/Accenture.svg'},
-    {'symbol': 'WEN', 'name': "Wendy's", 'url': '/?company=Wendy%27s', 'logo': 'https://upload.wikimedia.org/wikipedia/en/3/32/Wendy%27s_full_logo_2012.svg'}
-]
-
 card_dashboard = dmc.Group(
     id='card-dashboard',
     #style={'display': 'none'},
@@ -213,70 +198,7 @@ card_dashboard = dmc.Group(
 )
 
 # Card 1 - Select a Company
-card_1 = dmc.Card(
-    id='card-welcome1',
-    children=[
-        html.Img(
-            src='/assets/select_company_illustration.png',
-            style={
-                'width': '80px',
-                'height': '80px',
-                'marginBottom': '30px',
-                'borderRadius': '20px'
-            }
-        ),
-        dmc.Title(
-            "Explore a company's value",
-            order=5,
-            style={
-                'fontFamily': 'ABCGravityUprightVariable-Trial, sans-serif',
-            }
-        ),
-        dmc.Space(h=20),
-        dmc.SimpleGrid(
-            cols=3,  # number of buttons per row (2 or 3 depending on what you want)
-            spacing="xs",
-            children=[
-                dmc.Anchor(
-                    dmc.Button(
-                        #company["symbol"],
-                        variant="outline",
-                        size="sm",
-                        fullWidth=True,
-                        justify="center",
-                        style={
-                            "textDecoration": "none",
-                            #"paddingLeft": "4px",
-                            "paddingRight": "0px",
-                            "paddingTop": "2px",
-                            "paddingBottom": "2px",
-                            "borderWidth": "2px",
-                            "borderColor": "#953BF6",
-                            "boxShadow": "0 4px 4px -1px rgba(127, 17, 224, 0.3), 0 2px 4px -1px rgba(127, 17, 224, 0.2)",
-                        },
-                        leftSection=html.Img(
-                                    src=company["logo"],
-                                    style={
-                                        "maxHeight": "18px",
-                                        "maxWidth": "40px",
-                                    }
-                                ),
-                    ),
-                    href=company.get("url", "") or "#",
-                )
-                for company in companies
-            ]
-        )
-    ],
-    withBorder=True,
-    shadow="sm",
-    radius="xl",
-    p="xl",
-    style={
-        'minHeight': '500px',
-        'backgroundColor': 'white'
-    }
-)
+
 
 # Card 2 - See the Ranking
 card2 = dmc.Card(
@@ -335,7 +257,7 @@ card_welcome = dmc.Container(
                     cols={"base": 1, "lg": 2},
                     spacing="xl",
                     children=[
-                        card_1,
+                        HomeSelectCompanyCard.create(companies=DISPLAYED_COMPANIES),
                         card2],
                     style={'padding': '50px 0'}
                 )
