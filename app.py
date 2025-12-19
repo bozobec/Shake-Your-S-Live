@@ -89,6 +89,7 @@ app = dash.Dash(__name__,
 
 # Posthog settings
 posthog = Posthog(
+    # ToDo: Remove
     project_api_key='phc_b1l76bi8dgph2LI23vhWTdSNkiL34y2dkholjYEC7gw',
     host='https://eu.i.posthog.com',
     enable_exception_autocapture=True,
@@ -1171,8 +1172,6 @@ def show_cards(data, launch_counter):
     Output("graph-title", "children"),
     Output("growth-card-title", "children"),
     Output("revenue-card-title", "children"),
-    # Output("company-quadrant-card", "children"),
-    # Output("graph-subtitle", "children"),
     Output(component_id='profit-margin', component_property='style'),  # Show/hide depending on company or not
     Output(component_id='discount-rate', component_property='style'),  # Show/hide depending on company or not
     Output(component_id='section-1', component_property='style'),  # Show/hide hypemetercard depending on company or not
@@ -1182,11 +1181,9 @@ def show_cards(data, launch_counter):
     # Change the text below the profit margin slider
     Output(component_id='range-profit-margin', component_property='marks'),
     # Adds a mark to the slider if the profit margin > 0
-    # Output(component_id='range-profit-margin', component_property='value'),
     # Sets the value to the current profit margin
     Output(component_id='total-assets', component_property='data'),  # Stores the current assets
     Output(component_id='users-revenue-correlation', component_property='data'),  # Stores the correlation between
-    # Output(component_id='range-discount-rate', component_property='value'),
     Output(component_id='initial-sliders-values', component_property='data'),  # Stores the default slider values
     Output(component_id='data-source', component_property='children'),  # Stores the source of the data shown
     Output(component_id='data-selection-counter', component_property='data'),  # Flags that the data has changed
@@ -1288,16 +1285,12 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
         logger.info(max_net_margin)
 
         # Logic to be used when implementing changing the ARPU depending on the date picked
-        # date_last_quarter = main.previous_quarter_calculation().strftime("%Y-%m-%d")
-        # closest_index = main.find_closest_date(date_last_quarter,dates_unformatted)
+
 
         # Check whether it is a public company: Market cap fetching & displaying profit margin,
         # discount rate and arpu for Companies
         if symbol_company != "N/A":
-            hide_loader = {'display': ''}  # keep on showing the loader
-            display_loading_overlay = False  # keep on showing the loading overlay
             show_company_functionalities = {'display': ''}  # Style component showing the fin. function.
-            tab_selected = "1"  # show the first tab i.e. the valuation one
             try:
                 # Ugly if to create exceptions for companies that have weird assets
                 if dropdown_value == "Centene Corporation":
@@ -1326,7 +1319,6 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
 
             current_annual_profit_margin = profit_margin_array[-1]
             max_annual_profit_margin = max(profit_margin_array)
-            text_max_profit_margin = "Max theoretical profit margin: " + str(max_net_margin) + "%"
             text_best_profit_margin = "Best recorded profit margin ever: " + str(max_annual_profit_margin) + "%"
             if current_annual_profit_margin > 1:
                 value_profit_margin_slider = float(current_annual_profit_margin)
@@ -1347,11 +1339,8 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
                 text_profit_margin = "Latest annual profit margin: " + str(current_annual_profit_margin) + "% 😰"
 
         else:
-            hide_loader = {'display': 'none'}
-            display_loading_overlay = False  # keep on showing the loading overlay
             total_assets = 0
             show_company_functionalities = {'display': 'none'}
-            tab_selected = "2"  # show the second tab i.e. the Growth one
             users_revenue_regression = 0
             text_profit_margin = ""
             value_profit_margin_slider = 5.0
@@ -1377,7 +1366,6 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
         current_date = datetime.now()
         max_history_datepicker = current_date.date().isoformat()
         date_value_datepicker = max_history_datepicker  # Sets the value of the datepicker as the max date
-        # current_date = dates_formatted[-1]
         logger.info(f"Other data : { min_history_datepicker = }; { max_dataset_date = };" +
                     f" { max_history_datepicker_date = }; { max_history_datepicker = }; { date_value_datepicker= }; ")
 
@@ -1473,7 +1461,6 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
     users_new = np.array([entry['Users'] for entry in df_dataset_dict])
     users_original = users_new.astype(float) * 1000000
     closest_index = data_len - 1  # Index of the last data matching the date selected
-    current_annual_profit_margin = df_dataset.loc[closest_index, 'Profit Margin']
     current_revenue_array = np.array(df_dataset['Revenue'])
     current_revenue_array = current_revenue_array[:closest_index + 1]
     research_and_development = np.array(df_dataset['Research_And_Development'])
@@ -1482,10 +1469,7 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
 
     users = users_original
     # Resizing of the dataset taking into account the date picked
-    history_value_formatted = date_picked_formatted - 1970  # New slider: Puts back the historical value to the format for computations
-    dates_actual = src.Utils.dates.get_earlier_dates(dates, history_value_formatted)
     current_users_array = users_new * 1e6
-    current_users = current_users_array[closest_index]
 
     # All parameters are calculated by ignoring data 1 by 1, taking the history reference as the end point
     df_full = src.ParametersDataFrame.parameters_dataframe(dates[0:data_len],
@@ -1505,14 +1489,7 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
         logger.info("Successful scenarios exist")
     logger.info(f"{df_sorted = }")
     df_sorted_dict = df_sorted.to_dict(orient='records')  # Transforming it to dict to be stored
-    if dropdown_value is None:  # Exception for when dropdown is not selected yet, initializing df
-        df = df_full
-        current_valuation = 100
-    if date_picked_formatted:
-        if df_sorted.empty:
-            state_alert = True
-        else:
-            state_alert = False
+
 
     # Best scenario definition ---> Index of the row containing the highest R^Square
     highest_r2_index = df_sorted['R Squared'].idxmax()
@@ -1535,7 +1512,6 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
     r_scenarios = np.array(df_sorted['r'])
     p0_scenarios = np.array(df_sorted['p0'])
 
-    k_full = np.array(df_full['K'])
     r_full = np.array(df_full['r'])
 
     # Growth score calculation, around (a) how fast the company is growing today, and (b) how much headroom they still have.
@@ -1551,7 +1527,6 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
     h = 1 - u
 
     # Calculation of a reference r, by winsorizing at 5 - 95 pct -> it should be done across ALL companies
-    # r_wins = mstats.winsorize(r_scenarios, limits=[0.05, 0.05])  # returns numpy masked array
     r_ref_global = 0.4
 
     # Growth score calculation (early rocket: low u, high r): BIG GS | tired incumbent (high u, low r): low GS
@@ -1682,36 +1657,14 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
                                                             width=20)
 
     # Growth Accordion
-    # Promising Growth
-    if diff_r2lin_log > 0.1 or any(k < 0 for k in k_full[-7:-4]) or any(r < 0 for r in r_full[-7:-4] if r > 0.1):
-        growth_message_title = "Promising Exponential Growth Ahead!"
-        growth_message_body = "Rast's model predicts a strong likelihood of exponential growth in the foreseeable " \
-                              "future, surpassing the best-case scenario displayed."
-        growth_message_color = "green"
-        growth_icon_color = DashIconify(icon="uit:chart-growth", color=dmc.DEFAULT_THEME["colors"]["green"][6],
-                                        width=20)
-
-    # Stable Growth
-    else:
-        growth_message_title = "Consistent and Predictable Growth!"
-        growth_message_body = "Rast's model suggests a high probability that the dataset has transitioned into a " \
-                              "stable growth pattern, aligning closely with our best-case scenario."
-        growth_message_color = "yellow"
-        growth_icon_color = DashIconify(icon="uit:chart-growth", color=dmc.DEFAULT_THEME["colors"]["yellow"][6],
-                                        width=20)
 
     # High Growth
     if k_scenarios[-1] < 1e9:
         plateau_high_growth = f"{k_scenarios[-1] / 1e6:.1f} M"
     else:
         plateau_high_growth = f"{k_scenarios[-1] / 1e9:.1f} B"
-    time_high_growth = src.analysis.time_to_population(k_scenarios[-1], r_scenarios[-1], p0_scenarios[-1],
-                                                       k_scenarios[-1] * 0.9) + 1970
+
     # Low Growth
-    if k_scenarios[0] < 1e9:
-        plateau_low_growth = f"{k_scenarios[0] / 1e6:.1f} M"
-    else:
-        plateau_low_growth = f"{k_scenarios[0] / 1e9:.1f} B"
     time_high_growth = src.analysis.time_to_population(k_scenarios[0], r_scenarios[0], p0_scenarios[0],
                                                        k_scenarios[0] * 0.9) + 1970
     # Best Growth
@@ -1882,64 +1835,15 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
         filtered_revenue = current_revenue_array[current_revenue_array != 0]
         hype_market_cap = f"Market Cap = ${latest_market_cap / 1000:.2f}B"  # Formatted text for hype meter
         quarterly_revenue = filtered_revenue * 1_000_000  # Getting in database
-        yearly_revenue_quarters = sum(quarterly_revenue[-4:])
-        average_users_past_year = (current_users + current_users_array[closest_index - 4]) / 2
-        # current_arpu = yearly_revenue_quarters / average_users_past_year
         current_arpu = sum(quarterly_revenue[-4:] / current_users_array[closest_index - 4:closest_index])
-        printed_current_arpu = f"{current_arpu:.0f} $ (current arpu)"  # formatting
         first_arpu = quarterly_revenue[0] / current_users_array[0]
         logger.info(f"FirstARPU = {first_arpu}")
-        # arpu_growth_calculated = current_arpu/(first_arpu * (dates[data_len] - dates[3]))
-        marks_profit_margin_slider = []
-        if current_annual_profit_margin > 1:
-            value_profit_margin_slider = float(current_annual_profit_margin)
-            text_profit_margin = "Latest annual profit margin: " + str(current_annual_profit_margin) + "% 🤩",
-
-        else:
-
-            text_profit_margin = "Latest annual profit margin: " + str(current_annual_profit_margin) + "% 😰",
 
     else:
         current_market_cap = 0.0  # Otherwise, market_cap = zero
         current_arpu = 0.0
-        total_assets = 0.0
         hype_market_cap = ""
-        show_company_functionalities = {'display': 'none'}
-        users_revenue_regression = 0.0
-        printed_current_arpu = 0.0
-        text_profit_margin = ""
         latest_market_cap = 0.0
-
-    # Plateau Accordion
-    try:
-        arpu_needed = src.analysis.arpu_for_valuation(k_scenarios[highest_r2_index], r_scenarios[highest_r2_index],
-                                                      p0_scenarios[highest_r2_index], 0.2, 0.05, 10,
-                                                      current_market_cap * 1000000)
-    except Exception as e:
-        arpu_needed = 0
-
-    # Formating the displayed market cap:
-    if current_market_cap >= 1000:
-        formatted_market_cap = f"{current_market_cap / 1000:.2f} B$"
-    else:
-        formatted_market_cap = f"{current_market_cap} mio$"
-    if current_market_cap != 0:
-        valuation_message_title = "Current market cap is " + str(formatted_market_cap)
-        valuation_message_body = "Given the projected user growth, " + str(dropdown_value) + " should make " + \
-                                 f"{arpu_needed:.0f} $" + " per user and per year to justify the current market cap " \
-                                                          "(assuming a 20% profit margin & a 5% discount rate). They are" \
-                                                          " currently making " + f"{current_arpu:.0f} $" + " per user" \
-                                                                                                           " and have a " + f"{current_annual_profit_margin:.1f} % " + "" \
-                                                                                                                                                                       "net profit margin."
-        valuation_message_color = "green"
-        valuation_icon_color = DashIconify(icon="radix-icons:rocket", color=dmc.DEFAULT_THEME["colors"]["green"][6],
-                                           width=20)
-    else:
-        valuation_message_title = "Valuation not applicable"
-        valuation_message_body = "The valuation information is only relevant for companies"
-        valuation_message_color = "gray"
-        valuation_icon_color = DashIconify(icon="radix-icons:rocket", color=dmc.DEFAULT_THEME["colors"]["gray"][6],
-                                           width=20)
 
     # Initial ARPU Growth definition
     arpu_growth = 5
@@ -1960,15 +1864,10 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
     profit_margin_previous_year = profit_margin_array[-4:]
     average_profit_margin = sum(profit_margin_previous_year) / 4
     if average_profit_margin <= 0:
-        # min_profit_margin = 0.01
         min_profit_margin = max_net_margin * 0.8  # Taking 80% of the max profit margin as a lower scenario
-        # max_profit_margin = 0.1
         max_profit_margin = max_net_margin
     else:
-        # min_profit_margin = average_profit_margin
         min_profit_margin = max_net_margin * 0.8
-        # max_profit_margin = average_profit_margin + 0.05
-        # max_profit_margin = max(profit_margin_valuation) + 0.05
         max_profit_margin = max_net_margin  # High scenario taking the max theoretical profit margin
 
     best_profit_margin = max_profit_margin
@@ -2020,12 +1919,7 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
     Output(component_id='revenue-graph', component_property='figure'),  # Update graph 1
     Output(component_id='main-graph2', component_property='figure'),  # Update graph 2 about regression
     Output(component_id='product-maturity-graph', component_property='figure'),  # Update graph 2 about regression
-    # Output(component_id='main-graph3', component_property='figure'),  # Update graph 3
-    # Output(component_id='carrying-capacity', component_property='children'),  # Update the carrying capacity
     Output(component_id='r2-ring-progress', component_property='sections'),  # Update regression
-    # Output(component_id='range-slider-k', component_property='max'),
-    # Output(component_id='range-slider-k', component_property='marks'),
-    # Output(component_id='graph-message', component_property='hide'),
     Output(component_id='graph-message', component_property='children'),
 ],
 
@@ -2066,17 +1960,14 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
 
     # Gets the date selected from the new date picker
     date_picked_formatted = src.Utils.dates.date_formatting_from_string(date_picked_formatted_original)
-    history_value = date_picked_formatted
     history_value_graph = datetime.strptime(date_picked_formatted_original, "%Y-%m-%d")
     # Extract the x-coordinate for the vertical line
     x_coordinate = history_value_graph
 
     # Calculating the length of historical values to be considered in the plots
-    # history_value_formatted = history_value[0] - 1970  # Puts back the historical value to the format for computations
     history_value_formatted = date_picked_formatted - 1970  # New slider: Puts back the historical value to the format for computations
     dates_actual = src.Utils.dates.get_earlier_dates(dates, history_value_formatted)
     data_len = len(dates_actual)  # length of the dataset to consider for retrofitting
-    users_actual = users[0:data_len]
 
     logger.info(f"Selected date {date_picked_formatted}")
     logger.info(graph_unit)
@@ -2162,7 +2053,6 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
                  + str(plateau_selected_growth) + " " + str(graph_unit), span=True, c="#953BF6", fw=600),
     ],
         size="sm",
-        # fw=300,
     )
 
     # Build Main Chart
@@ -2170,7 +2060,6 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     hovertemplate_maingraph = "%{text}"
     fig_main = go.Figure(layout=layout_main_graph)
 
-    x_axis = [dates[0] + 1970, dates[-1] * 2 - dates[0] + 1970]
     # fig_main.update_xaxes(range=x_axis)  # Fixing the size of the X axis with users max + 10%
     # Historical data
     # Highlight points considered for the approximation
@@ -2241,7 +2130,6 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     # Prediction, S-Curves
 
     date_a = datetime.strptime(dates_raw[0], "%Y-%m-%d")
-    # date_b = datetime.strptime(dates_raw[-1], "%Y-%m-%d")
     date_b = datetime.strptime(dates_raw[-1], "%Y-%m-%d")
 
     # date_b_actual = history_value_graph  # Date including the datepicker
@@ -2253,14 +2141,11 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     date_end_formatted = src.Utils.dates.date_formatting_from_string(date_end.strftime("%Y-%m-%d"))
 
     # Add S-curve - S-Curve the user can play with
-    x = np.linspace(dates[0], float(date_end_formatted) - 1970, num=50)
 
     x_scenarios = np.linspace(dates_actual[-1], float(date_end_formatted) - 1970, num=50)  # changed
     y_predicted = src.Utils.Logistics.logisticfunction(k, r, p0, x_scenarios)
     # Generate x_dates array
-    x_dates = np.linspace(date_a.timestamp(), date_end.timestamp(), num=50)
     x_dates_scenarios = np.linspace(date_b_actual.timestamp(), date_end.timestamp(), num=50)  # changed
-    x_dates = [datetime.fromtimestamp(timestamp) for timestamp in x_dates]
     x_dates_scenarios = [datetime.fromtimestamp(timestamp) for timestamp in x_dates_scenarios]
 
     formatted_y_values = [
@@ -2273,11 +2158,8 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
                                   mode="lines", line=dict(color='#FFD000', width=2), opacity=0.8,
                                   text=formatted_y_values, hovertemplate=hovertemplate_maingraph))
     # Add 3 scenarios
-    x0 = np.linspace(dates_actual[-1] + 0.25, dates_actual[-1] * 2 - dates_actual[0],
-                     num=10)  # Creates a future timeline the size of the data
 
     # Low growth scenario
-    # x = np.linspace(dates[-1], dates[-1] * 2 - dates[0], num=50)
     y_trace = src.Utils.Logistics.logisticfunction(k_scenarios[0], r_scenarios[0], p0_scenarios[0], x_scenarios)
     formatted_y_values = [
         f"{y:.3f}" if y < 1e6 else f"{y / 1e6:.3f} M" if y < 1e9 else f"{y / 1e9:.3f} B"
@@ -2303,10 +2185,8 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
                                       line=dict(color='#C58400', width=0.5),
                                       textposition="top left", textfont_size=6, showlegend=False,
                                       text=formatted_y_values, hovertemplate=hovertemplate_maingraph))
-    years_future_users = list(range(2023 - 1970, 2039 - 1970))
 
     # Filling the area of possible scenarios
-    x_area = np.append(x, np.flip(x))  # Creating one array made of two Xs
     y_area_low = src.Utils.Logistics.logisticfunction(k_scenarios[0], r_scenarios[0], p0_scenarios[0],
                                                       x_scenarios)  # Low growth array
     y_area_high = src.Utils.Logistics.logisticfunction(k_scenarios[-1], r_scenarios[-1], p0_scenarios[-1],
@@ -2425,23 +2305,8 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
         ]
     )
 
-    # Carrying capacity to be printed
-    k_printed = int(np.rint(k) / pow(10, 6))
-    k_printed = "{:,} M".format(k_printed)
     # PLATEAU: Time when the plateau is reached, assuming the plateau is "reached" when p(t)=95%*K
     logger.info(p0)
-    if p0 > 2.192572e-11:
-        t_plateau = src.analysis.time_to_population(k, r, p0, 0.95 * k) + 1970
-        month_plateau = math.ceil((t_plateau - int(t_plateau)) * 12)
-        if month_plateau == 0:  # sometimes month_plateau is 0, quick fix to be improved
-            month_plateau = 1
-        year_plateau = int(np.round(t_plateau, 0))
-        date_plateau = datetime(year_plateau, month_plateau, 1).date()
-        date_plateau_displayed = date_plateau.strftime("%b, %Y")
-        t_plateau_displayed = 'Year {:.1f}'.format(t_plateau)
-        logger.info("Plateau calculated correctly")
-    else:
-        date_plateau_displayed = "Plateau could not be calculated"
 
     # Build chart containing the ARPU evolution chart
 
@@ -2458,7 +2323,6 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
         valid_indices = np.where(revenue != 0)
 
         years = 6
-        current_date = datetime.now()
         future_arpu = [current_arpu * (1 + arpu_growth) ** year for year in range(years)]
         future_arpu_dates = [datetime.strptime(date_picked_formatted_original, '%Y-%m-%d') + timedelta(days=365 * year)
                              for
@@ -2469,8 +2333,6 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
         dates_revenue = dates_raw[valid_indices]
         users_revenue = users[valid_indices]
         dates_revenue_actual = src.Utils.dates.get_earlier_dates(dates[valid_indices], history_value_formatted)
-        # users_revenue_actual = main.get_earlier_dates(users_revenue, history_value_formatted)
-        data_len_revenue_array = dates_raw[data_len:]
         revenue = revenue[valid_indices]
         research_and_development = research_and_development[valid_indices]
         dates_research_and_development = dates_raw[valid_indices]
@@ -2484,14 +2346,9 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
                 name="Annual Revenue per Unit (arpu)",
                 x=x_revenue,
                 y=y_revenue,
-                # mode='lines',
                 marker_color='#953AF6',
                 opacity=0.8,
-                # showlegend=False,
-                # text=formatted_y_values,
-                # hovertemplate=hovertemplate_maingraph
             ),
-                # secondary_y=True,
             )
             fig_revenue.add_trace(go.Scatter(
                 name="Future Annual Revenue per Unit (arpu)",
@@ -2513,9 +2370,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
                 mode='lines',
                 line=dict(color='Gray', width=1),
                 showlegend=False,
-                # text=formatted_y_values, #
                 hovertemplate=hovertemplate_maingraph),
-                # secondary_y=True,
             )
             fig_revenue.update_yaxes(range=[min(annual_revenue_per_user) * 0.9, max(annual_revenue_per_user) * 1.5],
                                      title="ARPU (" + graph_unit + ") [$]",
@@ -2607,7 +2462,6 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
                 x1=(dates_research_and_development[-1] + pd.DateOffset(months=6)).strftime('%Y-%m-%d'),
                 y0=0,
                 y1=10,
-                # xref="paper", yref="y",
                 fillcolor="#4946F2",
                 opacity=0.3,
                 layer="below",
@@ -2626,7 +2480,6 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
             font=dict(color="#4946F2", size=12),
             align="left",
             xanchor="left",
-            # bgcolor="rgba(231, 245, 255, 0.8)"  # Matching background color for better visibility
         )
 
         # Growth company
@@ -2637,7 +2490,6 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
                 x1=(dates_research_and_development[-1] + pd.DateOffset(months=6)).strftime('%Y-%m-%d'),
                 y0=10,
                 y1=30,
-                # xref="paper", yref="y",
                 fillcolor="#4946F2",
                 opacity=0.2,
                 layer="below",
@@ -2656,7 +2508,6 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
             font=dict(color="#4946F2", size=12),
             align="left",
             xanchor="left",
-            # bgcolor="rgba(231, 245, 255, 0.8)"  # Matching background color for better visibility
         )
 
         # High growth company
@@ -2667,7 +2518,6 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
                 x1=(dates_research_and_development[-1] + pd.DateOffset(months=6)).strftime('%Y-%m-%d'),
                 y0=30,
                 y1=100,
-                # xref="paper", yref="y",
                 fillcolor="#4946F2",
                 opacity=0.1,
                 layer="below",
@@ -2752,15 +2602,7 @@ def calculate_arpu(df_sorted, profit_margin, discount_rate, row_index, current_m
 
     if current_market_cap == 0:
         raise PreventUpdate
-    k_selected = df_sorted[row_index]['K']
-    r_selected = df_sorted[row_index]['r']
-    p0_selected = df_sorted[row_index]['p0']
-    profit_margin = profit_margin / 100
-    discount_rate = discount_rate / 100
-    YEARS_DCF = 10
-    current_market_cap = current_market_cap * 1000000
-    # Ignored to avoid calculating this. Can be discommented to reuse this function
-    # arpu_needed = main.arpu_for_valuation(k_selected, r_selected, p0_selected, profit_margin, discount_rate, YEARS_DCF, current_market_cap)
+
     arpu_needed = 0
     arpu_difference = arpu_needed / current_arpu
     printed_arpu = f"{arpu_needed:.0f} $. The current arpu " + f"({current_arpu:.0f} $)" + " should be multiplied by " + f"{arpu_difference:.2f}!"  # formatting
@@ -2950,13 +2792,13 @@ def historical_valuation_calculation(df_formatted, total_assets, df_raw, latest_
     logger.info(f"{iteration_range = }")
     if df_rawdataset_counter:  # calculates the historic of valuation only if the dataset has been updated
         for i in range(iteration_range[0], iteration_range[1]):
-            dates_valuation = dates_original[:i+1]
-            users_valuation = users_original[:i+1]
+            dates_valuation = dates_original[:i + 1]
+            users_valuation = users_original[:i + 1]
             quarterly_revenue = revenue_df * 1_000_000  # Getting in database
-            revenue_valuation = quarterly_revenue[:i+1]
+            revenue_valuation = quarterly_revenue[:i + 1]
             market_cap_valuation = market_cap_original[i]
 
-            profit_margin_valuation = profit_margin_original[:i+1]
+            profit_margin_valuation = profit_margin_original[:i + 1]
 
             # Smoothing the data
             # dates, users = main.moving_average_smoothing(dates_valuation, users_valuation, 1)
