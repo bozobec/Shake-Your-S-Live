@@ -563,7 +563,6 @@ def sync_url_and_dropdown(url_search, dropdown_value):
         Output("navbar", "style", allow_duplicate=True),  # To hide the navbar
         Output("dropdown-container", "style"),  # To hide the dropdown
         Output("ranking-grid", "style"),  # To display the ranking
-        Output('card-welcome', "style", allow_duplicate=True),  # To display the welcome card on homepage
     ],
     Input("url", "pathname"),
     Input("url", "search"),
@@ -579,7 +578,6 @@ def toggle_page_layout(pathname, search):
             {"display": "none"},  # Hide navbar
             {"display": "none"},  # Hide dropdown
             {"display": "block"},  # ranking-grid
-            {"display": "none"},  # Hide card welcome
         )
 
     # --- CASE 2: COMPANY PAGE ---------------------------------
@@ -596,7 +594,6 @@ def toggle_page_layout(pathname, search):
                 "display": "block"
             },
             {"display": "none"},  # ranking-grid
-            {"display": "none"},  # Hide card welcome
         )
     # --- CASE 3: PRICING PAGE ---------------------------------
     if pathname == "/pricing":
@@ -607,7 +604,6 @@ def toggle_page_layout(pathname, search):
             {"display": "none"},  # Hide navbar
             {"display": "none"},  # Hide dropdown
             {"display": "none"},  # ranking-grid
-            {"display": "none"},  # Hide card welcome
         )
 
     # --- CASE 4: HOMEPAGE -------------------------------------
@@ -622,7 +618,6 @@ def toggle_page_layout(pathname, search):
             "display": "block"
         },
         {"display": "none"},  # ranking-grid
-        {"display": "block"},  # Show card welcome
     )
 
 
@@ -932,7 +927,6 @@ def enable_slider(selection, scenario_value):
     Output("loader-general", "style", allow_duplicate=True),
     Output("homepage-cards", "style", allow_duplicate=True),
     Output("section-1", "style", allow_duplicate=True),
-    Output("card-welcome", 'style'),
     Output("section-3", "style", allow_duplicate=True),
     Output("section-4", "style", allow_duplicate=True),
     Output("section-5", "style", allow_duplicate=True),
@@ -948,11 +942,8 @@ def show_cards(data, launch_counter):
     if launch_counter['flag'] is not True:
         launch_counter['flag'] = True
         show_card = {'visibility': 'visible'}
-        hide_graph_card = {'display': 'none'}
         display_card = {'display': 'block'}
         logger.info("Displaying the graph hihi")
-        navbar_state = {"width": 250, "breakpoint": "sm", "style": {}}
-        navbar_state["style"] = {"display": "block"}
         return {'display': 'block'}, \
                launch_counter, \
                False, \
@@ -962,7 +953,6 @@ def show_cards(data, launch_counter):
                show_card, \
                display_card, \
                display_card, \
-               hide_graph_card, \
                display_card, \
                display_card, \
                display_card, \
