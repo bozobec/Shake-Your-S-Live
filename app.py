@@ -29,9 +29,10 @@ from flask import request, jsonify, send_from_directory
 from plotly.subplots import make_subplots
 from posthog import Posthog
 
-import main
 import src.ParametersDataFrame
+import src.Utils.MeterIndicators
 import src.Utils.Logistics
+import src.Utils.Utils
 import src.Utils.dates
 import src.Utils.mathematics
 import src.analysis
@@ -1350,7 +1351,7 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
     # Here we take a simple 0.5 weight, different weight could be given to the headroom or core
     growth_score = 0.5 * g / r_ref_global + 0.5 * h
 
-    badge_color_growth, badge_label_growth = main.growth_meter_indicator_values(growth_score)
+    badge_color_growth, badge_label_growth = src.Utils.HypeMeterIndicator.growth_meter_indicator_values(growth_score)
     growth_score_text = dmc.Group([
         dmc.Text(f"Growth score: {growth_score:.2f}", size="sm"),
         dmc.Badge(badge_label_growth, size="xs", variant="outline", color=badge_color_growth)
@@ -2733,7 +2734,7 @@ def historical_valuation_calculation(df_formatted, total_assets, df_raw, latest_
 
     # Clean up dataframe to avoid having infinite values (function to be deleted once K calculation is improved)
     # Create a copy to avoid modifying the original
-    df_valuation_cleaned = main.replace_inf_with_previous_2(df_valuation_over_time, "Valuation")
+    df_valuation_cleaned = src.Utils.Utils.replace_inf_with_previous_2(df_valuation_over_time, "Valuation")
     # df_valuation_cleaned_second_time = main.cleans_high_valuations(df_valuation_cleaned, "Valuation")
     df_valuation_over_time_dict = df_valuation_cleaned.to_dict(orient='records')  # Removing "inf" values
 
@@ -2832,7 +2833,7 @@ def graph_valuation_over_time(valuation_over_time_dict, unit_metric, date_picked
     logger.info(latest_market_cap)
     logger.info(low_scenario_valuation[-1])
     logger.info(high_scenario_valuation[-1])
-    badge_color, badge_label = main.hype_meter_indicator_values_new(hype_score)
+    badge_color, badge_label = src.Utils.HypeMeterIndicator.hype_meter_indicator_values_new(hype_score)
     # badge_color_growth, badge_label_growth = main.growth_meter_indicator_values(growth_score)
     hype_score_text = dmc.Group([
         dmc.Text(f"Hype score: {hype_score:.2f}", size="sm"),
@@ -3322,7 +3323,7 @@ def update_table(df_all_companies, hype_choice, industries, logged_in, pro_user)
 
     for i in range(len(df_sorted)):
         industry_type = df_sorted.iloc[i]['Industry'],
-        industry_type_icon = main.get_industry_icon(
+        industry_type_icon = src.Utils.Utils.get_industry_icon(
             df_sorted.iloc[i]['Industry'])  # function mapping the industry to an icon
         if pro_user:
             company_name = df_sorted.iloc[i]['Company Name']
@@ -3334,10 +3335,10 @@ def update_table(df_all_companies, hype_choice, industries, logged_in, pro_user)
         # Determine badge color and label -> To-do: apply the function in .main to this -> done, replace it by main.hype_meter_indicator_values
         # badge_color, badge_label = main.hype_meter_indicator_values(hype_score)
 
-        badge_color, badge_label = main.hype_meter_indicator_values_new(hype_score)
+        badge_color, badge_label = src.Utils.HypeMeterIndicator.hype_meter_indicator_values_new(hype_score)
 
         # Determine growth badge color and label -> To-do: apply the function in .main to this
-        badge_color_growth, badge_label_growth = main.growth_meter_indicator_values(growth_score)
+        badge_color_growth, badge_label_growth = src.Utils.HypeMeterIndicator.growth_meter_indicator_values(growth_score)
 
         row = html.Tr([
             html.Td(

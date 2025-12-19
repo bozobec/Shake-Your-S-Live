@@ -1,10 +1,7 @@
 import dash_bootstrap_components as dbc
-import dash_mantine_components as dmc
-from components.base_card import base_card
 from dash import html
+
 from components.offcanvas import offcanvas
-import os
-import main
 
 # App button for the Navbar
 app_button_link = html.Div(
