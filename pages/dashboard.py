@@ -23,9 +23,7 @@ register_page(
 
 
 # Values for the dropdown (all different companies in the DB)
-#IS_PRODUCTION = os.getenv("IS_PRODUCTION") == "true"  # Setup in heroku 'heroku config:set IS_PRODUCTION=true'
 labels = []
-#labels = dataAPI.get_airtable_labels() or [] if IS_PRODUCTION else ["Airbnb", "Affirm", "Spotify"]
 
 
 # ------------------------------------------------------------------------------------------------------------
@@ -33,7 +31,6 @@ labels = []
 # Dropdown - Taking data from "Labels"
 
 dropdown6 = dmc.Select(
-            # label="Select framework",
             placeholder="Company (and other)...",
             id="dataset-selection",
             data=labels,
@@ -45,7 +42,6 @@ dropdown6 = dmc.Select(
             },
             nothingFoundMessage="We don't have this company yet!",
             searchable=True,
-            #comboboxProps={"transitionProps": {"transition": "pop", "duration": 200}},
         )
 
 # Upload field
@@ -58,9 +54,7 @@ upload_field = html.Div([dcc.Upload(
     ])
 
 upload_modal = dmc.Modal(
-            #title="Uploaded data",
             id="upload-modal",
-            #overflow="inside",
             zIndex=10000,
             children=[
                 dmc.Text("Verify that your data has been correctly uploaded"),
@@ -76,7 +70,6 @@ upload_modal = dmc.Modal(
                             id="modal-close-button",
                         ),
                     ],
-                    #position="right",
                 ),
             ],
         )
@@ -111,11 +104,9 @@ hype_meter_bootstrap = dbc.Progress(
         [
             dbc.Progress(value=10, color="#C58400", bar=True, label="N-O Assets", id="hype-meter-noa"),
             dbc.Progress(value=10, color="#FFD000", bar=True, label="Intrinsic value", id="hype-meter-users"),
-            #dbc.Progress(value=20, color="#D1D1D1", bar=True, animated=True, striped=True, id="hype-meter-delta"),
             dbc.Progress(value=10, color="white", bar=True, animated=True, striped=True, label="Hype", id="hype-meter-hype"),
             dbc.Tooltip("Non-Operating Assets: $3.0B", target="hype-meter-noa", id='hype-tooltip-noa', placement="top"),
             dbc.Tooltip("Intrinsic value: $3.0B", target="hype-meter-users", id='hype-tooltip-users', placement="top"),
-            #dbc.Tooltip("Delta depending on the chosen scenario", target="hype-meter-delta", id="tooltip-equity-text", placement="top"),
             dbc.Tooltip("Hype: $4.0B", target="hype-meter-hype", id='hype-tooltip-hype', placement="top"),
         ],
     style={"height": "30px", "borderRadius": "0px"},
@@ -126,14 +117,7 @@ hype_meter_bootstrap_undervaluation = dbc.Progress(
         [
             dbc.Progress(value=91.1025, color="white", bar=True, id="hype-meter-undervaluation-rest"),
             dbc.Progress(value=8.8975, color="#FFD000", bar=True, striped=True, id="hype-meter-undervaluation-hype"),
-            #dbc.Progress(value=20, color="#D1D1D1", bar=True, animated=True, striped=True, id="hype-meter-delta"),
-            #dbc.Progress(value=10, color="#FFD000", bar=True, animated=True, striped=True, label="Hype", id="hype-meter-hype"),
-            #dbc.Tooltip("Non-Operating Assets: $3.0B", target="hype-meter-noa", id='hype-tooltip-noa', placement="top"),
-            #dbc.Tooltip("Hype: $3.0B", target="hype-meter-users", id='hype-tooltip-users', placement="top"),
-            #dbc.Tooltip("Delta depending on the chosen scenario", target="hype-meter-delta", id="tooltip-equity-text", placement="top"),
-            #dbc.Tooltip("Hype: $4.0B", target="hype-meter-hype", id='hype-tooltip-hype', placement="top"),
         ],
-    #style={"height": "30px", "borderRadius": "30px"},
     style={"height": "10px", "borderRadius": "0px"},
 )
 
@@ -142,15 +126,7 @@ hype_meter_bootstrap_price = dbc.Progress(
         [
             dbc.Progress(value=100, color="#953AF6", bar=True, label="Current price", id="hype-meter-price"),
             dbc.Progress(value=0, color="white", bar=True, label="Current price", id="hype-meter-price-rest"),
-            #dbc.Progress(value=8.8975, color="#FFD000", bar=True, label="Customer Equity"),
-            #dbc.Progress(value=20, color="#D1D1D1", bar=True, animated=True, striped=True, id="hype-meter-delta"),
-            #dbc.Progress(value=10, color="#FFD000", bar=True, animated=True, striped=True, label="Hype", id="hype-meter-hype"),
-            #dbc.Tooltip("Non-Operating Assets: $3.0B", target="hype-meter-noa", id='hype-tooltip-noa', placement="top"),
-            #dbc.Tooltip("Hype: $3.0B", target="hype-meter-users", id='hype-tooltip-users', placement="top"),
-            #dbc.Tooltip("Delta depending on the chosen scenario", target="hype-meter-delta", id="tooltip-equity-text", placement="top"),
-            #dbc.Tooltip("Hype: $4.0B", target="hype-meter-hype", id='hype-tooltip-hype', placement="top"),
         ],
-    #style={"height": "30px", "borderRadius": "30px"},
     style={"height": "30px", "borderRadius": "0px"},
 )
 
@@ -271,9 +247,6 @@ datepicker = html.Div(
                     dmc.DatePickerInput(
                         id="date-picker",
                         value=today,
-                        #minDate=date(2020, 8, 5),
-                        #inputFormat="MMMM,YY",
-                        #dropdownType="modal",
                         clearable=False,
                     ),
                 ]
@@ -388,7 +361,6 @@ graph_message = dmc.Alert(
     id="graph-message",
     title="Is there more growth ahead?",
     color="primaryPurple",
-    #hide="False",
     withCloseButton="True")
 
 # Graph message
@@ -397,7 +369,6 @@ valuation_graph_message = dmc.Alert(
     id="valuation-graph-message",
     title="About the Current Market Cap",
     color="blue",
-    #hide="False",
     withCloseButton="True")
 
 # Graph message
@@ -406,7 +377,6 @@ revenue_graph_message = dmc.Alert(
     id="revenue-graph-message",
     title="Are they generating more revenue per unit?",
     color="blue",
-    #hide="False",
     withCloseButton="True")
 
 # Graph message growth rate
@@ -415,7 +385,6 @@ growth_rate_graph_message = dmc.Alert(
     id="growth-rate-graph-message",
     title="When will the growth stop?",
     color="blue",
-    #hide="False",
     withCloseButton="True")
 
 # Graph message growth rate
@@ -424,7 +393,6 @@ product_maturity_graph_message = dmc.Alert(
     id="product-maturity-graph-message",
     title="Is the product still improving?",
     color="blue",
-    #hide="False",
     withCloseButton="True")
 
 
@@ -1316,73 +1284,6 @@ graph_hype = dmc.Card(children=[
     ],
     withBorder=True, shadow='lg', radius='md')
 
-
-
-
-'''
-def layout_old(company=None, **other_unknown_query_strings):
-    layout =html.Div(
-            [
-                dmc.Grid(
-                    [
-                        # dmc.Col(span=0.5, lg=0), # Empty left column
-                        #dmc.GridCol([
-                            #selecting_card,
-                            #dmc.Space(h=20), selector_card
-                        #], span={'base': 12,'lg': 3}, order={"xs": 1, "sm": 1, "lg": 1}),
-                        dmc.GridCol(
-                            [
-                            graph_card, dmc.Space(h=20), table_hype, dmc.Space(h=20),
-                            graph_hype
-                            # valuation_over_time_card  # Comment this line to remove the analysis graphs
-                            ], span={'base': 12,'lg': 8}, order={"xs": 2, "sm": 2, "lg": 2}),
-                        dmc.GridCol([hype_meter_card, dmc.Space(h=20), functionalities_card],
-                                    span={'base': 12,'lg': 4}, order={"xs": 1, "sm": 3, "lg": 3}),
-                    ],
-                ),
-                dmc.Space(h=20),
-                #bottom_card,
-
-            dbc.Container(children=[
-                # Storing the key dataframe with all parameters
-                dcc.Store(id='users-data'),
-                dcc.Store(id='users-dates-raw'),  # DF containing the initial users/dates from the API
-                dcc.Store(id='users-dates-formatted'),  # DF containing the users & dates in float for computation
-                dcc.Store(id='valuation-over-time'),  # DF containing the valuation over time for a given dataset
-                dcc.Store(id='scenarios-sorted'),  # DF containing all the possible growth scenarios
-                dcc.Store(id='current-market-cap'),
-                # Market cap of the company selected, 0 if N/A at the relative current time (depending on the date picked)
-                dcc.Store(id='latest-market-cap'),  # Market cap of the company at the absolute current time (now)
-                dcc.Store(id='graph-unit'),  # Graph unit (MAU, Population, etc.)
-                dcc.Store(id='symbol-dataset'),  # Symbol of the Public company (N/A if not)
-                # Counter that shows 0 if no dataset has been selected, or 1 otherwise
-                dcc.Store(id='revenue-dates'),  # DF Containing the quarterly revenue and the dates
-                dcc.Store(id='current-arpu-stored'),  # DF Containing the current ARPU
-                dcc.Store(id='total-assets'),  # DF Containing the current total assets of the company
-                dcc.Store(id='users-revenue-correlation'),  # R^2 indicating the strength of the correlation between the KPI
-                # used and the revenue
-                # dcc.Store(id='data-source'),  # sources of the data
-                dcc.Store(id='data-selection-counter', data={'flag': False}),
-                #dcc.Store(id='dataset-selected-url', data=str(company)), # stores the dataset given through the url through ?company={company}
-                dcc.Store(id='dataset-selected'),  # stores the dataset selected either through the dropdown or the URL
-                # Counter that shows if a new dataset has been selected
-                dcc.Store(id='initial-sliders-values'),
-                dcc.Store(id='current-valuation-calculated'),
-                # Current valuation calculated with the current parameters and date
-                # Counter that shows if a new dataset has been selected
-                dcc.Store(id='last-imported-data'),
-                dcc.Store(id='all-companies-information'),  # stores all the companies and the related information
-                dcc.Store(id='max-net-margin'),  # stores the max theoretical net margin for the selected company
-                dcc.Store(id='hype-score'),  # calculates the company's hype level that is used in the ranking
-                html.Div(id='page-load-trigger'),  # Dummy trigger to launch a callback once the page loads
-                dcc.Store(id="user-store"),  # storing user information
-                dcc.Store(id="user-token", storage_type="session")
-            ], fluid=True),
-        ]),
-
-    return layout
-    
-'''
 
 def layout(company=None, **other_unknown_query_strings):
     return html.Div()  # Empty - cards are in app.py
