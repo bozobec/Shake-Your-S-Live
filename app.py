@@ -50,6 +50,7 @@ from components.quadrant_card import quadrant_card
 from components.ranking_card import table_hype_card
 from components.revenue_card import revenue_card
 from components.stored_data import stored_data
+from components.styling import RAST_THEME
 from components.valuation_card import valuation_card
 import components.AppShellNavbar.RastAppShellNavbar as RastAppShellNavbar
 import components.RastDropDownBox.RastDropDownBox as RastDropDownBox
@@ -230,10 +231,6 @@ layout_one_column = dmc.AppShell(
                             ),
                         ),
                     ],
-                    # gutter="md",
-                    # style={
-                    #    "maxWidth": "100%",
-                    #    "margin": "0"},
                 ),
                 html.Div(
                     id="ranking-grid",
@@ -269,42 +266,7 @@ layout_one_column = dmc.AppShell(
 ),
 
 app.layout = dmc.MantineProvider(
-    theme={
-        "colors": {
-            "primaryPurple": [
-                "#F5F2F8",
-                "#DED2EB",
-                "#CAB2E3",
-                "#B78EE1",
-                "#A567E7",
-                "#953AF6",
-                "#8633DF",
-                "#7933C3",
-                "#6D3BA3",
-                "#633E89",
-                "#593F75",
-                "#503D64"
-            ],
-            "primaryGreen": [
-                "#E0F0E0",
-                "#BFE6C1",
-                "#9DE39F",
-                "#77E67A",
-                "#4BF250",
-                "#41DC46",
-                "#3AC73E",
-                "#40A743",
-                "#438D45",
-                "#437845",
-                "#416742"
-            ]
-        },
-        "primaryColor": "primaryPurple",
-        "fontFamily": "Basel, Arial, sans-serif",
-        "headings": {
-            "fontFamily": "ABCGravityUprightVariable, sans-serif",
-        },
-    },
+    theme=RAST_THEME,
     children=layout_one_column)
 
 # Clerk domain (e.g., "your-app.clerk.accounts.dev")
