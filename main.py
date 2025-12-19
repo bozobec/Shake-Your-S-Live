@@ -138,19 +138,6 @@ def get_industry_icon(industry: str) -> str:
     return mapping.get(industry, "mdi:briefcase-outline")
 
 
-def verify_token(token):
-    """
-    Verify JWT (simplified, replace with proper signature verification in production)
-    :param token:
-    :return:
-    """
-    try:
-        claims = jwt.decode(token, options={"verify_signature": False})
-        return claims
-    except Exception:
-        return None
-
-
 def replace_inf_with_previous_2(df, column):
     """
     Replace the infinite values and Nan values

@@ -953,9 +953,23 @@ def show_cards(data, launch_counter):
         logger.info("Displaying the graph hihi")
         navbar_state = {"width": 250, "breakpoint": "sm", "style": {}}
         navbar_state["style"] = {"display": "block"}
-        return {'display': 'block'}, launch_counter, False, False, False, False, show_card, display_card, display_card, hide_graph_card, \
-            display_card, display_card, display_card, display_card, display_card, show_card, \
-            {"visibility": "visible"}
+        return {'display': 'block'}, \
+               launch_counter, \
+               False, \
+               False, \
+               False, \
+               False, \
+               show_card, \
+               display_card, \
+               display_card, \
+               hide_graph_card, \
+               display_card, \
+               display_card, \
+               display_card, \
+               display_card, \
+               display_card, \
+               show_card, \
+               {"visibility": "visible"}
 
     else:
         logger.info(f"Card already displayed {launch_counter}")
@@ -1090,7 +1104,6 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
         logger.info(max_net_margin)
 
         # Logic to be used when implementing changing the ARPU depending on the date picked
-
 
         # Check whether it is a public company: Market cap fetching & displaying profit margin,
         # discount rate and arpu for Companies
@@ -1294,7 +1307,6 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
         logger.info("Successful scenarios exist")
     logger.info(f"{df_sorted = }")
     df_sorted_dict = df_sorted.to_dict(orient='records')  # Transforming it to dict to be stored
-
 
     # Best scenario definition ---> Index of the row containing the highest R^Square
     highest_r2_index = df_sorted['R Squared'].idxmax()
