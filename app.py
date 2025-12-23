@@ -210,7 +210,9 @@ layout_one_column = dmc.AppShell(
                                     gap="md",
                                     p="md",
                                     style={'display': 'none'}
-                                )],
+                                ),
+                                dmc.NotificationContainer(id="notification-container"),
+                            ],
                         ),
 
                         # Right column: static functionalities card
@@ -746,7 +748,7 @@ def sync_url_and_dropdown(url_search, dropdown_value):
         return no_update, no_update
 
     # Fallback
-    return no_update, no_update
+    return no_update, no_update, no_update
 
 
 # Callback to show/hide sections based on page
