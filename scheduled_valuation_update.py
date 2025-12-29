@@ -18,13 +18,40 @@ DASH_APP_URL = 'https://app.rast.guru/'
 #DASH_APP_URL = 'http://127.0.0.1:8050/'
 
 # Companies to track
-COMPANIES = AirTableAPI.get_labels() or []
+#ToDo: Important: update the companies array dynamically instead of hardcoding it
+COMPANIES = [
+    'Accenture', 'Adobe', 'Adyen', 'Affirm', 'Airbnb', 'Alphabet', 'Amazon',
+    'Atlassian', 'Beyond Meat', 'BILL Holdings', 'Block', 'Booking Holdings',
+    'Bumble', 'Carvana', 'CAVA Group', 'Centene Corporation', 'Charles Schwab',
+    'Chegg', 'Chewy', 'Chime', 'Chipotle', 'Circle Internet', 'Cloudflare',
+    'Coinbase', 'Costco', 'Crocs', 'Datadog', 'Dayforce', 'Diageo', 'DocuSign',
+    'Domino\'s Pizza', 'Doordash', 'DraftKings', 'Dropbox', 'Duolingo',
+    'Dutch Bros', 'Ebay', 'Elastic N.V. (Elasticsearch)', 'Equinix', 'Etsy',
+    'Expedia Group', 'Fastly', 'Figma', 'Freshpet', 'Gambling.com', 'Gitlab',
+    'GoDaddy Inc.', 'GoPro', 'Grindr', 'Hims and Hers Health Inc', 'Hubspot',
+    'Instacart (Maplebear Inc.)', 'Interactive Brokers', 'Jamf', 'Kazatomprom',
+    'Live Nation Entertainment', 'Lululemon', 'Lyft', 'Mastercard', 'Match Group',
+    'Mcdonald\'s', 'MercadoLibre', 'Meta', 'Microsoft', 'MongoDB', 'Morningstar',
+    'Netflix', 'Nike', 'Nintendo', 'Nubank', 'Nvidia', 'Oatly', 'Opendoor',
+    'Opera', 'Oscar Health', 'Palantir', 'Palo Alto Networks', 'Papa John\'s',
+    'Paypal', 'Peloton', 'Petco', 'Pinterest', 'Procore',
+    'RBI - Restaurant Brands International', 'Reddit', 'Revolve', 'Rivian',
+    'Robinhood', 'Roblox', 'Rocket Companies', 'Roku', 'Rubrik', 'Salesforce',
+    'Samsara', 'Sea Limited', 'ServiceNow', 'Shopify', 'Snap Inc.', 'Snowflake',
+    'SoFi', 'Spotify', 'Sprinklr', 'Starbucks', 'Stitch Fix', 'StoneCo',
+    'Surf Air', 'Sweetgreen', 'Tesla', 'Toast Inc.', 'Twilio', 'Uber', 'UI Path',
+    'Ulta Beauty', 'United Rentals', 'United Wholesale Mortgage (UWM)', 'Unity',
+    'Upstart', 'Veeva', 'Verisign', 'Victoria\'s Secret', 'Visa',
+    'Warby Parker Inc.', 'Warner Bros Discovery Inc', 'Wayfair', 'Webull',
+    'Wendy\'s', 'Wheels Up', 'Wise', 'Wix', 'Yelp', 'Yum! Brands', 'Zalando',
+    'Zeta', 'Zillow', 'Zoom Communications Inc.'
+]
 
 # Initialize Airtable
 api = Api(AIRTABLE_API_KEY)
 table = api.table(BASE_ID, TABLE_NAME)
 
-
+print(COMPANIES)
 def get_hype_score(driver, company_id):
     """
     Navigates to the company page and extracts the hype score 
