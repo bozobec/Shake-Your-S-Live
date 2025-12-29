@@ -41,7 +41,7 @@ login_overlay_table = dmc.Group(
                 ),
                 html.Img(
                     src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExeHc3YWJsNWx3ZXNxNDdwdDZiYnQyMWR1bjJpbTIxY3"
-                        "EydmViYXlxMSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/MW36NXIPuLhgyXhbQt/giphy.gif",
+                        "EydmViYXlxMSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/MW36NXIPuLhgyXhbQt/giphy.gif",  # Ronaldo
                     style={
                         "width": "200px",
                         "height": "200px",

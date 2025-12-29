@@ -42,11 +42,11 @@ login_overlay_chart = dmc.Group(
                     span=False,
                 ),
                 html.Img(
-                    src="https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExdDBxOGdmdHVuZW9ybzN6d2dzajJhdnplcj"
-                        "UwNHptZ3RkZDZ4Y3BjYyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/uyWTOgNGGWfks/giphy.gif",
+                    src="https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExcnNoNm1maDBhazZncnBiOWNiNmhhM2pzM2ppbXc3aWNq"
+                        "bzBzM21rdyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3o7WIwkSmw32NgXvTG/giphy.gif",
                     style={
-                        "width": "200px",
-                        "height": "233px",
+                        "width": "400px",
+                        "height": "225px",
                         "margin": "0 auto",
                         "display": "block"
                     }
