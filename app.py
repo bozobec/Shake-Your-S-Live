@@ -831,8 +831,9 @@ def toggle_page_layout(pathname, search):
     Output(component_id='valuation-category', component_property='data'),  # Update graph 1
     Input(component_id='dataset-selection', component_property='value'),
     Input('url', 'pathname'),  # Triggered once when the page is loaded
+    State("pro-user-state", "data")
 )
-def initialize_data(dropdown_selection, path):
+def initialize_data(dropdown_selection, path, pro_user_state):
     # ---- Performance assessment
     t2 = time.perf_counter(), time.process_time()
     logger.info(f" Time to launch the app (before the first callback")
@@ -967,12 +968,23 @@ def initialize_data(dropdown_selection, path):
     # Company-Specific quadrant
 
     df_all_companies_information.set_index("Company Name")
+    selected_row = df_all_companies_information[df_all_companies_information['Company Name'] == dropdown_selection]
+
+    OFFSET_LOG_SCALE = 3
 
     if dropdown_selection is not None:
         try:
             growth_score_company = df_all_companies_information[df_all_companies_information['Company Name'] == dropdown_selection]['Growth Score'].iloc[0]
-            hype_score_company = df_all_companies_information[df_all_companies_information['Company Name'] == dropdown_selection]['Hype Score'].iloc[0]+3
-
+            hype_score_company = df_all_companies_information[df_all_companies_information['Company Name'] == dropdown_selection]['Hype Score'].iloc[0] + OFFSET_LOG_SCALE
+            selected_industry = selected_row['Industry'].iloc[0]
+            ## Fetching the data of the competitors
+            competitors_df = df_all_companies_information[
+                (df_all_companies_information['Industry'] == selected_industry) &
+                (df_all_companies_information['Company Name'] != dropdown_selection)
+                ]
+            competitors_names = competitors_df['Company Name'].tolist()
+            competitors_growth = competitors_df['Growth Score'].tolist()
+            competitors_hype = (competitors_df['Hype Score'] + OFFSET_LOG_SCALE).tolist()
         except KeyError:
             raise ValueError(f"Company '{dropdown_selection}' not found in the quadrant dataframe")
 
@@ -1021,7 +1033,8 @@ def initialize_data(dropdown_selection, path):
             fig_company.add_annotation(x=0.65, y=log_y_top, text=" <b> Hot & hyped </b> ", showarrow=False,
                                        font=dict(size=12),
                                        bgcolor="#F862F0")
-        # Add scatter points with labels
+        # Add scatter points of all companies
+        '''
         fig_company.add_trace(go.Scatter(
             x=growth_score,
             y=hype_score,
@@ -1035,6 +1048,52 @@ def initialize_data(dropdown_selection, path):
                 line=dict(width=2, color="white")
             )
         ))
+        '''
+
+        # Add scatter points with labels
+        if pro_user_state is False:
+            competitor_labels = ["Competitors are visible to pro users only"] * len(competitors_names)
+            fig_company.add_trace(go.Scatter(
+                x=competitors_growth,
+                y=competitors_hype,
+                text="-",
+                hovertext=competitor_labels,
+                hoverinfo="text",
+                name=selected_industry+" companies",
+                mode="markers+text",
+                textfont=dict(size=8),
+                marker=dict(
+                    size=10,
+                    color="#953BF6",
+                    line=dict(width=2, color="white")
+                )
+            )
+            )
+        # Add scatter points with labels
+        else:
+            competitor_labels = competitors_names
+            fig_company.add_trace(go.Scatter(
+                x=competitors_growth,
+                y=competitors_hype,
+                text=competitors_names,
+                hovertext=competitor_labels,
+                hoverinfo="text",
+                hovertemplate=(
+                        "<br><b>%{text}</b><br>" +  # Bold Company Name
+                        "Growth score: %{x}<br>" +  # Value from x-axis
+                        "Hype score: %{y}" +  # Value from y-axis
+                        "<extra></extra>"  # Removes the secondary trace box
+                ),
+                textposition="bottom center",
+                name="Competitors",
+                mode="markers+text",
+                textfont=dict(size=8),
+                marker=dict(
+                    size=10,
+                    color="#953BF6",
+                    line=dict(width=2, color="white")
+                )
+            ))
 
         # Position of the company label depending on where it is positioned in the quadrant
         if hype_score_company > 12:
@@ -1055,9 +1114,16 @@ def initialize_data(dropdown_selection, path):
             x=[growth_score_company],
             y=[hype_score_company],
             mode="markers+text",
+            name=dropdown_selection,
             text=dropdown_selection,
             textposition=label_position,
             textfont=dict(size=12, family="Arial Black"),
+            hovertemplate=(
+                    f"<b>{dropdown_selection}</b><br>" +  # Bold Company Name
+                    "Growth score: %{x}<br>" +  # Value from x-axis
+                    "Hype score: %{y}" +  # Value from y-axis
+                    "<extra></extra>"  # Removes the secondary trace box
+            ),
             marker=dict(
                 size=15,
                 color="#F862F0",
@@ -1071,17 +1137,29 @@ def initialize_data(dropdown_selection, path):
             margin=dict(l=0, r=0, t=0, b=0),
 
             # Hide legend
-            showlegend=False,
+            showlegend=True,
+            legend=dict(
+                orientation="v",  # "h" for horizontal, "v" for vertical
+                yanchor="top",
+                y=1.15,  # Places legend above the chart
+                xanchor="right",
+                x=1
+            ),
             xaxis=dict(
                 title="Growth potential",
                 range=[0, 1],
+                fixedrange=True,
+                title_standoff=15
                 # type="log"
             ),
             yaxis=dict(
                 title="Hype level (log scale)",
                 type="log",
+                fixedrange=True,
             ),
             plot_bgcolor="white",
+            # Deactivate zoom and interaction with the graph
+            dragmode=False,
         )
     else:
         fig_company = fig

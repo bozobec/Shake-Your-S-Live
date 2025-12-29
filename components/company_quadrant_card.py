@@ -33,7 +33,7 @@ config_graph_with_toolbar = {
     'displayModeBar': True,
     'scrollZoom': False,
     'displaylogo': False,
-    'modeBarButtonsToRemove': ['zoom', 'zoomIn', 'zoomOut', 'pan', 'lasso', 'select','autoScale', 'resetScale'],
+    'modeBarButtonsToRemove': ['zoom', 'zoomIn', 'zoomOut', 'pan', 'lasso', 'select','autoScale', 'resetScale', 'toImage'],
     'toImageButtonOptions': {
             'format': 'svg', # one of png, svg, jpeg, webp
             'filename': 'RAST_Growth',
@@ -97,7 +97,7 @@ company_quadrant_card = dmc.Card(children=[
                 mb="xs",
             ),
             html.Div(quadrant_company_message),
-            dcc.Graph(id='hyped-ranking-graph-company', config=config_graph_with_toolbar),
+            dcc.Graph(id='hyped-ranking-graph-company', config=config_graph_with_toolbar, style={'cursor': 'default'}),
             login_overlay_chart,
         ],
         overlay_style={"visibility": "visible", "filter": "blur(2px)"},
