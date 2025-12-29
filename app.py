@@ -1135,7 +1135,6 @@ def initialize_data(dropdown_selection, path, pro_user_state):
         fig_company.update_layout(
             # Remove margins
             margin=dict(l=0, r=0, t=0, b=0),
-
             # Hide legend
             showlegend=True,
             legend=dict(
