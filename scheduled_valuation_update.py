@@ -1,101 +1,131 @@
 import time
 import json
-import requests
+import schedule
+import os
+from datetime import datetime
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from bs4 import BeautifulSoup
-from urllib.parse import urlparse, parse_qs
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
+from pyairtable import Api
 
-# ToDo: What is this?
-'''
-# List of URLs to crawl
-urls = [
-    "https://rast.guru/app?company=Affirm",
-    "https://rast.guru/app?company=Airbnb",
-    "https://rast.guru/app?company=Arista%20Networks"
-]
+# --- CONFIGURATION ---
+#AIRTABLE_API_KEY = os.getenv("AIRTABLE_API_KEY")
+AIRTABLE_API_KEY = 'patUQKc4meIVaiLIw.efa35a957210ca18edc4fc00ae1b599a6a49851b8b7c59994e4384c19c20fcd1'
+BASE_ID = 'appm3ffcu38jyqhi3'
+TABLE_NAME = 'Companies'
+#DASH_APP_URL = 'https://app.rast.guru/'
+DASH_APP_URL = 'http://127.0.0.1:8050/'
 
-# Configure Chrome options (running headless)
-chrome_options = Options()
-chrome_options.add_argument("--headless")
+# Companies to track
+COMPANIES = ['Affirm', 'Spotify', 'Airbnb']
 
-# Initialize the WebDriver (ensure chromedriver is installed and in your PATH)
-driver = webdriver.Chrome(options=chrome_options)
+# Initialize Airtable
+api = Api(AIRTABLE_API_KEY)
+table = api.table(BASE_ID, TABLE_NAME)
 
-# List to store extracted data
-data = []
 
-for url in urls:
+def get_hype_score(driver, company_id):
+    """
+    Navigates to the company page and extracts the hype score 
+    specifically from Session Storage.
+    """
+    url = f"{DASH_APP_URL}?company={company_id}"
+    print(f"Checking: {url}")
+
+    driver.get(url)
+
+    # Wait for Dash callbacks to fire and popuplate the store
+    # If your app calculates this slowly, increase this time
+    time.sleep(15)
+
     try:
-        # Parse the company name from the URL query string
-        parsed_url = urlparse(url)
-        query_params = parse_qs(parsed_url.query)
-        company = query_params.get('company', ['Unknown'])[0]
+        # EXECUTE JAVASCRIPT
+        # Directly retrieve the value associated with the component ID
+        # Since storage_type='session', it lives in sessionStorage under the ID.
+        storage_value = driver.execute_script(
+            "return window.sessionStorage.getItem('hype-score');"
+        )
 
-        # Open the URL
-        driver.get(url)
+        if storage_value:
+            # Dash stores data as a JSON string. We must parse it.
+            # Example: storage_value might be '{"score": 88, "trend": "up"}'
+            parsed_data = json.loads(storage_value)
 
-        # Wait 10 seconds to allow dynamic content to load
-        time.sleep(10)
+            # CASE 1: The store contains a simple number/string
+            if isinstance(parsed_data, (int, float, str)):
+                return parsed_data
 
-        # Get the updated HTML after JavaScript has rendered the page
-        html = driver.page_source
-        soup = BeautifulSoup(html, "html.parser")
+            # CASE 2: The store contains a dictionary (e.g. {'value': 10})
+            # Adjust 'score' to whatever key your actual data uses
+            elif isinstance(parsed_data, dict):
+                return parsed_data.get('score', parsed_data)
 
-        # Extract the text content from the div with id "hype-market-cap"
-        hype_market_cap_div = soup.find("div", id="hype-market-cap")
-        hype_market_cap = hype_market_cap_div.text.strip() if hype_market_cap_div else "Not found"
+            return parsed_data
 
-        # Extract the width from the style attribute of the div with id "hype-meter-hype"
-        hype_meter_hype_div = soup.find("div", id="hype-meter-hype")
-        hype_meter_value = "Not found"
-        if hype_meter_hype_div:
-            style_attr = hype_meter_hype_div.get("style", "")
-            for part in style_attr.split(";"):
-                if "width:" in part:
-                    hype_meter_value = part.split("width:")[1].strip()
-                    break
+        else:
+            print(f"Warning: 'hype-score' not found in sessionStorage for {company_id}")
+            return None
 
-        # Append the extracted data into our list
-        data.append({
-            "company": company,
-            "hype-market-cap": hype_market_cap,
-            "hype-meter-value": hype_meter_value
-        })
-
-        print(f"Processed {company}: Hype Market Cap = {hype_market_cap}, Hype Meter Value = {hype_meter_value}")
-
+    except json.JSONDecodeError:
+        print(f"Error: Data found but could not parse JSON for {company_id}")
+        return None
     except Exception as e:
-        print(f"Error processing {url}: {e}")
+        print(f"Error extracting data for {company_id}: {e}")
+        return None
 
-# Close the browser once processing is complete
-driver.quit()
 
-# -------------------------------
-# Write data to Airtable
-# -------------------------------
+def update_airtable_record(company_name, score):
+    """
+    Finds the company in Airtable and updates the score.
+    """
+    # 1. Search for the company record
+    formula = f"{{Company_Name}} = '{company_name}'"
+    matches = table.all(formula=formula)
 
-# Replace the following placeholders with your actual Airtable credentials
-AIRTABLE_API_KEY = "YOUR_API_KEY_HERE"
-AIRTABLE_BASE_ID = "YOUR_BASE_ID_HERE"
-AIRTABLE_TABLE_NAME = "YOUR_TABLE_NAME_HERE"
+    if not matches:
+        print(f"Skipping: {company_name} not found in Airtable.")
+        return
 
-airtable_url = f"https://api.airtable.com/v0/{AIRTABLE_BASE_ID}/{AIRTABLE_TABLE_NAME}"
+    record_id = matches[0]['id']
 
-headers = {
-    "Authorization": f"Bearer {AIRTABLE_API_KEY}",
-    "Content-Type": "application/json"
-}
+    # 2. Update the Hype Score
+    # Note: Ensure the Airtable column is a Number or Text field as appropriate
+    try:
+        table.update(record_id, {'Hype_meter_value': score})
+        print(f"Success: Updated {company_name} with score {score}")
+    except Exception as e:
+        print(f"Failed to write to Airtable: {e}")
 
-# Prepare payload as a list of records in Airtable format
-records = [{"fields": record} for record in data]
-payload = {"records": records}
 
-response = requests.post(airtable_url, headers=headers, json=payload)
+def job():
+    print(f"--- Starting Weekly Job: {datetime.now()} ---")
 
-if response.status_code in [200, 201]:
-    print("Data successfully written to Airtable!")
-else:
-    print(f"Failed to write data to Airtable: {response.text}")
+    chrome_options = Options()
+    chrome_options.binary_location = os.environ.get("GOOGLE_CHROME_BIN")  # Vital for Heroku
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
 
-'''
+    # Use the binary location in the Service
+    driver = webdriver.Chrome(
+        service=Service(executable_path=os.environ.get("CHROMEDRIVER_PATH")),
+        options=chrome_options
+    )
+
+    try:
+        for company in COMPANIES:
+            score = get_hype_score(driver, company)
+
+            if score is not None:
+                update_airtable_record(company, score)
+
+            # Short sleep to prevent overwhelming the server/browser
+            time.sleep(2)
+
+    finally:
+        driver.quit()
+        print("--- Job Finished ---")
+
+if __name__ == "__main__":
+    job()  # The Heroku Scheduler triggers this

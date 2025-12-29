@@ -34,7 +34,7 @@ stored_data = dbc.Container(
         dcc.Store(id='all-companies-information'),  # stores all the companies and the related information
         dcc.Store(id='max-net-margin'),  # stores the max theoretical net margin for the selected company
         dcc.Store(id='valuation-category'),  # stores the valuation category of the company (low/high growth, low/high valuation)
-        dcc.Store(id='hype-score'),  # calculates the company's hype level that is used in the ranking
+        dcc.Store(id='hype-score', storage_type='session'),  # calculates the company's hype level that is used in the ranking
         dcc.Store(id='growth-score'),  # calculates the company's hype level that is used in the ranking
         html.Div(id='page-load-trigger'),  # Dummy trigger to launch a callback once the page loads
         dcc.Store(id="user-store"),  # storing user information
