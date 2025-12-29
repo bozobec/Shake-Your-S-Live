@@ -8,17 +8,17 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 from pyairtable import Api
+from src.API.AirTableAPI import AirTableAPI
 
 # --- CONFIGURATION ---
-#AIRTABLE_API_KEY = os.getenv("AIRTABLE_API_KEY")
-AIRTABLE_API_KEY = 'patUQKc4meIVaiLIw.efa35a957210ca18edc4fc00ae1b599a6a49851b8b7c59994e4384c19c20fcd1'
+AIRTABLE_API_KEY = os.getenv("AIRTABLE_API_KEY")
 BASE_ID = 'appm3ffcu38jyqhi3'
 TABLE_NAME = 'Companies'
-#DASH_APP_URL = 'https://app.rast.guru/'
-DASH_APP_URL = 'http://127.0.0.1:8050/'
+DASH_APP_URL = 'https://app.rast.guru/'
+#DASH_APP_URL = 'http://127.0.0.1:8050/'
 
 # Companies to track
-COMPANIES = ['Affirm', 'Spotify', 'Airbnb']
+COMPANIES = AirTableAPI.get_labels() or []
 
 # Initialize Airtable
 api = Api(AIRTABLE_API_KEY)
