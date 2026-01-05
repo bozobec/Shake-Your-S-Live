@@ -134,7 +134,7 @@ layout_one_column = dmc.AppShell(
                                 opened=False,
                                 color="white",
                             ),
-                            dcc.Link(
+                            html.A(
                                 id='logo-link',
                                 children=dmc.Image(
                                     src="/assets/RAST_Vector_Logo.svg",
@@ -142,7 +142,7 @@ layout_one_column = dmc.AppShell(
                                     w={"base": 65, "sm": 91, "lg": 104},  # Responsive width
                                     alt="RAST app guru, valuation made simple"
                                 ),
-                                href="/",
+                                href="https://www.rast.guru",
                             ),
                         ],
                         gap="xs",
