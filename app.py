@@ -44,6 +44,7 @@ from components.growth_card import growth_card
 from components.growth_rate_card import growth_rate_card
 from components.hype_meter_card import hype_meter_card, card_welcome
 from components.offcanvas import offcanvas
+from components.modal_video_tutorial import modal_tutorial
 from components.product_maturity_card import product_maturity_card
 from components.quadrant_card import quadrant_card
 from components.ranking_card import table_hype_card
@@ -165,7 +166,8 @@ layout_one_column = dmc.AppShell(
                                 ),
                                 href="/ranking",
                             ),
-                            dmc.Box(offcanvas, visibleFrom="sm"),
+                            #dmc.Box(offcanvas, visibleFrom="sm"),
+                            dmc.Box(modal_tutorial, visibleFrom="sm"),
                             html.Div(
                                 id="clerk-header",
                                 style={"flexShrink": "0"}  # Prevent shrinking
@@ -690,6 +692,16 @@ def toggle_overlay(logged_in, pro_user_state):
 
 # ----------------------------------------------------------------------------------
 # Callback behaviours and interaction
+
+# Callback to open/close the modal
+@app.callback(
+    Output("video-modal", "opened"),
+    Input("open-modal-btn", "n_clicks"),
+    State("video-modal", "opened"),
+    prevent_initial_call=True,
+)
+def toggle_modal(n_clicks, opened):
+    return not opened
 
 # Callback to update the URL based on the dropdown selection
 @app.callback(
@@ -2078,7 +2090,7 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
     else:
         profit_margin_slider_value = no_update
         arpu_growth_slider_value = no_update
-        growth_slider_value = no_update
+        growth_slider_value = base_growth  # bringing it back to the base case, to avoid clash when changing date-picker
 
     t2 = time.perf_counter(), time.process_time()
     logger.info(f" Definition of the messages in analysis and above the graphs")
@@ -2110,7 +2122,7 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
 
     [
         Input(component_id='range-slider-k', component_property='value'),  # Take user slider value
-        Input(component_id='date-picker', component_property='value'),  # Take date-picker date
+        State(component_id='date-picker', component_property='value'),  # Take date-picker date
         Input(component_id='users-dates-formatted', component_property='data'),
         Input(component_id='scenarios-sorted', component_property='data'),
         State(component_id='graph-unit', component_property='data'),  # Stores the graph unit (y axis legend)
@@ -3650,17 +3662,6 @@ def graph_valuation_over_time(valuation_over_time_dict, unit_metric, date_picked
     return fig_valuation, valuation_graph_message, valuation_graph_color, valuation_graph_title, quadrant_message, quadrant_color, quadrant_title, valuation_accordion_title, \
            valuation_accordion_message, valuation_graph_color, valuation_icon_color, hype_score, hype_score_text, growth_description, badge_color, badge_label
 
-
-# Callback resetting enabling the reset button
-@app.callback(
-    Output("offcanvas", "is_open"),
-    Input("open-offcanvas", "n_clicks"),
-    [State("offcanvas", "is_open")],
-)
-def toggle_offcanvas(n1, is_open):
-    if n1:
-        return not is_open
-    return is_open
 
 
 # Callback to update table based on selection
