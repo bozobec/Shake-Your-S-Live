@@ -24,7 +24,7 @@ COMPANIES = [
     'Atlassian', 'Beyond Meat', 'BILL Holdings', 'Block', 'Booking Holdings',
     'Bumble', 'Carvana', 'CAVA Group', 'Centene Corporation', 'Charles Schwab',
     'Chegg', 'Chewy', 'Chime', 'Chipotle', 'Circle Internet', 'Cloudflare',
-    'Coinbase', 'Costco', 'Crocs', 'Datadog', 'Dayforce', 'Diageo', 'DocuSign',
+    'Coinbase', 'Corpay', 'Costco', 'Crocs', 'Datadog', 'Dayforce', 'Diageo', 'DocuSign',
     'Domino\'s Pizza', 'Doordash', 'DraftKings', 'Dropbox', 'Duolingo',
     'Dutch Bros', 'Ebay', 'Elastic N.V. (Elasticsearch)', 'Equinix', 'Etsy',
     'Expedia Group', 'Fastly', 'Figma', 'Freshpet', 'Gambling.com', 'Gitlab',
@@ -64,7 +64,7 @@ def get_hype_score(driver, company_id):
 
     # Wait for Dash callbacks to fire and popuplate the store
     # If your app calculates this slowly, increase this time
-    time.sleep(15)
+    time.sleep(20)
 
     try:
         # EXECUTE JAVASCRIPT
