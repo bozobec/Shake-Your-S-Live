@@ -2,6 +2,7 @@
 
 import jwt
 import numpy as np
+import dash_mantine_components as dmc
 
 from src.Utils.dates import YEAR_OFFSET, date_formatting
 from src.Utils.RastLogger import get_default_logger
@@ -237,3 +238,10 @@ def cleans_high_valuations(df, column):
             df_copy.loc[current_idx, column] = previous_high_valuation
 
     return df_copy
+
+# Helper function to generate breadcrumb children
+def render_breadcrumbs(company_name=None):
+    items = [dmc.Anchor("Home", href="/", underline=False, size="sm")]
+    if company_name:
+        items.append(dmc.Text(company_name, size="sm"))
+    return items

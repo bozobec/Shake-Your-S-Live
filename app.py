@@ -200,6 +200,14 @@ layout_one_column = dmc.AppShell(
                                 dmc.Stack(
                                     id="homepage-cards",
                                     children=[
+                                        dmc.Breadcrumbs(
+                                            id="breadcrumbs-container",
+                                            px="lg",
+                                            separator="→",
+                                            children=[
+                                                dmc.Anchor("Home", href="/", underline=False),
+                                                ]
+                                        ),
                                         hype_meter_card,
                                         company_quadrant_card,
                                         analysis_card,
@@ -707,6 +715,7 @@ def toggle_modal(n_clicks, opened):
 @app.callback(
     Output('url-input', 'search'),  # Output 1: URL search string
     Output('dataset-selection', 'value'),  # Output 2: Dropdown value
+    Output('breadcrumbs-container', 'children'),  # Output 2: Dropdown value
     Input('url-input', 'search'),  # Input 1: URL search string
     Input("dataset-selection", "value")  # Input 2: Dropdown selection
 )
@@ -725,9 +734,9 @@ def sync_url_and_dropdown(url_search, dropdown_value):
 
         if company_from_url and company_from_url != dropdown_value:
             # Update dropdown from URL on initial load
-            return no_update, company_from_url
+            return no_update, company_from_url, main.render_breadcrumbs(company_from_url)
 
-        return no_update, no_update
+        return no_update, no_update, main.render_breadcrumbs()
 
     # 2. Determine Trigger Source
     trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
@@ -738,9 +747,9 @@ def sync_url_and_dropdown(url_search, dropdown_value):
         # Goal: Update the URL to reflect the selection.
         if dropdown_value:
             new_search = f"?company={urllib.parse.quote(dropdown_value)}"
-            return new_search, no_update
+            return new_search, no_update, main.render_breadcrumbs(dropdown_value)
         # If selection is cleared/empty, you might want to clear the URL or no_update
-        return no_update, no_update
+        return no_update, no_update, main.render_breadcrumbs()
 
 
     # --- B. URL Triggered the Change ---
@@ -754,10 +763,10 @@ def sync_url_and_dropdown(url_search, dropdown_value):
 
         if company_from_url and company_from_url != dropdown_value:
             # Update dropdown if the URL contains a valid, different company
-            return no_update, company_from_url
+            return no_update, company_from_url, main.render_breadcrumbs(company_from_url)
 
         # If the URL is empty or the company is already selected, do nothing
-        return no_update, no_update
+        return no_update, no_update, main.render_breadcrumbs(company_from_url)
 
     # Fallback
     return no_update, no_update, no_update
