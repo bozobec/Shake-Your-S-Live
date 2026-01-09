@@ -661,7 +661,7 @@ def update_login_state(bridge_content):
     Output("login-overlay-table", "style"),
     Output("login-overlay-chart", "style"),
     Output("scenarios-picker", "disabled"),
-    Output("picker-tooltip", "disabled"),  # New Output for the Tooltip
+    Output("picker-tooltip", "disabled"),
     Input("login-state", "data"),
     State("pro-user-state", "data")
 )
