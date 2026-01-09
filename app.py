@@ -216,6 +216,7 @@ layout_one_column = dmc.AppShell(
                                         revenue_card,
                                         product_maturity_card,
                                         growth_rate_card,
+                                        html.Div(id='js-title-trigger', style={'display': 'none'}), # trigger changing the page's title
                                     ],
                                     gap="md",
                                     p="md",
@@ -766,6 +767,25 @@ def sync_url_and_dropdown(url_search, dropdown_value):
 
     # Fallback
     return no_update, no_update, no_update
+
+# This callback runs in the browser (JavaScript) and updates the page title
+# It triggers whenever the dropdown value changes
+app.clientside_callback(
+    """
+    function(company) {
+        if (company) {
+            // Update the browser tab title
+            document.title = company + " Valuation & Financial Analysis | RAST.guru";
+        } else {
+            // Default title if no company is selected
+            document.title = "Stock Valuation & DCF | RAST.guru";
+        }
+        return ""; // Clientside callbacks must return something
+    }
+    """,
+    Output('js-title-trigger', 'children'), # You'll need a hidden Div for this
+    Input('dataset-selection', 'value')
+)
 
 
 # Callback to show/hide sections based on page
