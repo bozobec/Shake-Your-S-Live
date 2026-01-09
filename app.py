@@ -240,10 +240,6 @@ layout_one_column = dmc.AppShell(
                             ),
                         ),
                     ],
-                    # gutter="md",
-                    # style={
-                    #    "maxWidth": "100%",
-                    #    "margin": "0"},
                 ),
                 html.Div(
                     id="ranking-grid",
