@@ -226,7 +226,7 @@ layout_one_column = dmc.AppShell(
                             ],
                         ),
 
-                        # Right column:static functionalities card
+                        # Right column: static functionalities card
                         dmc.GridCol(
                             span={"base": 12, "lg": 4},
                             children=dmc.Stack(
