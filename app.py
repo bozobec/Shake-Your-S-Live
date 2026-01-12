@@ -216,7 +216,7 @@ layout_one_column = dmc.AppShell(
                                         revenue_card,
                                         product_maturity_card,
                                         growth_rate_card,
-                                        html.Div(id='js-title-trigger', style={'display': 'none'}), # trigger changing the page's title
+                                        html.Div(id='js-title-trigger', style={'display': 'none'}), #trigger changing the page's title
                                     ],
                                     gap="md",
                                     p="md",
