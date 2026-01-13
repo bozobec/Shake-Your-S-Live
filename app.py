@@ -170,7 +170,7 @@ layout_one_column = dmc.AppShell(
                             dmc.Box(modal_tutorial, visibleFrom="sm"),
                             html.Div(
                                 id="clerk-header",
-                                style={"flexShrink": "0"}  # Prevent shrinking
+                                style={"flexShrink": "0"}  #Prevent shrinking
                             ),  # Clerk user button
                         ],
                         gap="sm",
