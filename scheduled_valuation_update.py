@@ -23,7 +23,7 @@ COMPANIES = [
     'Accenture', 'Adobe', 'Adyen', 'Affirm', 'Airbnb', 'Alphabet', 'Amazon',
     'Atlassian', 'Beyond Meat', 'BILL Holdings', 'Block', 'Booking Holdings',
     'Bumble', 'Carvana', 'CAVA Group', 'Centene Corporation', 'Charles Schwab',
-    'Chegg', 'Chewy', 'Chime', 'Chipotle', 'Circle Internet', 'Cloudflare',
+    'Chewy', 'Chime', 'Chipotle', 'Circle Internet', 'Cloudflare',
     'Coinbase', 'Corpay', 'Costco', 'Crocs', 'Datadog', 'Dayforce', 'Diageo', 'DocuSign',
     'Domino\'s Pizza', 'Doordash', 'DraftKings', 'Dropbox', 'Duolingo',
     'Dutch Bros', 'Ebay', 'Elastic N.V. (Elasticsearch)', 'Equinix', 'Etsy',
