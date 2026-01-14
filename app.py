@@ -2420,7 +2420,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
                                   )
                        )
     mid_id_growth = len(x_scenarios) // 2
-    #mid_id_marketcap = len(market_cap_array) // 2
+    # mid_id_marketcap = len(market_cap_array) // 2
 
     fig_main.update_layout(
         hovermode="x unified",
