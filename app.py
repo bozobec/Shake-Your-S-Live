@@ -2335,25 +2335,6 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
     else:
         range_y = [0, users_raw[-1] * 1.2]
 
-    fig_main.update_layout(
-        hovermode="x unified",
-        annotations=[
-            dict(
-                x=(x_coordinate + relativedelta(months=9)).strftime("%Y-%m-%d"),
-                y=0.6 * src.Utils.Logistics.logisticfunction(k_scenarios[-1], r_scenarios[-1], p0_scenarios[-1], [60]),
-                text="F O R E C A S T",
-                showarrow=False,
-                font=dict(size=8, color="black"),
-                opacity=0.5,
-            )
-        ],
-        yaxis=dict(
-            title=graph_unit,
-            range=range_y
-        ),
-        margin=dict(t=40, b=10, l=5, r=5),
-    )
-
     # Prediction, S-Curves
 
     date_a = datetime.strptime(dates_raw[0], "%Y-%m-%d")
@@ -2394,28 +2375,27 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
 
     # Low growth scenario
     # x = np.linspace(dates[-1], dates[-1] * 2 - dates[0], num=50)
-    y_trace = src.Utils.Logistics.logisticfunction(k_scenarios[0], r_scenarios[0], p0_scenarios[0], x_scenarios)
+    y_low_trace = src.Utils.Logistics.logisticfunction(k_scenarios[0], r_scenarios[0], p0_scenarios[0], x_scenarios)
     formatted_y_values = [
         f"{y:.3f}" if y < 1e6 else f"{y / 1e6:.3f} M" if y < 1e9 else f"{y / 1e9:.3f} B"
-        for y in y_trace
+        for y in y_low_trace
     ]
     fig_main.add_trace(go.Scatter(name="Low Growth", x=x_dates_scenarios,
-                                  y=src.Utils.Logistics.logisticfunction(k_scenarios[0], r_scenarios[0],
-                                                                         p0_scenarios[0], x_scenarios),
+                                  y=y_low_trace,
                                   mode='lines',
                                   line=dict(color='#C58400', width=0.5), showlegend=False, text=formatted_y_values,
                                   hovertemplate=hovertemplate_maingraph)),
     # fig.add_trace(go.Line(name="Predicted S Curve", x=x + 1970,
     # y=main.logisticfunction(k_scenarios[1], r_scenarios[1], p0_scenarios[1], x), mode="lines"))
-    y_trace = src.Utils.Logistics.logisticfunction(k_scenarios[-1], r_scenarios[-1], p0_scenarios[-1], x_scenarios)
+    y_high_trace = src.Utils.Logistics.logisticfunction(k_scenarios[-1], r_scenarios[-1], p0_scenarios[-1], x_scenarios)
     formatted_y_values = [
         f"{y:.3f}" if y < 1e6 else f"{y / 1e6:.3f} M" if y < 1e9 else f"{y / 1e9:.3f} B"
-        for y in y_trace
+        for y in y_high_trace
     ]
     # High growth scenario, if existent
     if len(k_scenarios) > 1:
         fig_main.add_trace(go.Scatter(name="High Growth", x=x_dates_scenarios,
-                                      y=y_trace, mode='lines',
+                                      y=y_high_trace, mode='lines',
                                       line=dict(color='#C58400', width=0.5),
                                       textposition="top left", textfont_size=6, showlegend=False,
                                       text=formatted_y_values, hovertemplate=hovertemplate_maingraph))
@@ -2439,6 +2419,54 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
                                   showlegend=False,
                                   )
                        )
+    mid_id_growth = len(x_scenarios) // 2
+    #mid_id_marketcap = len(market_cap_array) // 2
+
+    fig_main.update_layout(
+        hovermode="x unified",
+        annotations=[
+            # Forecast annotation
+            dict(
+                x=(x_coordinate + relativedelta(months=9)).strftime("%Y-%m-%d"),
+                y=0.6 * src.Utils.Logistics.logisticfunction(k_scenarios[-1], r_scenarios[-1], p0_scenarios[-1], [60]),
+                text="F O R E C A S T",
+                showarrow=False,
+                font=dict(size=8, color="black"),
+                opacity=0.5,
+            ),
+            # Low valuation arrow
+            dict(
+                x=x_dates_scenarios[mid_id_growth - 3],
+                y=y_low_trace[mid_id_growth-3],
+                text="Worst scenario",
+                showarrow=True,
+                arrowhead=2,
+                arrowcolor="#433001",
+                ax=0,  # offset of arrow tail
+                ay=40,  # offset of arrow tail
+                font=dict(size=8, color="#433001"),
+                opacity=0.5,
+            ),
+            # High valuation arrow
+            dict(
+                x=x_dates_scenarios[mid_id_growth + 3],
+                y=y_high_trace[mid_id_growth+3],
+                text="Best scenario",
+                showarrow=True,
+                arrowhead=2,
+                arrowcolor="#433001",
+                ax=0,  # offset of arrow tail
+                ay=-40,  # offset of arrow tail
+                font=dict(size=8, color="#433001"),
+                opacity=0.5,
+            ),
+        ],
+        yaxis=dict(
+            title=graph_unit,
+            range=range_y
+        ),
+        margin=dict(t=40, b=10, l=5, r=5),
+    )
 
     # Adding RAST logo
     fig_main.add_layout_image(
@@ -2672,7 +2700,7 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
                         opacity=0.5,
                         yref="y2"
                     )
-                ]
+                ],
             )
 
             fig_revenue.update_yaxes(range=[min(profit_margin_array) - abs(min(profit_margin_array)) * 0.1,
