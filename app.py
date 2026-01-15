@@ -866,6 +866,7 @@ def toggle_page_layout(pathname, search):
     Output(component_id='hyped-ranking-graph-company', component_property='figure'),  # Update graph 1
     Output(component_id='hyped-table-industry', component_property='data'),  # Update graph 1
     Output(component_id='valuation-category', component_property='data'),  # Update graph 1
+    Output(component_id='is-company', component_property='data'),  # Stores whether a company or not has been selected
     Input(component_id='dataset-selection', component_property='value'),
     Input('url', 'pathname'),  # Triggered once when the page is loaded
     State("pro-user-state", "data")
@@ -1010,198 +1011,245 @@ def initialize_data(dropdown_selection, path, pro_user_state):
     OFFSET_LOG_SCALE = 3
 
     if dropdown_selection is not None:
+        # 1. Initialize variables with default values
+        growth_score_company = None
+        hype_score_company = None
+        selected_industry = None
+        competitors_names = []
+        competitors_growth = []
+        competitors_hype = []
+        valuation_category = ""
+
         try:
-            growth_score_company = df_all_companies_information[df_all_companies_information['Company Name'] == dropdown_selection]['Growth Score'].iloc[0]
-            hype_score_company = df_all_companies_information[df_all_companies_information['Company Name'] == dropdown_selection]['Hype Score'].iloc[0] + OFFSET_LOG_SCALE
-            selected_industry = selected_row['Industry'].iloc[0]
-            ## Fetching the data of the competitors
-            competitors_df = df_all_companies_information[
-                (df_all_companies_information['Industry'] == selected_industry) &
-                (df_all_companies_information['Company Name'] != dropdown_selection)
-                ]
-            competitors_names = competitors_df['Company Name'].tolist()
-            competitors_growth = competitors_df['Growth Score'].tolist()
-            competitors_hype = (competitors_df['Hype Score'] + OFFSET_LOG_SCALE).tolist()
-        except KeyError:
-            raise ValueError(f"Company '{dropdown_selection}' not found in the quadrant dataframe")
+            # 2. Attempt to fetch data
+            company_row = df_all_companies_information[
+                df_all_companies_information['Company Name'] == dropdown_selection]
 
-        # Add quadrant lines
-        fig_company.add_shape(type="line", x0=x_mid, x1=x_mid, y0=y_min, y1=y1,
-                              line=dict(dash="dash", width=2, color="#868786"))
-        fig_company.add_shape(type="line", x0=0, x1=1, y0=y_mid, y1=y_mid,
-                              line=dict(dash="dash", width=2, color="#868786"))
+            if not company_row.empty:
+                growth_score_company = company_row['Growth Score'].iloc[0]
+                hype_score_company = company_row['Hype Score'].iloc[0] + OFFSET_LOG_SCALE
+                selected_industry = company_row['Industry'].iloc[0]
 
-        # Add quadrant labels - position them in log space
-        fig_company.add_annotation(x=0.65, y=log_y_top, text=" Hot & hyped ", showarrow=False, font=dict(size=12),
-                                   bgcolor="#E2E2E2")
-        fig_company.add_annotation(x=0.15, y=log_y_top, text=" Bubble zone ", showarrow=False, font=dict(size=12),
-                                   bgcolor="#E2E2E2")
-        fig_company.add_annotation(x=0.15, y=log_y_bottom, text=" Steady, Forgotten ", showarrow=False,
-                                   font=dict(size=12),
-                                   bgcolor="#E2E2E2")
-        fig_company.add_annotation(x=0.65, y=log_y_bottom, text=" Undervalued gems ", showarrow=False,
-                                   font=dict(size=12), bgcolor="#E2E2E2")
+                ## Fetching the data of the competitors
+                competitors_df = df_all_companies_information[
+                    (df_all_companies_information['Industry'] == selected_industry) &
+                    (df_all_companies_information['Company Name'] != dropdown_selection)
+                    ]
 
-        if growth_score_company < x_mid and hype_score_company < y_mid:
-            valuation_category = "lowGrowth_lowHype"
-            fig_company.add_shape(type="rect", x0=0, x1=x_mid, y0=y_min, y1=y_mid, fillcolor="#9493FC", opacity=0.2,
-                                  line_width=0)
-            fig_company.add_annotation(x=0.15, y=log_y_bottom, text=" <b> Steady, Forgotten </b> ", showarrow=False,
-                                       font=dict(size=12),
-                                       bgcolor="#F862F0")
-        elif growth_score_company > x_mid and hype_score_company < y_mid:
-            valuation_category = "highGrowth_lowHype"
-            fig_company.add_shape(type="rect", x0=x_mid, x1=1, y0=y_min, y1=y_mid, fillcolor="#FFD000", opacity=0.2,
-                                  line_width=0)
-            fig_company.add_annotation(x=0.65, y=log_y_bottom, text=" <b> Undervalued gems </b> ", showarrow=False,
-                                       font=dict(size=12),
-                                       bgcolor="#FED100")
-        elif growth_score_company < x_mid and hype_score_company > y_mid:
-            valuation_category = "lowGrowth_highHype"
-            fig_company.add_shape(type="rect", x0=0, x1=x_mid, y0=y_mid, y1=y1, fillcolor="#FB4040", opacity=0.2,
-                                  line_width=0)
-            fig_company.add_annotation(x=0.15, y=log_y_top, text=" <b> Bubble Zone </b> ", showarrow=False,
-                                       font=dict(size=12),
-                                       bgcolor="#F862F0")
-        else:
-            valuation_category = "highGrowth_highHype"
-            fig_company.add_shape(type="rect", x0=x_mid, x1=1, y0=y_mid, y1=y1, fillcolor="#9493FC", opacity=0.2,
-                                  line_width=0)
-            fig_company.add_annotation(x=0.65, y=log_y_top, text=" <b> Hot & hyped </b> ", showarrow=False,
-                                       font=dict(size=12),
-                                       bgcolor="#F862F0")
-        # Add scatter points of all companies
-        '''
-        fig_company.add_trace(go.Scatter(
-            x=growth_score,
-            y=hype_score,
-            hoverinfo="none",
-            name=dropdown_selection,
-            mode="markers+text",
-            textfont=dict(size=8),
-            marker=dict(
-                size=10,
-                color="#F2E5FF",
-                line=dict(width=2, color="white")
-            )
-        ))
-        '''
+                competitors_names = competitors_df['Company Name'].tolist()
+                competitors_growth = competitors_df['Growth Score'].tolist()
+                competitors_hype = (competitors_df['Hype Score'] + OFFSET_LOG_SCALE).tolist()
 
-        # Add scatter points with labels
-        if pro_user_state is False:
-            competitor_labels = ["Competitors are visible to pro users only"] * len(competitors_names)
-            fig_company.add_trace(go.Scatter(
-                x=competitors_growth,
-                y=competitors_hype,
-                text="-",
-                hovertext=competitor_labels,
-                hoverinfo="text",
-                name=selected_industry+" companies",
-                mode="markers+text",
-                textfont=dict(size=8),
-                marker=dict(
-                    size=10,
-                    color="#953BF6",
-                    line=dict(width=2, color="white")
+                # Add quadrant lines
+                fig_company.add_shape(type="line", x0=x_mid, x1=x_mid, y0=y_min, y1=y1,
+                                      line=dict(dash="dash", width=2, color="#868786"))
+                fig_company.add_shape(type="line", x0=0, x1=1, y0=y_mid, y1=y_mid,
+                                      line=dict(dash="dash", width=2, color="#868786"))
+
+                # Add quadrant labels - position them in log space
+                fig_company.add_annotation(x=0.65, y=log_y_top, text=" Hot & hyped ", showarrow=False,
+                                           font=dict(size=12),
+                                           bgcolor="#E2E2E2")
+                fig_company.add_annotation(x=0.15, y=log_y_top, text=" Bubble zone ", showarrow=False,
+                                           font=dict(size=12),
+                                           bgcolor="#E2E2E2")
+                fig_company.add_annotation(x=0.15, y=log_y_bottom, text=" Steady, Forgotten ", showarrow=False,
+                                           font=dict(size=12),
+                                           bgcolor="#E2E2E2")
+                fig_company.add_annotation(x=0.65, y=log_y_bottom, text=" Undervalued gems ", showarrow=False,
+                                           font=dict(size=12), bgcolor="#E2E2E2")
+
+                if growth_score_company < x_mid and hype_score_company < y_mid:
+                    valuation_category = "lowGrowth_lowHype"
+                    fig_company.add_shape(type="rect", x0=0, x1=x_mid, y0=y_min, y1=y_mid, fillcolor="#9493FC",
+                                          opacity=0.2,
+                                          line_width=0)
+                    fig_company.add_annotation(x=0.15, y=log_y_bottom, text=" <b> Steady, Forgotten </b> ",
+                                               showarrow=False,
+                                               font=dict(size=12),
+                                               bgcolor="#F862F0")
+                elif growth_score_company > x_mid and hype_score_company < y_mid:
+                    valuation_category = "highGrowth_lowHype"
+                    fig_company.add_shape(type="rect", x0=x_mid, x1=1, y0=y_min, y1=y_mid, fillcolor="#FFD000",
+                                          opacity=0.2,
+                                          line_width=0)
+                    fig_company.add_annotation(x=0.65, y=log_y_bottom, text=" <b> Undervalued gems </b> ",
+                                               showarrow=False,
+                                               font=dict(size=12),
+                                               bgcolor="#FED100")
+                elif growth_score_company < x_mid and hype_score_company > y_mid:
+                    valuation_category = "lowGrowth_highHype"
+                    fig_company.add_shape(type="rect", x0=0, x1=x_mid, y0=y_mid, y1=y1, fillcolor="#FB4040",
+                                          opacity=0.2,
+                                          line_width=0)
+                    fig_company.add_annotation(x=0.15, y=log_y_top, text=" <b> Bubble Zone </b> ", showarrow=False,
+                                               font=dict(size=12),
+                                               bgcolor="#F862F0")
+                else:
+                    valuation_category = "highGrowth_highHype"
+                    fig_company.add_shape(type="rect", x0=x_mid, x1=1, y0=y_mid, y1=y1, fillcolor="#9493FC",
+                                          opacity=0.2,
+                                          line_width=0)
+                    fig_company.add_annotation(x=0.65, y=log_y_top, text=" <b> Hot & hyped </b> ", showarrow=False,
+                                               font=dict(size=12),
+                                               bgcolor="#F862F0")
+                # Add scatter points of all companies
+                '''
+                fig_company.add_trace(go.Scatter(
+                    x=growth_score,
+                    y=hype_score,
+                    hoverinfo="none",
+                    name=dropdown_selection,
+                    mode="markers+text",
+                    textfont=dict(size=8),
+                    marker=dict(
+                        size=10,
+                        color="#F2E5FF",
+                        line=dict(width=2, color="white")
+                    )
+                ))
+                '''
+
+                # Add scatter points with labels
+                if pro_user_state is False:
+                    competitor_labels = ["Competitors are visible to pro users only"] * len(competitors_names)
+                    fig_company.add_trace(go.Scatter(
+                        x=competitors_growth,
+                        y=competitors_hype,
+                        text="-",
+                        hovertext=competitor_labels,
+                        hoverinfo="text",
+                        name=selected_industry + " companies",
+                        mode="markers+text",
+                        textfont=dict(size=8),
+                        marker=dict(
+                            size=10,
+                            color="#953BF6",
+                            line=dict(width=2, color="white")
+                        )
+                    )
+                    )
+                # Add scatter points with labels
+                else:
+                    competitor_labels = competitors_names
+                    fig_company.add_trace(go.Scatter(
+                        x=competitors_growth,
+                        y=competitors_hype,
+                        text=competitors_names,
+                        hovertext=competitor_labels,
+                        hoverinfo="text",
+                        hovertemplate=(
+                                "<br><b>%{text}</b><br>" +  # Bold Company Name
+                                "Growth score: %{x}<br>" +  # Value from x-axis
+                                "Hype score: %{y}" +  # Value from y-axis
+                                "<extra></extra>"  # Removes the secondary trace box
+                        ),
+                        textposition="bottom center",
+                        name="Competitors",
+                        mode="markers+text",
+                        textfont=dict(size=8),
+                        marker=dict(
+                            size=10,
+                            color="#953BF6",
+                            line=dict(width=2, color="white")
+                        )
+                    ))
+
+                # Position of the company label depending on where it is positioned in the quadrant
+                if hype_score_company > 12:
+                    label_position = 'bottom center'
+                elif hype_score_company > 12 and growth_score_company < 0.1:
+                    label_position = 'bottom right'
+                elif growth_score_company < 0.1:
+                    label_position = 'middle right'
+                elif growth_score_company < 0.1 and hype_score_company < 1.2:
+                    label_position = 'top right'
+                elif hype_score_company < 1.2:
+                    label_position = 'top center'
+                else:
+                    label_position = 'top center'
+
+                # Add scatter point of the company with label
+                fig_company.add_trace(go.Scatter(
+                    x=[growth_score_company],
+                    y=[hype_score_company],
+                    mode="markers+text",
+                    name=dropdown_selection,
+                    text=dropdown_selection,
+                    textposition=label_position,
+                    textfont=dict(size=12, family="Arial Black"),
+                    hovertemplate=(
+                            f"<b>{dropdown_selection}</b><br>" +  # Bold Company Name
+                            "Growth score: %{x}<br>" +  # Value from x-axis
+                            "Hype score: %{y}" +  # Value from y-axis
+                            "<extra></extra>"  # Removes the secondary trace box
+                    ),
+                    marker=dict(
+                        size=15,
+                        color="#F862F0",
+                        line=dict(width=4, color="white")
+                    ),
+                ))
+
+                # Update the figure layout
+                fig_company.update_layout(
+                    # Remove margins
+                    margin=dict(l=0, r=0, t=0, b=0),
+                    # Hide legend
+                    showlegend=True,
+                    legend=dict(
+                        orientation="v",  # "h" for horizontal, "v" for vertical
+                        yanchor="top",
+                        y=1.15,  # Places legend above the chart
+                        xanchor="right",
+                        x=1
+                    ),
+                    xaxis=dict(
+                        title="Growth potential",
+                        range=[0, 1],
+                        fixedrange=True,
+                        title_standoff=15
+                        # type="log"
+                    ),
+                    yaxis=dict(
+                        title="Hype level (log scale)",
+                        type="log",
+                        fixedrange=True,
+                    ),
+                    plot_bgcolor="white",
+                    # Deactivate zoom and interaction with the graph
+                    dragmode=False,
                 )
-            )
-            )
-        # Add scatter points with labels
-        else:
-            competitor_labels = competitors_names
-            fig_company.add_trace(go.Scatter(
-                x=competitors_growth,
-                y=competitors_hype,
-                text=competitors_names,
-                hovertext=competitor_labels,
-                hoverinfo="text",
-                hovertemplate=(
-                        "<br><b>%{text}</b><br>" +  # Bold Company Name
-                        "Growth score: %{x}<br>" +  # Value from x-axis
-                        "Hype score: %{y}" +  # Value from y-axis
-                        "<extra></extra>"  # Removes the secondary trace box
-                ),
-                textposition="bottom center",
-                name="Competitors",
-                mode="markers+text",
-                textfont=dict(size=8),
-                marker=dict(
-                    size=10,
-                    color="#953BF6",
-                    line=dict(width=2, color="white")
-                )
-            ))
+                is_company = True
+            else:
+                print(f"Warning: Company '{dropdown_selection}' not found.")
+                valuation_category = ""
+                is_company = False
 
-        # Position of the company label depending on where it is positioned in the quadrant
-        if hype_score_company > 12:
-            label_position = 'bottom center'
-        elif hype_score_company > 12 and growth_score_company < 0.1:
-            label_position = 'bottom right'
-        elif growth_score_company < 0.1:
-            label_position = 'middle right'
-        elif growth_score_company < 0.1 and hype_score_company < 1.2:
-            label_position = 'top right'
-        elif hype_score_company < 1.2:
-            label_position = 'top center'
-        else:
-            label_position = 'top center'
-
-        # Add scatter point of the company with label
-        fig_company.add_trace(go.Scatter(
-            x=[growth_score_company],
-            y=[hype_score_company],
-            mode="markers+text",
-            name=dropdown_selection,
-            text=dropdown_selection,
-            textposition=label_position,
-            textfont=dict(size=12, family="Arial Black"),
-            hovertemplate=(
-                    f"<b>{dropdown_selection}</b><br>" +  # Bold Company Name
-                    "Growth score: %{x}<br>" +  # Value from x-axis
-                    "Hype score: %{y}" +  # Value from y-axis
-                    "<extra></extra>"  # Removes the secondary trace box
-            ),
-            marker=dict(
-                size=15,
-                color="#F862F0",
-                line=dict(width=4, color="white")
-            ),
-        ))
-
-        # Update the figure layout
-        fig_company.update_layout(
-            # Remove margins
-            margin=dict(l=0, r=0, t=0, b=0),
-            # Hide legend
-            showlegend=True,
-            legend=dict(
-                orientation="v",  # "h" for horizontal, "v" for vertical
-                yanchor="top",
-                y=1.15,  # Places legend above the chart
-                xanchor="right",
-                x=1
-            ),
-            xaxis=dict(
-                title="Growth potential",
-                range=[0, 1],
-                fixedrange=True,
-                title_standoff=15
-                # type="log"
-            ),
-            yaxis=dict(
-                title="Hype level (log scale)",
-                type="log",
-                fixedrange=True,
-            ),
-            plot_bgcolor="white",
-            # Deactivate zoom and interaction with the graph
-            dragmode=False,
-        )
+        except (KeyError, IndexError) as e:
+            # 3. Log the error and continue
+            print(f"An error occurred while processing {dropdown_selection}: {e}")
+            # The code will now continue to the next line after this block
     else:
         fig_company = fig
         valuation_category = ""
 
-    return all_companies_information_store, fig, fig_company, industry_list, valuation_category
+    return all_companies_information_store, fig, fig_company, industry_list, valuation_category, is_company
+
+# Hiding the irrelevant cards for cases when non-company dataset are selected
+@app.callback(
+    Output("section-1", "style", allow_duplicate=True),
+    Output("section-2", "style", allow_duplicate=True),
+    Output("section-3", "style", allow_duplicate=True),
+    Output("section-5", "style", allow_duplicate=True),
+    Output("section-6", "style", allow_duplicate=True),
+    Input("is-company", "data"), prevent_initial_call=True
+)
+def hide_irrelevant_cards(is_company):
+    if is_company is True:
+        return no_update
+    else:
+        return {"display": "none"}, {"display": "none"}, {"display": "none"}, {"display": "none"}, {"display": "none"}
 
 
 # Callback to enable the slider if "Custom" is selected
@@ -3628,7 +3676,7 @@ def graph_valuation_over_time(valuation_over_time_dict, unit_metric, date_picked
         quadrant_color = "yellow"
         growth_description = dmc.Text(
             children=[
-                "But there is probably ",
+                "And there is probably ",
                 dmc.Text(" no big upside ", span=True, c="black", fw=600),
                 " to expect in the future given the low growth of ",
                 unit_metric,

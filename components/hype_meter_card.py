@@ -73,35 +73,62 @@ config_graph_with_toolbar = {
 
 # Valuation message (left side)
 valuation_message = dmc.Alert(
-    children=[
-        dmc.Text(
-            dmc.Skeleton(height=8, radius="xl"),
-            size="sm",
-            id="valuation-content"
-        ),
-        dmc.Space(h="xs"),
-        dmc.List(
-            [
-                dmc.ListItem(dmc.Skeleton(height=8, w="70%", radius="xl"), id="hype-score-text"),
-                dmc.ListItem(dmc.Skeleton(height=8, w="70%", radius="xl"), id="growth-score-text"),
-            ],
-            size="sm",
-            spacing="xs",
-        ),
-        dmc.Space(h="xs"),
-        dmc.Text(
-            dmc.Skeleton(height=8, w="70%", radius="xl"),
-            size="sm",
-            id="growth-content"
-        )
-    ],
     id="valuation-message",
     title=dmc.Skeleton(height=8, w="70%", radius="xl"),
     color="blue",
     variant="light",
     icon=dmc.Text("💡", size={"base": "xs", "sm": "xl"}),
-    p={"base": "xs", "sm": "md"},  # ⬅ smaller padding on mobile
-    #style={"height": "100%"},
+    p={"base": "xs", "sm": "md"},
+    children=[
+        dmc.Accordion(
+            variant="unstyled", # Keeps the look clean inside the alert
+            disableChevronRotation=False,
+            children=[
+                dmc.AccordionItem(
+                    value="details",
+                    children=[
+                        # The Summary (Clickable header)
+                        dmc.AccordionControl(
+                            dmc.Text(
+                                dmc.Skeleton(height=8, radius="xl"),
+                                size="sm",
+                                id="valuation-content"
+                            ),
+                            # Reduces padding to fit better inside Alert
+                            px=0,
+                        ),
+                        # The Hidden Details
+                        dmc.AccordionPanel(
+                            children=[
+                                dmc.Space(h="xs"),
+                                dmc.List(
+                                    [
+                                        dmc.ListItem(
+                                            dmc.Skeleton(height=8, w="70%", radius="xl"),
+                                            id="hype-score-text"
+                                        ),
+                                        dmc.ListItem(
+                                            dmc.Skeleton(height=8, w="70%", radius="xl"),
+                                            id="growth-score-text"
+                                        ),
+                                    ],
+                                    size="sm",
+                                    spacing="xs",
+                                ),
+                                dmc.Space(h="xs"),
+                                dmc.Text(
+                                    dmc.Skeleton(height=8, w="70%", radius="xl"),
+                                    size="sm",
+                                    id="growth-content"
+                                )
+                            ],
+                            px=0,
+                        ),
+                    ],
+                ),
+            ],
+        )
+    ],
 )
 
 # Hype meter visualization (right side)

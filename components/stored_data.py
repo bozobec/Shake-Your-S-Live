@@ -50,6 +50,7 @@ stored_data = dbc.Container(
         dcc.Download(id="download-chart"),  # Component to handle file download
         dcc.Store(id='dataset-selected-url', data=None),
         dcc.Store(id='launch-counter', data={'flag': False}),
+        dcc.Store(id="is-company"), # Boolean storing whether it is a publicly traded company (True) or not (False)
         dcc.Location(id='url', refresh=False)
             ],
     fluid=True)
