@@ -6,6 +6,7 @@ from datetime import datetime
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
 from pyairtable import Api
 from src.API.AirTableAPI import AirTableAPI
@@ -62,9 +63,8 @@ def get_hype_score(driver, company_id):
 
     driver.get(url)
 
-    # Wait for Dash callbacks to fire and popuplate the store
-    # If your app calculates this slowly, increase this time
-    time.sleep(20)
+    # Wait up to 20 seconds, but check every 1 second if the score exists
+    wait = WebDriverWait(driver, 20)
 
     try:
         # EXECUTE JAVASCRIPT
@@ -125,34 +125,35 @@ def update_airtable_record(company_name, score):
         print(f"Failed to write to Airtable: {e}")
 
 
-def job():
-    print(f"--- Starting Weekly Job: {datetime.now()} ---")
-
+def process_batch(company_batch):
     chrome_options = Options()
-    chrome_options.binary_location = os.environ.get("GOOGLE_CHROME_BIN")  # Vital for Heroku
+    chrome_options.binary_location = os.environ.get("GOOGLE_CHROME_BIN")
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.add_argument("--disable-gpu")  # disabling gpu acceleration
+    chrome_options.add_argument("--blink-settings=imagesEnabled=false")  # not loading images
 
-    # Use the binary location in the Service
     driver = webdriver.Chrome(
         service=Service(executable_path=os.environ.get("CHROMEDRIVER_PATH")),
         options=chrome_options
     )
 
     try:
-        for company in COMPANIES:
+        for company in company_batch:
             score = get_hype_score(driver, company)
-
             if score is not None:
                 update_airtable_record(company, score)
-
-            # Short sleep to prevent overwhelming the server/browser
-            time.sleep(2)
-
     finally:
-        driver.quit()
-        print("--- Job Finished ---")
+        driver.quit()  # This physically kills the Chrome process and frees RAM
+
+def job():
+    # Split companies into batches of 5 not to exceed memory
+    batch_size = 5
+    for i in range(0, len(COMPANIES), batch_size):
+        batch = COMPANIES[i:i + batch_size]
+        print(f"Processing batch: {batch}")
+        process_batch(batch)
 
 if __name__ == "__main__":
     job()  # The Heroku Scheduler triggers this
