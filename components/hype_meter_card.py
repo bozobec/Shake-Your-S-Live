@@ -89,8 +89,10 @@ valuation_message = dmc.Alert(
                     children=[
                         # The Summary (Clickable header)
                         dmc.AccordionControl(
-                            dmc.Text(
-                                dmc.Skeleton(height=8, radius="xl"),
+                            dmc.Text([
+                                dmc.Skeleton(height=8, width=450, radius="xl"),
+                                dmc.Skeleton(height=8, width=450, radius="xl"),
+                                dmc.Skeleton(height=8, width=250, radius="xl")],
                                 size="sm",
                                 id="valuation-content"
                             ),
@@ -104,11 +106,11 @@ valuation_message = dmc.Alert(
                                 dmc.List(
                                     [
                                         dmc.ListItem(
-                                            dmc.Skeleton(height=8, w="70%", radius="xl"),
+                                            dmc.Skeleton(height=8, w=150, radius="xl"),
                                             id="hype-score-text"
                                         ),
                                         dmc.ListItem(
-                                            dmc.Skeleton(height=8, w="70%", radius="xl"),
+                                            dmc.Skeleton(height=8, w=150, radius="xl"),
                                             id="growth-score-text"
                                         ),
                                     ],
@@ -132,7 +134,7 @@ valuation_message = dmc.Alert(
 )
 
 # Hype meter visualization (right side)
-hype_meter_visualization = dmc.Stack(
+hype_meter_visualization = dmc.Box(
     children=[
         dmc.Stack([
             dmc.Text("Overvaluation", size="xs", fw=500, ta="right", id="hype-overvaluation-label", m=0),
@@ -147,7 +149,7 @@ hype_meter_visualization = dmc.Stack(
                          src='',
                          style={
                              'height': '20px',  # Fixed height
-                             'width': 'auto',  # Width adjusts automatically to maintain aspect ratio
+                             'width': '60px',  # Width adjusts automatically to maintain aspect ratio
                              'display': 'block',  # Prevents inline spacing issues
                              # 'marginTop': '20px',
                              'maxWidth': '100%',  # Prevents overflow in smaller containers
@@ -162,7 +164,11 @@ hype_meter_visualization = dmc.Stack(
         gap="xs"
         )
     ],
-    gap="md"
+    style={
+            "minHeight": 260,
+            "display": "flex",
+            "alignItems": "stretch",
+        },
 )
 
 # Main card
@@ -384,6 +390,7 @@ hype_meter_card = dmc.Card(
         withBorder=True,
         shadow="sm",
         radius="md",
+        style={"minHeight": 280},
         p={"base": "sm", "sm": "xl"},  # smaller padding on mobile
         m={"base": 5, "sm": "md"},  # tighter outer margin on mobile
     )
