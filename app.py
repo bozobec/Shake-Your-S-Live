@@ -1653,7 +1653,7 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
 
     # All parameters are calculated by ignoring data 1 by 1, taking the history reference as the end point
     df_full = src.ParametersDataFrame.parameters_dataframe(dates[0:data_len],
-                                        users[0:data_len])  # Dataframe containing all parameters with all data ignored
+                                        users[0:data_len])  # Dataframe containing all parameters with all data ignored!
     logger.info(f"{df_full = }")
     df_sorted = src.ParametersDataFrame.parameters_dataframe_cleaning(df_full, users[
                                                             0:data_len])  # Dataframe where inadequate scenarios are eliminated
