@@ -3765,7 +3765,7 @@ def graph_valuation_over_time(valuation_over_time_dict, unit_metric, date_picked
 
 
 
-# Callback to update table based on selection!
+# Callback to update table based on selection
 @app.callback(
     Output("top_25_companies", "children"),
     Input('all-companies-information', 'data'),  # Table of companies
