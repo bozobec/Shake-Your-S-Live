@@ -20,7 +20,7 @@ import plotly.graph_objects as go
 import requests
 import stripe
 from dash import callback
-from dash import html, dcc, callback_context, no_update, clientside_callback
+from dash import html, dcc, callback_context, no_update, clientside_callback, ctx
 from dash.dependencies import Input, Output, State
 from dash.exceptions import PreventUpdate
 from dash_iconify import DashIconify
@@ -51,6 +51,7 @@ from components.ranking_card import table_hype_card
 from components.revenue_card import revenue_card
 from components.stored_data import stored_data
 from components.valuation_card import valuation_card
+from components.notifications_messages import SLIDER_CONFIG
 import components.AppShellNavbar.RastAppShellNavbar as RastAppShellNavbar
 import components.RastDropDownBox.RastDropDownBox as RastDropDownBox
 
@@ -222,7 +223,6 @@ layout_one_column = dmc.AppShell(
                                     p="md",
                                     style={'display': 'none'}
                                 ),
-                                dmc.NotificationContainer(id="notification-container"),
                             ],
                         ),
 
@@ -245,8 +245,23 @@ layout_one_column = dmc.AppShell(
                 html.Div(
                     id="ranking-grid",
                     style={"display": "none"},  # Hidden by default
-                    children=dmc.Grid([
-                        dmc.GridCol([table_hype_card], span={'base': 12, 'sm': 10}),
+                    children=dmc.Grid(
+                        [
+                        dmc.GridCol(
+                            dmc.Stack(
+                                children=[
+                                    dmc.Breadcrumbs(
+                                        id="breadcrumbs-container2",
+                                        px="lg",
+                                        separator="→",
+                                        children=[
+                                            dmc.Anchor("Home", href="/", underline=False, size="sm"),
+                                            dmc.Text("Ranking", size="sm"),
+                                            ]
+                                        ),
+                                    table_hype_card
+                                ]
+                            ), span={'base': 12, 'sm': 10}),
                         dmc.GridCol([quadrant_card], span={'base': 12, 'sm': 10}),
                     ],
                         gutter="xs"
@@ -254,6 +269,8 @@ layout_one_column = dmc.AppShell(
                 ),
                 dash.page_container,
                 stored_data,
+                # Notification containers
+                dmc.NotificationContainer(id="notifications-container"),
             ],
             id="main-content",
             style={
@@ -717,7 +734,7 @@ def toggle_modal(n_clicks, opened):
     Input("dataset-selection", "value")  # Input 2: Dropdown selection
 )
 def sync_url_and_dropdown(url_search, dropdown_value):
-    # This helps break the cycle by identifying the source of the trigger
+    # Identifying the source of the trigger
     ctx = dash.callback_context
 
     # 1. Handle Initial Load
@@ -1600,7 +1617,7 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
     Output(component_id='product-maturity-graph-message', component_property='color'),
     Output(component_id='revenue-graph-message', component_property='children'),  # Prints the revenue graph message
     Output(component_id='revenue-graph-message', component_property='color'),  # Prints the revenue graph message color
-    Output(component_id='range-slider-k', component_property='value'),  # Reset slider value to the best value
+    Output(component_id='range-slider-k', component_property='value', allow_duplicate=True),  # Reset slider value to the best value
     Output("range-arpu-growth", "value", allow_duplicate=True),
     Output("range-discount-rate", "value", allow_duplicate=True),
     Output("range-profit-margin", "value", allow_duplicate=True),
@@ -2179,7 +2196,57 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
            product_maturity_graph_message, product_maturity_graph_message_color, revenue_graph_message, \
            revenue_graph_message_color, growth_slider_value, arpu_growth_slider_value, discount_rate_slider_value, profit_margin_slider_value, growth_score_text, growth_score
 
+# Callback controlling the notification
+@app.callback(
+    Output("notifications-container", "sendNotifications"),
+    Input("range-slider-k", "value"),
+    Input("range-arpu-growth", "value"),
+    Input("range-profit-margin", "value"),
+    Input("range-discount-rate", "value"),
+    Input(component_id='date-picker', component_property='value'),
+    State(component_id='scenarios-sorted', component_property='data'),
+    prevent_initial_call=True
+)
+def notify_slider_change(v1, v2, v3, v4, v5, df_sorted):
+    # Doesn't update if many triggered (i.e. first load)
+    if len(ctx.triggered) > 1 or df_sorted is None:
+        return no_update
+    # Doesn't update if date-picked is today
+    if ctx.triggered == 'date-picker' and v5 == datetime.today().strftime('%Y-%m-%d'):
+        return no_update
+    triggered_id = ctx.triggered_id
 
+    # Formatting if K has changed
+    if triggered_id == 'range-slider-k':
+        current_value_unformatted = df_sorted[v1]['K']
+        if current_value_unformatted >= 1_000_000_000:
+            current_value = f"{current_value_unformatted / 1_000_000_000:.1f}B"
+        elif current_value_unformatted >= 1_000_000:
+            current_value = f"{current_value_unformatted / 1_000_000:.1f}M"
+        elif current_value_unformatted >= 1_000:
+            current_value = f"{current_value_unformatted / 1_000:.1f}K"
+        else:
+            current_value = f"{current_value_unformatted:,.0f}"
+    elif triggered_id == 'date-picker':
+        current_value = ctx.triggered[0]['value']
+    else:
+        current_value = f"{ctx.triggered[0]['value']}%"
+
+    # Get config for the specific slider
+    config = SLIDER_CONFIG.get(triggered_id)
+    # This ensures a new bubble pops up with the current value
+    unique_notification_id = f"{triggered_id}-{time.time()}"
+
+    # Return a list of dictionaries as per latest DMC spec
+    return [{
+        "id": unique_notification_id,  # Unique ID prevents notification stacking
+        "title": config["title"],
+        "message": f"{config['message']} \n Current Value: {current_value}",
+        "action": "show",  # "show" creates or updates if the ID exists
+        "icon": DashIconify(icon=config["icon"]),
+        "color": config["color"],
+        "autoClose": 5000,
+    }]
 @app.callback([
     Output(component_id='main-graph1', component_property='figure'),  # Update graph 1
     Output(component_id='revenue-graph', component_property='figure'),  # Update graph 1

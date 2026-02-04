@@ -25,7 +25,7 @@ slider_k = dmc.Slider(
             size="sm",
             disabled=True,
             showLabelOnHover=False,
-            color="#4dabf7",
+            color="#F963F1",
             )
 
 # ARPU growth slider
@@ -36,7 +36,7 @@ slider_arpu_growth = dmc.Slider(
             max=15,
             value=2,
             step=0.1,
-            color='green',
+            color='#953AF6',
             marks=[
                 {"value": 0, "label": "0%"},
                 {"value": 5, "label": "5%"},
@@ -64,6 +64,7 @@ slider_profit_margin = dmc.Slider(
             size="sm",
             disabled=False,
             showLabelOnHover=False,
+            color="#4946F2",
             precision=2,
             step=0.1,
             )
@@ -84,6 +85,7 @@ slider_discount_rate = dmc.Slider(
             disabled=False,
             showLabelOnHover=False,
             precision=2,
+            color="#38C8F3"
             )
 
 datepicker = html.Div(
