@@ -1,3 +1,4 @@
+import dash_mantine_components as dmc
 # Configuration mapping for custom messages and styles, depending on which slide was triggered
 SLIDER_CONFIG = {
     "range-slider-k": {
@@ -28,8 +29,9 @@ SLIDER_CONFIG = {
     },
     "date-picker": {
         "title": "New date selected",
-        "message": "You're back in time! See how our model performed in the past.",
-        "color": "#38C8F3",
-        "icon": "tabler:cash"
+        "message": "You're back in time! See how our model performed in the past. "
+                   "For now, only the growth is shown (not the valuation at the time)",
+        "color": "#4BF250",
+        "icon": "stash:data-date"
     }
 }

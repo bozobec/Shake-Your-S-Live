@@ -2241,7 +2241,7 @@ def notify_slider_change(v1, v2, v3, v4, v5, df_sorted):
     return [{
         "id": unique_notification_id,  # Unique ID prevents notification stacking
         "title": config["title"],
-        "message": f"{config['message']} \n Current Value: {current_value}",
+        "message": dmc.Text(f"{config['message']} \n Current Value: {current_value}", size="sm", fw=400),
         "action": "show",  # "show" creates or updates if the ID exists
         "icon": DashIconify(icon=config["icon"]),
         "color": config["color"],
