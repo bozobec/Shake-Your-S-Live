@@ -1513,17 +1513,17 @@ def set_history_size(dropdown_value, imported_df, df_all_companies):
             if current_annual_profit_margin > 1:
                 value_profit_margin_slider = float(current_annual_profit_margin)
                 marks_profit_margin_slider = [
-                    {"value": 2, "label": "2%"},
-                    {"value": max_net_margin, "label": "MAX"},
-                    {"value": 50, "label": "50%"},
+                    {"value": 2, "label": dmc.Text("2%", size="sm", fw=500)},
+                    {"value": max_net_margin, "label": dmc.Text("MAX", size="sm", fw=500)},
+                    {"value": 50, "label": dmc.Text("50%", size="sm", fw=500)},
                 ]
                 text_profit_margin = "Latest annual profit margin: " + str(current_annual_profit_margin) + "% 🤩"
 
             else:
                 marks_profit_margin_slider = [
-                    {"value": 2, "label": "2%"},
-                    {"value": max_net_margin, "label": "MAX"},
-                    {"value": 50, "label": "50%"},
+                    {"value": 2, "label": dmc.Text("2%", size="sm", fw=500)},
+                    {"value": max_net_margin, "label": dmc.Text("MAX", size="sm", fw=500)},
+                    {"value": 50, "label": dmc.Text("50%", size="sm", fw=500)},
                 ]
                 value_profit_margin_slider = max_net_margin
                 text_profit_margin = "Latest annual profit margin: " + str(current_annual_profit_margin) + "% 😰"
@@ -1979,56 +1979,56 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
     if k_scenarios[-1] >= 1_000_000_000:  # If the max value of the slider is over 1 B
         if highest_r2_index >= max_limit_slider_label:  # If the best = max, then display them side by side
             marks_slider = [
-                {"value": data_ignored_array[0], "label": f"{k_scenarios[0] / 1000000000:.1f}B"},
+                {"value": data_ignored_array[0], "label": dmc.Text(f"{k_scenarios[0] / 1000000000:.1f}B", size="sm", fw=500)},
                 {"value": highest_r2_index},
-                {"value": data_ignored_array[-1], "label": f"★{k_scenarios[-1] / 1000000000:.1f}B"},
+                {"value": data_ignored_array[-1], "label": dmc.Text(f"★{k_scenarios[-1] / 1000000000:.1f}B", size="sm", fw=500)},
             ]
         elif highest_r2_index <= min_limit_slider_label:  # If the best = min, then display them side by side
             marks_slider = [
-                {"value": data_ignored_array[0], "label": f"{k_scenarios[0] / 1000000000:.1f}B ★"},
+                {"value": data_ignored_array[0], "label": dmc.Text(f"{k_scenarios[0] / 1000000000:.1f}B ★", size="sm", fw=500)},
                 {"value": highest_r2_index},
-                {"value": data_ignored_array[-1], "label": f"{k_scenarios[-1] / 1000000000:.1f}B"},
+                {"value": data_ignored_array[-1], "label": dmc.Text(f"{k_scenarios[-1] / 1000000000:.1f}B", size="sm", fw=500)},
             ]
         else:
             marks_slider = [
-                {"value": data_ignored_array[0], "label": f"{k_scenarios[0] / 1000000000:.1f}B"},
+                {"value": data_ignored_array[0], "label": dmc.Text(f"{k_scenarios[0] / 1000000000:.1f}B", size="sm", fw=500)},
                 {"value": highest_r2_index, "label": "★"},
-                {"value": data_ignored_array[-1], "label": f"{k_scenarios[-1] / 1000000000:.1f}B"},
+                {"value": data_ignored_array[-1], "label": dmc.Text(f"{k_scenarios[-1] / 1000000000:.1f}B", size="sm", fw=500)},
             ]
     elif k_scenarios[-1] >= 1_000_000:
         if highest_r2_index >= max_limit_slider_label:
             marks_slider = [
-                {"value": data_ignored_array[0], "label": f"{k_scenarios[0] / 1000000:.0f}M"},
-                {"value": data_ignored_array[-1], "label": f"★{k_scenarios[-1] / 1000000:.0f}M"},
+                {"value": data_ignored_array[0], "label": dmc.Text(f"{k_scenarios[0] / 1000000:.0f}M", size="sm", fw=500)},
+                {"value": data_ignored_array[-1], "label": dmc.Text(f"★{k_scenarios[-1] / 1000000:.0f}M", size="sm", fw=500)},
             ]
         elif highest_r2_index <= min_limit_slider_label:
             marks_slider = [
-                {"value": data_ignored_array[0], "label": f"{k_scenarios[0] / 1000000:.0f}M ★"},
-                {"value": data_ignored_array[-1], "label": f"{k_scenarios[-1] / 1000000:.0f}M"},
+                {"value": data_ignored_array[0], "label": dmc.Text(f"{k_scenarios[0] / 1000000:.0f}M ★", size="sm", fw=500)},
+                {"value": data_ignored_array[-1], "label": dmc.Text(f"{k_scenarios[-1] / 1000000:.0f}M", size="sm", fw=500)},
             ]
         else:
             marks_slider = [
-                {"value": data_ignored_array[0], "label": f"{k_scenarios[0] / 1000000:.0f}M"},
+                {"value": data_ignored_array[0], "label": dmc.Text(f"{k_scenarios[0] / 1000000:.0f}M", size="sm", fw=500)},
                 {"value": highest_r2_index, "label": "★"},
-                {"value": data_ignored_array[-1], "label": f"{k_scenarios[-1] / 1000000:.0f}M"},
+                {"value": data_ignored_array[-1], "label": dmc.Text(f"{k_scenarios[-1] / 1000000:.0f}M", size="sm", fw=500)},
             ]
 
     else:  # If K max smaller than 1 million
         if highest_r2_index >= max_limit_slider_label:
             marks_slider = [
-                {"value": data_ignored_array[0], "label": f"{k_scenarios[0] / 1000:.0f}K"},
-                {"value": data_ignored_array[-1], "label": f"★{k_scenarios[-1] / 1000:.0f}K"},
+                {"value": data_ignored_array[0], "label": dmc.Text(f"{k_scenarios[0] / 1000:.0f}K", size="sm", fw=500)},
+                {"value": data_ignored_array[-1], "label": dmc.Text(f"★{k_scenarios[-1] / 1000:.0f}K", size="sm", fw=500)},
             ]
         elif highest_r2_index <= min_limit_slider_label:
             marks_slider = [
-                {"value": data_ignored_array[0], "label": f"{k_scenarios[0] / 1000:.0f}K ★"},
-                {"value": data_ignored_array[-1], "label": f"{k_scenarios[-1] / 1000:.0f}K"},
+                {"value": data_ignored_array[0], "label": dmc.Text(f"{k_scenarios[0] / 1000:.0f}K ★", size="sm", fw=500)},
+                {"value": data_ignored_array[-1], "label": dmc.Text(f"{k_scenarios[-1] / 1000:.0f}K", size="sm", fw=500)},
             ]
         else:
             marks_slider = [
-                {"value": data_ignored_array[0], "label": f"{k_scenarios[0] / 1000:.0f}K"},
+                {"value": data_ignored_array[0], "label": dmc.Text(f"{k_scenarios[0] / 1000:.0f}K", size="sm", fw=500)},
                 {"value": highest_r2_index, "label": "★"},
-                {"value": data_ignored_array[-1], "label": f"{k_scenarios[-1] / 1000:.0f}K"},
+                {"value": data_ignored_array[-1], "label": dmc.Text(f"{k_scenarios[-1] / 1000:.0f}K", size="sm", fw=500)},
             ]
 
     # Financial Values Calculation

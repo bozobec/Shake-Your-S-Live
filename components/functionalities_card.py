@@ -38,10 +38,10 @@ slider_arpu_growth = dmc.Slider(
             step=0.1,
             color='#953AF6',
             marks=[
-                {"value": 0, "label": "0%"},
-                {"value": 5, "label": "5%"},
-                {"value": 10, "label": "10%"},
-                {"value": 15, "label": "15%"},
+                {"value": 0, "label": dmc.Text("0%", size="sm", fw=500)},
+                {"value": 5, "label": dmc.Text("5%", size="sm", fw=500)},
+                {"value": 10, "label": dmc.Text("10%", size="sm", fw=500)},
+                {"value": 15, "label": dmc.Text("15%", size="sm", fw=500)},
             ],
             size="sm",
             disabled=False,
@@ -55,10 +55,10 @@ slider_profit_margin = dmc.Slider(
             min=1,
             max=60,
             marks=[
-                {"value": 2, "label": "2%"},
-                {"value": 10, "label": "10%"},
-                {"value": 20, "label": "20%"},
-                {"value": 50, "label": "50%"}
+                {"value": 2, "label": dmc.Text("2%", size="sm", fw=500)},
+                {"value": 10, "label": dmc.Text("10%", size="sm", fw=500)},
+                {"value": 20, "label": dmc.Text("20%", size="sm", fw=500)},
+                {"value": 50, "label": dmc.Text("50%", size="sm", fw=500)}
                 ],
             value=20,
             size="sm",
@@ -77,9 +77,9 @@ slider_discount_rate = dmc.Slider(
             value=10,
             step=0.1,
             marks=[
-                {"value": 2, "label": "2%"},
-                {"value": 10, "label": "10%"},
-                {"value": 20, "label": "20%"},
+                {"value": 2, "label": dmc.Text("2%", size="sm", fw=500)},
+                {"value": 10, "label": dmc.Text("10%", size="sm", fw=500)},
+                {"value": 20, "label": dmc.Text("20%", size="sm", fw=500)},
             ],
             size="sm",
             disabled=False,
