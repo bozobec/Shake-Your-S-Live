@@ -1009,7 +1009,7 @@ def initialize_data(dropdown_selection, path, pro_user_state):
     selected_row = df_all_companies_information[df_all_companies_information['Company Name'] == dropdown_selection]
 
     OFFSET_LOG_SCALE = 3
-    is_company = True  # initialization with default value
+    is_company = True  #  initialization with default value
 
     if dropdown_selection is not None:
         # 1. Initialize variables with default values
