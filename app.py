@@ -940,6 +940,7 @@ def initialize_data(dropdown_selection, path, pro_user_state):
     y1 = max(hype_score)
     #y_mid = np.sqrt(y_min * y1)
     y_mid = (y_min**weight) * (y1**(1-weight))
+    #y_mid = 3.38
     x_mid = 0.35
 
     # Convert to log10 exponents for positioning
