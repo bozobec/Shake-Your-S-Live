@@ -18,7 +18,7 @@ pricing_layout = dmc.Container([
     dmc.Grid([
         dmc.GridCol(
             span=8,
-            offset=1,  # Centers the 10-column content
+            offset=1,  # Centers the 10-column content.
             children=[
                 dmc.Stack([
                     # Welcome Alert
