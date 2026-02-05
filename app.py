@@ -2409,13 +2409,34 @@ def graph_update(data_slider, date_picked_formatted_original, df_dataset_dict, d
         dmc.Text("The yellow zone ", span=True, c="#C48501", fw=600), "is our forecast range, " \
                                                                       "showing how this driver should evolve in the future. These drivers follow an S-curve: " \
                                                                       "fast growth at first, then a gradual slowdown.\n" \
-                                                                      " With the selected growth, the",
-        dmc.Text(" plateau ", span=True, c="#953BF6", fw=600), past_tense,
-        dmc.Text(src.Utils.dates.string_formatting_to_date(time_selected_growth) + ", projected at " \
-                 + str(plateau_selected_growth) + " " + str(graph_unit), span=True, c="#953BF6", fw=600),
+                                                                      " With the selected growth, the ",
+        dmc.Tooltip(
+            dmc.Text(" plateau ", span=True, c="#953BF6", fw=600),
+            label=dmc.Text("The 'plateau' means the end of the growth, the end of the S-Curve. "
+                  "Investors tend to freak out when the end of the growth is reached. "
+                  "We can predict it in a better way than simply looking at the revenue.", fw=500),
+            w=270,
+            multiline=True,
+            arrowPosition="side",
+            arrowOffset=11,
+            arrowSize=6,
+            arrowRadius=2,
+            boxWrapperProps={"style": {"display": "inline-block"}}
+        ), past_tense,
+        dmc.Tooltip(
+            dmc.Text(src.Utils.dates.string_formatting_to_date(time_selected_growth) + ", projected at " \
+                     + str(plateau_selected_growth) + " " + str(graph_unit), span=True, c="#953BF6", fw=600),
+            label=dmc.Text("This date changes depending on the scenario you pick in the scenario analysis ➡️", fw=500),
+            w=270,
+            multiline=True,
+            arrowPosition="side",
+            arrowOffset=11,
+            arrowSize=6,
+            arrowRadius=2,
+            boxWrapperProps={"style": {"display": "inline-block"}}
+        ),
     ],
         size="sm",
-        # fw=300,
     )
 
     # Build Main Chart
