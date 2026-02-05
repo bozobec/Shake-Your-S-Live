@@ -2205,16 +2205,24 @@ def load_data(dropdown_value, date_picked, scenario_value, df_dataset_dict,
     Input("range-discount-rate", "value"),
     Input(component_id='date-picker', component_property='value'),
     State(component_id='scenarios-sorted', component_property='data'),
+    State("scenarios-picker", "value"),
     prevent_initial_call=True
 )
-def notify_slider_change(v1, v2, v3, v4, v5, df_sorted):
-    # Doesn't update if many triggered (i.e. first load)
-    if len(ctx.triggered) > 1 or df_sorted is None:
+def notify_slider_change(v1, v2, v3, v4, v5, df_sorted, scenario_selected):
+    # 1. Detect the "Initial Load" (Batch Trigger)
+    # We check the length of ctx.triggered (the list), not the triggered_id (the string)
+    if len(ctx.triggered) > 1:
+        triggered_id = "data-loaded"
+    else:
+        triggered_id = ctx.triggered_id
+
+    # 2. Safety Checks
+    if df_sorted is None:
         return no_update
-    # Doesn't update if date-picked is today
-    if ctx.triggered == 'date-picker' and v5 == datetime.today().strftime('%Y-%m-%d'):
+
+    # Prevent notification if date-picker is today
+    if triggered_id == 'date-picker' and v5 == datetime.today().strftime('%Y-%m-%d'):
         return no_update
-    triggered_id = ctx.triggered_id
 
     # Formatting if K has changed
     if triggered_id == 'range-slider-k':
@@ -2229,6 +2237,11 @@ def notify_slider_change(v1, v2, v3, v4, v5, df_sorted):
             current_value = f"{current_value_unformatted:,.0f}"
     elif triggered_id == 'date-picker':
         current_value = ctx.triggered[0]['value']
+    elif triggered_id == "data-loaded":
+        if scenario_selected == "Nerd mode":
+            current_value = "Custom scenario selected"
+        else:
+            current_value = scenario_selected + " scenario"
     else:
         current_value = f"{ctx.triggered[0]['value']}%"
 

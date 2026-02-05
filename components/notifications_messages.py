@@ -33,5 +33,11 @@ SLIDER_CONFIG = {
                    "For now, only the growth is shown (not the valuation at the time)",
         "color": "#4BF250",
         "icon": "stash:data-date"
+    },
+    "data-loaded": {
+        "title": "Data loaded",
+        "message": "",
+        "color": "#4BF250",
+        "icon": "lets-icons:check-fill"
     }
 }
