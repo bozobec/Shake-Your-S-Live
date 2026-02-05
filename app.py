@@ -1165,7 +1165,7 @@ def initialize_data(dropdown_selection, path, pro_user_state):
                                 "<extra></extra>"  # Removes the secondary trace box
                         ),
                         textposition="bottom center",
-                        name="Competitors",
+                        name="Related Firms",
                         mode="markers+text",
                         textfont=dict(size=8),
                         marker=dict(
@@ -1220,9 +1220,15 @@ def initialize_data(dropdown_selection, path, pro_user_state):
                     legend=dict(
                         orientation="v",  # "h" for horizontal, "v" for vertical
                         yanchor="top",
-                        y=1.15,  # Places legend above the chart
+                        y=0.95,  # Places legend in the chart
                         xanchor="right",
-                        x=1
+                        x=1,
+                        # Separation
+                        bgcolor = "rgba(255, 255, 255, 0.8)",  # Semi-transparent white
+                        bordercolor = "Gray",  # Distinct boundary
+                        borderwidth = 1,  # 1px border
+                        #title_text = "<b>Categories</b>",  # Explicit title
+                        itemsizing = "constant",  # Makes legend dots a fixed size
                     ),
                     xaxis=dict(
                         title="Growth potential",

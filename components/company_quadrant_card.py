@@ -71,7 +71,7 @@ company_quadrant_card = dmc.Card(children=[
             dmc.Stack([
                 dmc.Group(
                     [
-                        dmc.Title("Compared to other companies", order=5),
+                        dmc.Title("Compared to similar companies", order=5),
                         dcc.Link(
                             dmc.Button(
                                 "See all companies",
