@@ -933,12 +933,14 @@ def initialize_data(dropdown_selection, path, pro_user_state):
     fig = go.Figure()
 
     # Midpoints for quadrants (here using 0.5, adjust if needed, 1.386 for y because log1p(1+2)
+    weight = 0.7 # Weight lowering the horizontal line for y_mid to exclude more companies from undervalued gems
     # x_mid, y_mid = 0.5, 1.386
     # x_mid, y_mid = 0.5, max(hype_score)/2
     y_min = min(hype_score)
     y1 = max(hype_score)
-    y_mid = np.sqrt(y_min * y1)
-    x_mid = 0.3
+    #y_mid = np.sqrt(y_min * y1)
+    y_mid = (y_min**weight) * (y1**(1-weight))
+    x_mid = 0.35
 
     # Convert to log10 exponents for positioning
     log_y_min = np.log10(y_min)
