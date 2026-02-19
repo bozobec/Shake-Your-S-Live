@@ -42,7 +42,7 @@ def create(labels):
                         "backgroundColor": "#5c7cfa",
                         "color": "white",
                     },
-                    "fontWeight": "300",
+                    "fontWeight": "400",
                 },
             },
             nothingFoundMessage="We don't have this company yet!",

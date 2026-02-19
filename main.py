@@ -72,19 +72,19 @@ def hype_meter_indicator_values_new(hype_score: float) -> (str, str):
     :return:
     """
     if hype_score > 2.5:
-        badge_color = "red"
+        badge_color = "#fa5252"
         badge_label = "Super hyped"
     elif hype_score > 1.5:
-        badge_color = "orange"
+        badge_color = "#fd7e14"
         badge_label = "Mildly hyped"
     elif hype_score > 1:
-        badge_color = "yellow"
+        badge_color = "#fab005"
         badge_label = "Marginally hyped"
     elif hype_score > 0:
-        badge_color = "green"
+        badge_color = "#40c057"
         badge_label = "Fairly priced"
     else:
-        badge_color = "teal"
+        badge_color = "#12b886"
         badge_label = "Undervalued"
     return badge_color, badge_label
 
@@ -96,16 +96,16 @@ def growth_meter_indicator_values(growth_score: float) -> (str, str):
     :return: badge_color and badge_label depending on growth score
     """
     if growth_score > 0.5:
-        badge_color_growth = "teal"
+        badge_color_growth = "#12b886"
         badge_label_growth = "Massive growth"
     elif growth_score > 0.3:
-        badge_color_growth = "green"
+        badge_color_growth = "#40c057"
         badge_label_growth = "Strong growth"
     elif growth_score > 0.1:
-        badge_color_growth = "yellow"
+        badge_color_growth = "#fab005"
         badge_label_growth = "Limited growth"
     else:
-        badge_color_growth = "red"
+        badge_color_growth = "#fa5252"
         badge_label_growth = "Poor growth"
     return badge_color_growth, badge_label_growth
 

@@ -3875,7 +3875,7 @@ def graph_valuation_over_time(valuation_over_time_dict, unit_metric, date_picked
            valuation_accordion_message, valuation_graph_color, valuation_icon_color, hype_score, hype_score_text, growth_description, badge_color, badge_label
 
 
-
+'''
 # Callback to update table based on selection
 @app.callback(
     Output("top_25_companies", "children"),
@@ -4013,6 +4013,51 @@ def update_table(df_all_companies, hype_choice, industries, logged_in, pro_user)
     logger.info(f" Real time: {t2[0] - t1[0]:.2f} seconds")
     logger.info(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
     return header + body
+'''
+
+@app.callback(
+    Output("top_25_companies_new", "rowData"),  # Only update rowData, not children
+    Input('all-companies-information', 'data'),
+    Input('hyped-table-industry', 'value'),
+    Input("login-state", "data"),
+    State('pro-user-state', 'data'),
+)
+def update_table(df_all_companies, industries, logged_in, pro_user):
+    if df_all_companies is None:
+        raise PreventUpdate
+
+    # 1. Quick environment check
+    if os.getenv("IS_PRODUCTION") == "false":
+        return no_update
+
+    # 2. Convert to DataFrame for easier manipulation
+    df = pd.DataFrame(df_all_companies)
+
+    # 3. Filter Industry
+    if industries:
+        df = df[df["Industry"].isin(industries)]
+
+    # 4. Handle Pro-User Logic (Masking names)
+    if not pro_user:
+        df["Company Name"] = "Nope, still not pro amigo"
+        # If not pro, perhaps don't sort by Hype?
+        # (Keeping your original logic: only sort if pro_user)
+
+    # 6. Add metadata for the Custom Renderers (Colors/Labels)
+    # We do this calculation here so the JavaScript renderer knows what color to pick
+    def get_hype_meta(val):
+        color, label = main.hype_meter_indicator_values_new(val)
+        return {"color": color, "label": label}
+
+    def get_growth_meta(val):
+        color, label = main.growth_meter_indicator_values(val)
+        return {"color": color, "label": label}
+
+    df["hype_meta"] = df["Hype Score"].apply(get_hype_meta)
+    df["growth_meta"] = df["Growth Score"].apply(get_growth_meta)
+    df["industry_icon"] = df["Industry"].apply(main.get_industry_icon)
+
+    return df.to_dict("records")
 
 
 if __name__ == '__main__':
