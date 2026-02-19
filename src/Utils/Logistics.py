@@ -16,15 +16,15 @@ def logisticfunction(k, r, p0, dates):
     :param dates:
     :return:
     """
-    # y = (k*p0*np.exp(r*dates))/(k+p0*(np.exp(r*dates)-1))  OLD METHOD
-    y = np.zeros(len(dates))
-    for i in range(len(dates)):
-        try:
-            y[i] = (k * p0 * np.exp(r * dates[i])) / (k + p0 * (np.exp(r * dates[i]) - 1))
-        except:
-            y[i] = 0
-            logger.info("Log function could not be computed with the following parameters")
-            logger.info(f"k = {k}; r = {r}; p0 = {p0}")
+    dates = np.asarray(dates, dtype=float)
+    exp_r_dates = np.exp(r * dates)
+    denominator = k + p0 * (exp_r_dates - 1)
+    with np.errstate(divide='ignore', invalid='ignore'):
+        y = np.where(denominator != 0, (k * p0 * exp_r_dates) / denominator, 0.0)
+    if np.any(np.isnan(y) | np.isinf(y)):
+        y = np.nan_to_num(y, nan=0.0, posinf=0.0, neginf=0.0)
+        logger.info("Log function could not be computed with the following parameters")
+        logger.info(f"k = {k}; r = {r}; p0 = {p0}")
     return y
 
 
