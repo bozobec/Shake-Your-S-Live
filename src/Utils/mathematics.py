@@ -26,10 +26,7 @@ def linear_regression(users, revenue):
     x = users.reshape(-1, 1)
     y = revenue.reshape(-1, 1)
     regression = reg.fit(x, y)
-    coefficient = regression.coef_
-    intercept = regression.intercept_
     r_squared = regression.score(x, y)
-    # revenue_predicted = predict(revenue)
 
     return r_squared
 
@@ -174,6 +171,7 @@ def logistic_function_approximation(dates, users):
         k_carrying_capacity = 0
     else:
         k_carrying_capacity = float(-intercept / coefficient)
+
 
     # Nested function to be created to calculate different P0, initial population
     def p0_function(usersp, datesp, k, r):
