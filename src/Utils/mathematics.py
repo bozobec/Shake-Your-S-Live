@@ -132,12 +132,8 @@ def logistic_parameters_given_K(dates, users, k):
     intercept = coefficient * (user_interval[0])  # The final intercept is found by computing the function for x=K
     r_growth_rate = float(intercept)
 
-    def p0_function(usersp, datesp, k, r):
-        p0 = usersp * k / (-usersp * (np.exp(r * datesp) - 1) + k * np.exp(r * datesp))
-        return p0
-
-    p0_all_func = np.vectorize(p0_function)
-    p0_all = p0_all_func(users, dates, k, r_growth_rate)
+    exp_r_dates = np.exp(r_growth_rate * dates)
+    p0_all = users * k / (-users * (exp_r_dates - 1) + k * exp_r_dates)
     p0_initialusers = np.mean(p0_all)
 
     # Rsquare calculation
@@ -173,13 +169,9 @@ def logistic_function_approximation(dates, users):
         k_carrying_capacity = float(-intercept / coefficient)
 
 
-    # Nested function to be created to calculate different P0, initial population
-    def p0_function(usersp, datesp, k, r):
-        p0 = usersp * k / (-usersp * (np.exp(r * datesp) - 1) + k * np.exp(r * datesp))
-        return p0
-
-    p0_all_func = np.vectorize(p0_function)
-    p0_all = p0_all_func(users, dates, k_carrying_capacity, r_growth_rate)
+    # Calculate P0 (initial population) using broadcasted NumPy expression
+    exp_r_dates = np.exp(r_growth_rate * dates)
+    p0_all = users * k_carrying_capacity / (-users * (exp_r_dates - 1) + k_carrying_capacity * exp_r_dates)
     p0_initialusers = np.mean(p0_all)
     return k_carrying_capacity, r_growth_rate, p0_initialusers
 
