@@ -1,4 +1,5 @@
 import os
+import time
 from collections import defaultdict
 
 import pandas as pd
@@ -14,14 +15,23 @@ logger.info(f"Airtable key loaded: {bool(os.getenv('AIRTABLE_API_KEY'))}")
 
 # ToDo: make pretty urls
 
+# Cache TTL constants (seconds)
+_LABELS_TTL = 3600        # 1 hour — label list changes rarely
+_DATA_TTL = 300           # 5 minutes — company time-series
+_HYPED_TTL = 300          # 5 minutes — ranking/company metadata
+
 
 class AirTableAPI:
     _instance = None
     AIRTABLE_API_KEY = os.getenv("AIRTABLE_API_KEY")
     _labels = None
+    _labels_ts = 0.0                  # timestamp of last fetch
     _data = {}
+    _data_ts = {}                     # per-company fetch timestamps
     _hyped_companies = {}
+    _hyped_companies_ts = {}          # per-key fetch timestamps
     _hyped_companies_data = None
+    _hyped_companies_data_ts = 0.0    # timestamp of last fetch
 
     def __new__(cls, *args, **kwargs):
         """
@@ -103,16 +113,17 @@ class AirTableAPI:
     def get_labels(cls):
         """
         Checks if the labels have already been downloaded and returns it. If not, it will go and fetch it.
+        Re-fetches when the cached value is older than _LABELS_TTL seconds.
         :return:
         """
-        if cls._labels is None:
-            logger.info("Dataset labels not yet fetched. Starting fetch")
+        if cls._labels is None or (time.time() - cls._labels_ts) > _LABELS_TTL:
+            logger.info("Dataset labels not yet fetched or cache expired. Starting fetch")
             try:
                 cls._labels = cls._get_airtable_labels()
+                cls._labels_ts = time.time()
                 logger.info("Label fetching successful.")
             except:
                 logger.exception("Exception while fetching AirTable dataset labels")
-
         else:
             logger.info("Dataset labels already fetched. Using cached data")
 
@@ -169,20 +180,19 @@ class AirTableAPI:
     def get_data(cls, company: str) -> pd.DataFrame:
         """
         Check if company data has already been downloaded. If so returns it, if not it will go and fetch it from
-        AirTable. Returns a pandas DataFrame
+        AirTable. Re-fetches when the cached value is older than _DATA_TTL seconds.
         :param company: string of the company
         :return: pandas DataFrame of the company data.
         """
-        if company not in cls._data.keys():
-            # we need to go and fetch it
-            logger.info(f"{company} data not yet fetched. Starting fetch")
+        cache_expired = (time.time() - cls._data_ts.get(company, 0.0)) > _DATA_TTL
+        if company not in cls._data or cache_expired:
+            logger.info(f"{company} data not yet fetched or cache expired. Starting fetch")
             try:
                 cls._data[company] = cls._get_airtable_data(company)
+                cls._data_ts[company] = time.time()
                 logger.info(f"{company} data fetching successful")
-
             except:
                 logger.exception(f"Exception while fetching {company} data: ")
-
         else:
             logger.info(f"{company} data already fetched. Using cached data")
 
@@ -239,20 +249,19 @@ class AirTableAPI:
     def get_hyped_companies(cls, hyped: bool) -> pd.DataFrame:
         """
         Checks if hyped/not hyped data has been downloaded. If so returns it, if not it will go and fetch it from
-        AirTable. Returns a pandas DataFrame
+        AirTable. Re-fetches when the cached value is older than _HYPED_TTL seconds.
         :param hyped: bool if hyped or not hyped
         :return: pandas DataFrame.
-                """
-        if hyped not in cls._hyped_companies.keys():
-            # we need to go and fetch it
-            logger.info(f"{'hyped' if hyped else 'not hyped'} company data not yet fetched. Starting fetch")
+        """
+        cache_expired = (time.time() - cls._hyped_companies_ts.get(hyped, 0.0)) > _HYPED_TTL
+        if hyped not in cls._hyped_companies or cache_expired:
+            logger.info(f"{'hyped' if hyped else 'not hyped'} company data not yet fetched or cache expired. Starting fetch")
             try:
                 cls._hyped_companies[hyped] = cls._get_hyped_companies(hyped)
+                cls._hyped_companies_ts[hyped] = time.time()
                 logger.info(f"{'hyped' if hyped else 'not hyped'} company data fetching successful")
-
             except:
                 logger.exception(f"Exception while fetching {'hyped' if hyped else 'not hyped'} company data: ")
-
         else:
             logger.info(f"{'hyped' if hyped else 'not hyped'} company data already fetched. Using cached data")
 
@@ -322,20 +331,18 @@ class AirTableAPI:
     def get_hyped_companies_data(cls) -> pd.DataFrame:
         """
         Checks if hyped company data has been downloaded. If so returns it, if not it will go and fetch it from
-        AirTable. Returns a pandas DataFrame
+        AirTable. Re-fetches when the cached value is older than _HYPED_TTL seconds.
         :return:
         """
-
-        if cls._hyped_companies_data is None:
-            # we need to go and fetch it
-            logger.info("hyped_companies data not yet fetched. Starting fetch")
+        cache_expired = (time.time() - cls._hyped_companies_data_ts) > _HYPED_TTL
+        if cls._hyped_companies_data is None or cache_expired:
+            logger.info("hyped_companies data not yet fetched or cache expired. Starting fetch")
             try:
                 cls._hyped_companies_data = cls._get_hyped_companies_data()
+                cls._hyped_companies_data_ts = time.time()
                 logger.info("hyped_companies data fetching successful")
-
             except:
                 logger.exception(f"Exception while fetching hyped_companies data: ")
-
         else:
             logger.info("hyped_companies data already fetched. Using cached data")
 

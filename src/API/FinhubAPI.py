@@ -1,3 +1,4 @@
+import time
 from datetime import datetime
 
 import requests
@@ -7,14 +8,22 @@ from src.Utils.RastLogger import get_default_logger
 
 logger = get_default_logger()
 
+# Cache TTL constants (seconds)
+_MARKETCAP_TTL = 300           # 5 minutes — market cap changes frequently
+_REVENUE_TTL = 86400           # 24 hours — quarterly revenue changes rarely
+_PROFIT_MARGIN_TTL = 86400     # 24 hours — annual metric, changes rarely
+
 
 class FinhubAPI:
     _instance = None
     _base_url = "https://finnhub.io/api/v1/"
     _auth_token = "clmplq1r01qjj8i8s6ugclmplq1r01qjj8i8s6v0"  # Free token visible here: https://finnhub.io/dashboard
     _marketcap = {}
+    _marketcap_ts = {}                # per-symbol fetch timestamps
     _previous_quarter_revenue = {}
+    _previous_quarter_revenue_ts = {} # per-symbol fetch timestamps
     _profit_margin = {}
+    _profit_margin_ts = {}            # per-symbol fetch timestamps
 
 
     def __new__(cls, *args, **kwargs):
@@ -53,20 +62,19 @@ class FinhubAPI:
     def get_marketcap(cls, symbol_input) -> float:
         """
         Check if current marketcap has already been fetched, if so returns the cached value, else will go and fetch it.
+        Re-fetches when the cached value is older than _MARKETCAP_TTL seconds.
         :param symbol_input:
         :return:
         """
-
-        if symbol_input not in cls._marketcap.keys():
-            logger.info(f"Current marketcap for {symbol_input} not yet fetched. Starting fetch")
-
+        cache_expired = (time.time() - cls._marketcap_ts.get(symbol_input, 0.0)) > _MARKETCAP_TTL
+        if symbol_input not in cls._marketcap or cache_expired:
+            logger.info(f"Current marketcap for {symbol_input} not yet fetched or cache expired. Starting fetch")
             try:
                 cls._marketcap[symbol_input] = cls._get_marketcap(symbol_input)
+                cls._marketcap_ts[symbol_input] = time.time()
                 logger.info(f"Current marketcap for {symbol_input} fetched successfully")
-
             except:
                 logger.exception(f"Exception while fetching marketcap for {symbol_input}: ")
-
         else:
             logger.info(f"Current marketcap for {symbol_input} already fetched. Using cached data")
 
@@ -125,21 +133,20 @@ class FinhubAPI:
     @classmethod
     def get_previous_quarter_revenue(cls, symbol_input):
         """
-        Checks if quarter data has been cached, if so will return it,  if not goes and fetches it.
+        Checks if quarter data has been cached, if so will return it, if not goes and fetches it.
+        Re-fetches when the cached value is older than _REVENUE_TTL seconds.
         :param symbol_input:
         :return:
         """
-
-        if symbol_input not in cls._previous_quarter_revenue.keys():
-            logger.info(f"Previous Quarter Revenue for {symbol_input} not yet fetched. Starting fetch")
-
+        cache_expired = (time.time() - cls._previous_quarter_revenue_ts.get(symbol_input, 0.0)) > _REVENUE_TTL
+        if symbol_input not in cls._previous_quarter_revenue or cache_expired:
+            logger.info(f"Previous Quarter Revenue for {symbol_input} not yet fetched or cache expired. Starting fetch")
             try:
                 cls._previous_quarter_revenue[symbol_input] = cls._get_previous_quarter_revenue(symbol_input)
+                cls._previous_quarter_revenue_ts[symbol_input] = time.time()
                 logger.info(f"Previous Quarter Revenue for {symbol_input} fetched successfully")
-
             except:
                 logger.exception(f"Exception while fetching Previous Quarter Revenue for {symbol_input}: ")
-
         else:
             logger.info(f"Previous Quarter Revenue for {symbol_input} already fetched. Using cached data")
 
@@ -169,20 +176,19 @@ class FinhubAPI:
     def get_profit_margin(cls, symbol_input):
         """
         Checks if profit margin for company is already cached and returns it if so. If not will go and fetch it.
+        Re-fetches when the cached value is older than _PROFIT_MARGIN_TTL seconds.
         :param symbol_input:
         :return:
         """
-
-        if symbol_input not in cls._profit_margin.keys():
-            logger.info(f"Profit Margin for {symbol_input} not yet fetched. Starting fetch")
-
+        cache_expired = (time.time() - cls._profit_margin_ts.get(symbol_input, 0.0)) > _PROFIT_MARGIN_TTL
+        if symbol_input not in cls._profit_margin or cache_expired:
+            logger.info(f"Profit Margin for {symbol_input} not yet fetched or cache expired. Starting fetch")
             try:
                 cls._profit_margin[symbol_input] = cls._get_profit_margin(symbol_input)
+                cls._profit_margin_ts[symbol_input] = time.time()
                 logger.info(f"Profit Margin for {symbol_input} fetched successfully")
-
             except:
                 logger.exception(f"Exception while fetching Profit Margin for {symbol_input}: ")
-
         else:
             logger.info(f"Profit Margin for {symbol_input} already fetched. Using cached data")
 
