@@ -21,12 +21,13 @@ def parameters_dataframe(dates, users):
     n_data_ignored = len(dates) - 3  # Number of data until which to be ignored
     dataframe = np.zeros((n_data_ignored * number_moving_average, 9))
     # Calculation of K, r & p0 and its related RSquare for each data ignored
+    dates_orig, users_orig = np.array(dates, dtype=float), np.array(users, dtype=float)
     for i in range(0, number_moving_average):
         moving_average = i + 1
         if moving_average == 1:
-            pass
+            dates, users = dates_orig, users_orig
         else:
-            dates, users = moving_average_smoothing(dates, users, moving_average)
+            dates, users = moving_average_smoothing(dates_orig, users_orig, moving_average)
         for j in range(n_data_ignored):
             try:
                 dates_rsquare = dates[j:len(dates)]
@@ -49,7 +50,7 @@ def parameters_dataframe(dates, users):
                 except:
                     rootmeansquare = 0
                     logger.info(f"rmsd could not be calculated when ignoring: {n_data_ignored} number of data points")
-                logfit = log_approximation(dates_rsquare, users_rsquare)
+                logfit = np.polyfit(np.log(userinterval), rd, 1, rcond=None, full=False)
 
                 approximated_values_log = rsquare_calculation(observed_values_df,
                                                               np.polyval(logfit, np.log(userinterval)))
@@ -96,22 +97,14 @@ def parameters_dataframe_cleaning(df, users):
     # Eliminate all rows where NaN values are present
     df = df.dropna()
     usersMax = np.amax(users)
-    # Get names of indexes for which column K is smaller than 98% of the max user
-    indexNames_K = df[df['K'] <= 1.05 * usersMax].index
-    # Delete these row indexes from dataFrame
-    df.drop(indexNames_K, inplace=True)
-    # Get names of indexes for which column r is smaller than zero
-    indexNames_r = df[df['r'] <= 0].index
-    # Delete these row indexes from dataFrame
-    df.drop(indexNames_r, inplace=True)
-    # Get names of indexes for which column r is smaller or equal to zero
-    indexNames_rSquared = df[df['R Squared'] <= 0.2].index
-    # Delete these row indexes from dataFrame
-    df.drop(indexNames_rSquared, inplace=True)
-    # Get names of indexes for which column p0 is smaller that numbers very close to zero
-    indexNames_p0 = df[df['p0'] < 5.775167e-41].index
-    # Delete these row indexes from dataFrame
-    df.drop(indexNames_p0, inplace=True)
+    # Filter rows: K > 1.05*usersMax, r > 0, R Squared > 0.2, p0 >= near-zero threshold
+    mask = (
+        (df['K'] > 1.05 * usersMax) &
+        (df['r'] > 0) &
+        (df['R Squared'] > 0.2) &
+        (df['p0'] >= 5.775167e-41)
+    )
+    df = df[mask]
     df_sorted = df.sort_values(by=['K'], ascending=True)
     # Resetting the indexes
     df_sorted = df_sorted.reset_index(drop=True)
@@ -131,26 +124,14 @@ def parameters_dataframe_cleaning_minimal(df, users):
     # Eliminate all rows where NaN values are present
     df = df.dropna()
     usersMax = np.amax(users)
-    # Get names of indexes for which column K is smaller than 98% of the max user
-    indexNames_K = df[df['K'] <= 0.8 * usersMax].index
-    # Delete these row indexes from dataFrame
-    df.drop(indexNames_K, inplace=True)
-    # Get names of indexes for which column K is smaller than 98% of the max user
-    indexNames_K_max = df[df['K'] > 5 * usersMax].index
-    # Delete these row indexes from dataFrame
-    df.drop(indexNames_K_max, inplace=True)
-    # Get names of indexes for which column r is smaller than zero
-    indexNames_r = df[df['r'] <= 0].index
-    # Delete these row indexes from dataFrame
-    df.drop(indexNames_r, inplace=True)
-    # Get names of indexes for which column r is smaller or equal to zero
-    indexNames_rSquared = df[df['R Squared'] <= 0.001].index
-    # Delete these row indexes from dataFrame
-    # df.drop(indexNames_rSquared, inplace=True)
-    # Get names of indexes for which column p0 is smaller that numbers very close to zero
-    indexNames_p0 = df[df['p0'] < 5.775167e-41].index
-    # Delete these row indexes from dataFrame
-    df.drop(indexNames_p0, inplace=True)
+    # Filter rows: 0.8*usersMax < K <= 5*usersMax, r > 0, p0 >= near-zero threshold
+    mask = (
+        (df['K'] > 0.8 * usersMax) &
+        (df['K'] <= 5 * usersMax) &
+        (df['r'] > 0) &
+        (df['p0'] >= 5.775167e-41)
+    )
+    df = df[mask]
     df_sorted = df.sort_values(by=['K'], ascending=True)
     # Resetting the indexes
     df_sorted = df_sorted.reset_index(drop=True)

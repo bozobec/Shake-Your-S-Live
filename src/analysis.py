@@ -18,9 +18,9 @@ def discrete_growth_rate(users, dates):
     :param dates:
     :return:
     """
-    discretegrowthrate = np.zeros(len(dates) - 1)
-    for i in range(len(dates) - 1):
-        discretegrowthrate[i] = math.log(users[i + 1] / users[i]) / (dates[i + 1] - dates[i])
+    users = np.asarray(users, dtype=float)
+    dates = np.asarray(dates, dtype=float)
+    discretegrowthrate = np.log(users[1:] / users[:-1]) / (dates[1:] - dates[:-1])
     return discretegrowthrate
 
 
@@ -31,9 +31,8 @@ def discrete_user_interval(users):
     :param users:
     :return:
     """
-    discreteuserinterval = np.zeros(len(users) - 1)
-    for i in range(len(users) - 1):
-        discreteuserinterval[i] = (users[i + 1] + users[i]) / 2
+    users = np.asarray(users, dtype=float)
+    discreteuserinterval = (users[1:] + users[:-1]) / 2
     return discreteuserinterval
 
 
